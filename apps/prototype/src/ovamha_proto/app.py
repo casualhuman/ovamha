@@ -18,6 +18,7 @@ import gradio as gr
 
 from . import fhir_client, sms
 from .asr import model_name, transcribe
+from .auth import Worker, login, workers
 from .confirm import Session, fmt, label
 from .encounter import Encounter
 from .extract import extract
@@ -36,8 +37,9 @@ PLAUSIBLE = {"gestational_age_weeks": (4, 45), "systolic": (50, 300), "diastolic
              "temperature": (30, 45), "fetal_heart_rate": (50, 250)}
 
 
-def new_state() -> dict:
-    return {"session": Session(), "lang": "en", "asr_model": model_name("en"), "encounter": None, "fhir": {}}
+def new_state(worker: Worker | None = None) -> dict:
+    session = Session(worker_id=worker.worker_id) if worker else Session()
+    return {"session": session, "lang": "en", "asr_model": model_name("en"), "encounter": None, "fhir": {}, "worker": worker}
 
 
 # ---------------- helpers ----------------
@@ -110,10 +112,21 @@ def do_transcribe(audio_path, lang, st):
     return r.text, f"Transcribed offline with {r.model}. {r.message}", st
 
 
-def do_extract(transcript, lang, st):
-    st = new_state() | {"asr_model": (st or {}).get("asr_model", model_name(lang))}
+def do_extract(audio_path, transcript, lang, st):
+    """Read back for confirmation. Transcribes first if there is audio but no transcript."""
+    st = st or new_state()
+    asr_note = gr.update()
+    if not (transcript or "").strip():
+        if not audio_path:
+            return (*views(st), "", gr.update(), "⚠️ Record or upload a description, or type it, first.", gr.Tabs(), st)
+        r = transcribe(audio_path, lang)
+        if not r.ok:
+            return (*views(st), "", gr.update(), f"🔁 {r.message}", gr.Tabs(), st)
+        transcript, st["asr_model"] = r.text, r.model
+        asr_note = f"Transcribed offline with {r.model}. {r.message}"
+    st = new_state(st.get("worker")) | {"asr_model": st.get("asr_model", model_name(lang))}
     st["lang"] = lang
-    ex = extract(transcript or "", lang)
+    ex = extract(transcript, lang)
     s = st["session"]
     s.propose_from_extraction(ex)
     flags = scan(ex)
@@ -127,7 +140,7 @@ def do_extract(transcript, lang, st):
     if flags:
         notes.append("⚠️ AI safety net raised: " + ", ".join(f"**{f.label}** ({f.reason})" for f in flags))
     notes.append("Not captured (asked only if a rule needs it): " + (", ".join(missing) or "none"))
-    return (*views(st), "\n\n".join(notes), st)
+    return (*views(st), "\n\n".join(notes), transcript, asr_note, gr.Tabs(selected="confirm"), st)
 
 
 def do_confirm(ticked, st):
@@ -187,7 +200,10 @@ def do_finish(st):
     s = st["session"]
     confirmed = s.finalise()  # unconfirmed proposals are discarded here
     results = evaluate(confirmed)
+    w = st.get("worker")
     e = Encounter(confirmed, dict(s.sources), results, st["lang"], s.worker_id, st["asr_model"])
+    if w:
+        e.facility = w.facility
     st["encounter"] = e
     bundle = build_bundle(e)
     try:
@@ -235,75 +251,160 @@ def do_reply(text, st):
     return out, st
 
 
+# ---------------- login ----------------
+
+def do_login(worker_id, pin, st):
+    w, err = login(worker_id, pin)
+    if not w:
+        return gr.update(visible=True), gr.update(visible=False), f"❌ {err}", "", gr.update(value=""), gr.update(), st
+    header = f"Signed in as **{w.display_name}** · {w.role} · {w.facility}"
+    return (gr.update(visible=False), gr.update(visible=True), "", header, gr.update(value=""),
+            gr.update(value=w.languages[0] if w.languages else "en"), new_state(w))
+
+
+def do_logout(st):
+    return gr.update(visible=True), gr.update(visible=False), "", "", gr.update(value=""), gr.update(), new_state()
+
+
 # ---------------- layout ----------------
 
+SL_BLUE = "#0072C6"  # Sierra Leone flag blue
+BLUE = gr.themes.Color(
+    c50="#E6F1FA", c100="#CCE3F4", c200="#99C7E9", c300="#66AADD", c400="#338ED2",
+    c500="#0072C6", c600="#005EA3", c700="#004A80", c800="#00365E", c900="#00223B", c950="#001629",
+    name="sl_blue",
+)
+THEME = gr.themes.Soft(
+    primary_hue=BLUE, secondary_hue=BLUE, neutral_hue="slate",
+    font=["system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],  # system fonts: no download, works offline
+    text_size=gr.themes.sizes.text_lg, spacing_size=gr.themes.sizes.spacing_lg, radius_size=gr.themes.sizes.radius_lg,
+)
+CSS = f"""
+.gradio-container {{ max-width: 1100px !important; margin: 0 auto !important; font-size: 18px; }}
+button {{ font-size: 1.15rem !important; min-height: 56px; }}
+input, textarea, select {{ font-size: 1.2rem !important; }}
+.tab-wrapper button, [role="tab"] {{ font-size: 1.15rem !important; min-height: 52px; }}
+.ov-hero {{ text-align: center; padding: 28px 8px 8px; }}
+.ov-hero h1 {{ font-size: 2.8rem; color: {SL_BLUE}; margin: 0; letter-spacing: -0.02em; }}
+.ov-hero .sub {{ font-size: 1.35rem; color: var(--body-text-color-subdued); margin-top: 6px; }}
+.ov-steps {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 20px 0 8px; }}
+.ov-step {{ border: 1px solid var(--border-color-primary); border-top: 6px solid {SL_BLUE}; border-radius: 14px; padding: 16px 18px; background: var(--block-background-fill); }}
+.ov-step b {{ display: block; font-size: 1.25rem; color: {SL_BLUE}; margin-bottom: 4px; }}
+.ov-step span {{ font-size: 1.05rem; line-height: 1.45; }}
+.ov-safe {{ border-left: 6px solid {SL_BLUE}; background: var(--color-accent-soft); padding: 14px 18px; border-radius: 10px; font-size: 1.1rem; line-height: 1.5; }}
+.ov-bar {{ background: {SL_BLUE}; color: white; border-radius: 12px; padding: 12px 18px; }}
+.ov-bar p, .ov-bar strong {{ color: white !important; font-size: 1.1rem; margin: 0; }}
+"""
+
+HERO = f"""
+<div class="ov-hero">
+  <h1>Ovamha</h1>
+  <div class="sub">Offline voice assistant for maternal care</div>
+</div>
+<div class="ov-steps">
+  <div class="ov-step"><b>1 · Speak</b><span>Describe the pregnant woman's situation in Krio, Yoruba or English.</span></div>
+  <div class="ov-step"><b>2 · Confirm</b><span>Ovamha reads back what it heard. You confirm or correct each item. Numbers such as blood pressure are typed, never guessed.</span></div>
+  <div class="ov-step"><b>3 · Refer</b><span>It checks WHO danger signs, prepares the handover for the hospital and sends the referral SMS.</span></div>
+</div>
+<div class="ov-safe">
+  <strong>You stay in charge.</strong> Nothing is used until you confirm it. Referral decisions follow WHO antenatal guidance;
+  the AI can only add warnings for you to check, it can never remove one. Everything works with no internet.
+</div>
+"""
+
+
 def build_ui() -> gr.Blocks:
-    with gr.Blocks(title="Ovamha prototype") as ui:
+    with gr.Blocks(title="Ovamha") as ui:
         st = gr.State(new_state())
-        gr.Markdown(
-            "# Ovamha: offline voice assistant for maternal care\n"
-            "Rules set the floor, AI widens the net, **the worker confirms**. Nothing unconfirmed counts. "
-            "Demo rules from the WHO ANC DAK PDF, pending Annex B extraction. SMS is simulated unless a GSM modem is attached."
-        )
-        with gr.Tab("1 · Describe"):
-            lang = gr.Dropdown(LANG_CHOICES, value="en", label="Language")
-            audio = gr.Audio(sources=["microphone", "upload"], type="filepath", label="Describe the woman's situation")
-            btn_asr = gr.Button("Transcribe (offline)")
-            transcript = gr.Textbox(label="Transcript (editable)", lines=4)
-            asr_note = gr.Markdown()
-            btn_extract = gr.Button("Read back for confirmation", variant="primary")
-            extract_note = gr.Markdown()
-        with gr.Tab("2 · Confirm"):
-            gr.Markdown("### Read-back: confirm each item")
-            readback = gr.Markdown()
-            with gr.Row():
-                btn_audio = gr.Button("🔊 Play read-back")
-                audio_out = gr.Audio(label="Read-back audio", interactive=False)
-            audio_note = gr.Markdown()
-            ticks = gr.CheckboxGroup(label="Tick each item that is correct")
-            btn_confirm = gr.Button("Confirm ticked items", variant="primary")
-            with gr.Accordion("Correct or remove an item", open=False):
-                fld = gr.Dropdown(label="Item")
-                newval = gr.Textbox(label="Correct value (yes / no / severe / mild / light / heavy / a number)")
-                with gr.Row():
-                    btn_correct = gr.Button("Correct & confirm")
-                    btn_reject = gr.Button("Remove (not true)")
-            gr.Markdown("### Keypad entry (numbers are never taken from voice)")
-            with gr.Row():
-                ga = gr.Number(value=None, label="Gestational age (weeks)", precision=0)
-                sys_ = gr.Number(value=None, label="Systolic BP", precision=0)
-                dia = gr.Number(value=None, label="Diastolic BP", precision=0)
-            with gr.Row():
-                rsys = gr.Number(value=None, label="Repeat systolic", precision=0)
-                rdia = gr.Number(value=None, label="Repeat diastolic", precision=0)
-                pulse = gr.Number(value=None, label="Pulse", precision=0)
-            with gr.Row():
-                temp = gr.Number(value=None, label="Temperature °C")
-                fhr = gr.Number(value=None, label="Fetal heart rate", precision=0)
-                protein = gr.Dropdown(["negative", "trace", "+", "++", "+++", "unknown"], value=None, label="Urine protein")
-                severe = gr.Dropdown(["No", "Yes", "Don't know"], value=None, label="Severe pre-eclampsia symptoms")
-            btn_keypad = gr.Button("Add keypad entries to read-back")
-            keypad_note = gr.Markdown()
-            gr.Markdown("### Confirmed so far")
-            confirmed = gr.Markdown()
-            preview = gr.Markdown()
-        with gr.Tab("3 · Result"):
-            btn_finish = gr.Button("Finish encounter: discard unconfirmed, apply rules, send referral", variant="stop")
-            result = gr.Markdown()
-            sms_out = gr.Markdown()
-            handover = gr.Textbox(label="Handover (confirmed data only)", lines=16)
-        with gr.Tab("4 · FHIR & SMS replies"):
-            valid = gr.Markdown()
-            btn_post = gr.Button("POST Bundle to local HAPI FHIR server")
-            post_out = gr.Markdown()
-            reply = gr.Textbox(label=f"Incoming SMS reply (simulated), e.g. ACK ABCD or FULL ABCD")
-            btn_reply = gr.Button("Receive reply")
-            reply_out = gr.Markdown()
-            bundle = gr.Code(label="FHIR R4 transaction Bundle", language="json")
+
+        # ----- welcome + sign in (offline) -----
+        with gr.Column(visible=True) as login_col:
+            gr.HTML(HERO)
+            with gr.Group():
+                gr.Markdown("## Sign in")
+                who = gr.Dropdown([(f"{w.display_name}  ({w.role})", w.worker_id) for w in workers()],
+                                  value=None, label="Your name")
+                pin = gr.Textbox(label="PIN", type="password", max_lines=1)
+                btn_login = gr.Button("Sign in", variant="primary", size="lg")
+                login_msg = gr.Markdown()
+            gr.Markdown("<sub>Sign-in is checked on this device: no internet needed. Demo accounts only.</sub>")
+
+        # ----- main app -----
+        with gr.Column(visible=False) as app_col:
+            with gr.Row(elem_classes="ov-bar", equal_height=True):
+                header = gr.Markdown(scale=4)
+                btn_logout = gr.Button("Sign out", size="sm", scale=1)
+            gr.Markdown(
+                "You confirm every item before it counts. Referral rules follow WHO antenatal guidance "
+                "(demo rules, pending full extraction). SMS is **simulated** unless a GSM modem is attached."
+            )
+            with gr.Tabs() as tabs:
+                with gr.Tab("1 · Describe", id="describe"):
+                    lang = gr.Dropdown(LANG_CHOICES, value="en", label="Language")
+                    audio = gr.Audio(sources=["microphone", "upload"], type="filepath", label="Describe the woman's situation")
+                    btn_asr = gr.Button("Transcribe (offline)")
+                    transcript = gr.Textbox(label="What was said (you can edit or type it)", lines=4)
+                    asr_note = gr.Markdown()
+                    btn_extract = gr.Button("Read back for confirmation →", variant="primary", size="lg")
+                with gr.Tab("2 · Confirm", id="confirm"):
+                    extract_note = gr.Markdown()
+                    gr.Markdown("### Read-back: confirm each item")
+                    readback = gr.Markdown()
+                    with gr.Row():
+                        btn_audio = gr.Button("🔊 Play read-back")
+                        audio_out = gr.Audio(label="Read-back audio", interactive=False)
+                    audio_note = gr.Markdown()
+                    ticks = gr.CheckboxGroup(label="Tick each item that is correct")
+                    btn_confirm = gr.Button("Confirm ticked items", variant="primary", size="lg")
+                    with gr.Accordion("Correct or remove an item", open=False):
+                        fld = gr.Dropdown(label="Item")
+                        newval = gr.Textbox(label="Correct value (yes / no / severe / mild / light / heavy / a number)")
+                        with gr.Row():
+                            btn_correct = gr.Button("Correct & confirm")
+                            btn_reject = gr.Button("Remove (not true)")
+                    gr.Markdown("### Keypad entry (numbers are never taken from voice)")
+                    with gr.Row():
+                        ga = gr.Number(value=None, label="Gestational age (weeks)", precision=0)
+                        sys_ = gr.Number(value=None, label="Systolic BP", precision=0)
+                        dia = gr.Number(value=None, label="Diastolic BP", precision=0)
+                    with gr.Row():
+                        rsys = gr.Number(value=None, label="Repeat systolic", precision=0)
+                        rdia = gr.Number(value=None, label="Repeat diastolic", precision=0)
+                        pulse = gr.Number(value=None, label="Pulse", precision=0)
+                    with gr.Row():
+                        temp = gr.Number(value=None, label="Temperature °C")
+                        fhr = gr.Number(value=None, label="Fetal heart rate", precision=0)
+                    with gr.Row():
+                        protein = gr.Dropdown(["negative", "trace", "+", "++", "+++", "unknown"], value=None, label="Urine protein")
+                        severe = gr.Dropdown(["No", "Yes", "Don't know"], value=None, label="Severe pre-eclampsia symptoms")
+                    btn_keypad = gr.Button("Add keypad entries to read-back")
+                    keypad_note = gr.Markdown()
+                    gr.Markdown("### Confirmed so far")
+                    confirmed = gr.Markdown()
+                    preview = gr.Markdown()
+                with gr.Tab("3 · Result", id="result"):
+                    btn_finish = gr.Button("Finish encounter: discard unconfirmed, apply rules, send referral", variant="primary", size="lg")
+                    result = gr.Markdown()
+                    sms_out = gr.Markdown()
+                    handover = gr.Textbox(label="Handover (confirmed data only)", lines=16)
+                with gr.Tab("4 · FHIR & SMS replies", id="fhir"):
+                    valid = gr.Markdown()
+                    btn_post = gr.Button("POST Bundle to local HAPI FHIR server")
+                    post_out = gr.Markdown()
+                    reply = gr.Textbox(label="Incoming SMS reply (simulated), e.g. ACK ABCD or FULL ABCD")
+                    btn_reply = gr.Button("Receive reply")
+                    reply_out = gr.Markdown()
+                    bundle = gr.Code(label="FHIR R4 transaction Bundle", language="json")
+
+        login_out = [login_col, app_col, login_msg, header, pin, lang, st]
+        btn_login.click(do_login, [who, pin, st], login_out)
+        pin.submit(do_login, [who, pin, st], login_out)
+        btn_logout.click(do_logout, [st], login_out)
 
         view_out = [readback, ticks, fld, confirmed, preview]
         btn_asr.click(do_transcribe, [audio, lang, st], [transcript, asr_note, st])
-        btn_extract.click(do_extract, [transcript, lang, st], [*view_out, extract_note, st])
+        btn_extract.click(do_extract, [audio, transcript, lang, st],
+                          [*view_out, extract_note, transcript, asr_note, tabs, st])
         btn_confirm.click(do_confirm, [ticks, st], [*view_out, st])
         btn_correct.click(do_correct, [fld, newval, st], [*view_out, st])
         btn_reject.click(do_reject, [fld, st], [*view_out, st])
@@ -334,7 +435,7 @@ def main() -> None:
     if a.https:
         key, crt = _self_signed_cert()
         kw = {"ssl_keyfile": key, "ssl_certfile": crt, "ssl_verify": False}
-    build_ui().launch(server_name="0.0.0.0", server_port=a.port, **kw)
+    build_ui().launch(server_name="0.0.0.0", server_port=a.port, theme=THEME, css=CSS, **kw)
 
 
 if __name__ == "__main__":

@@ -28,3 +28,11 @@ The first transcription downloads Whisper small (~460 MB) once; after that, no i
 ## Modules (`src/ovamha_proto/`)
 
 `asr.py` · `extract.py` + `lexicon.py` · `safety_net.py` · `confirm.py` · `rules.py` · `tts.py` · `handover.py` · `encounter.py` · `fhir_bundle.py` · `fhir_client.py` · `sms.py` · `app.py`
+
+## Demo logins (fictional demo accounts, offline)
+
+| Worker | PIN |
+| --- | --- |
+| Nurse Fati | 769131 |
+| CHW Aminata | 507892 |
+| Midwife Funmi | 186706 |
