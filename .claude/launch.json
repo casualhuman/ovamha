@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ovamha-prototype",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd apps/prototype/src && ../../../.venv/bin/python -m ovamha_proto.app"],
+      "port": 7860
+    }
+  ]
+}

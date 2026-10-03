@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+data/*
+!data/README.md
+ml/models/*
+!ml/models/README.md
+*.wav
+*.mp3
+*.ogg
+*.webm
+*.bin
+*.safetensors
+outbox/
+demo/audio_local/

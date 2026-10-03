@@ -1,0 +1,598 @@
+{
+  "resourceType": "Bundle",
+  "type": "transaction",
+  "entry": [
+    {
+      "fullUrl": "urn:uuid:b2ec289d-ae75-4ac7-83f4-e1a520d69666",
+      "resource": {
+        "resourceType": "Patient",
+        "identifier": [
+          {
+            "system": "https://fhir.ovamha.org/sid/woman-id",
+            "value": "b22f6873-d700-42ef-8526-910b5c690ba7"
+          },
+          {
+            "system": "https://fhir.ovamha.org/sid/card-code",
+            "value": "JGTYJ8"
+          }
+        ],
+        "gender": "female"
+      },
+      "request": {
+        "method": "POST",
+        "url": "Patient"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:bee9609d-7b33-40a6-b4a0-6d5fe223dbbf",
+      "resource": {
+        "resourceType": "Practitioner",
+        "identifier": [
+          {
+            "system": "https://fhir.ovamha.org/sid/worker-id",
+            "value": "chw-demo-01"
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Practitioner"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:1f59a535-93be-41ec-ae0d-fb15fd353661",
+      "resource": {
+        "resourceType": "Device",
+        "deviceName": [
+          {
+            "name": "faster-whisper openai/whisper-small (CTranslate2 int8)",
+            "type": "model-name"
+          }
+        ],
+        "type": {
+          "text": "Automatic speech recognition model"
+        }
+      },
+      "request": {
+        "method": "POST",
+        "url": "Device"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:1faf0761-760f-4e27-8cc8-ac3c7539344d",
+      "resource": {
+        "resourceType": "Encounter",
+        "identifier": [
+          {
+            "system": "https://fhir.ovamha.org/sid/encounter-code",
+            "value": "SMV4"
+          }
+        ],
+        "status": "finished",
+        "class": {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          "code": "HH",
+          "display": "home health"
+        },
+        "subject": {
+          "reference": "urn:uuid:b2ec289d-ae75-4ac7-83f4-e1a520d69666"
+        },
+        "participant": [
+          {
+            "individual": {
+              "reference": "urn:uuid:bee9609d-7b33-40a6-b4a0-6d5fe223dbbf"
+            }
+          }
+        ],
+        "period": {
+          "start": "2026-10-03T23:17:05+00:00",
+          "end": "2026-10-03T23:17:05+00:00"
+        }
+      },
+      "request": {
+        "method": "POST",
+        "url": "Encounter"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:da3fb859-ab5b-40bb-a930-6e8207dbd024",
+      "resource": {
+        "resourceType": "Observation",
+        "status": "final",
+        "subject": {
+          "reference": "urn:uuid:b2ec289d-ae75-4ac7-83f4-e1a520d69666"
+        },
+        "encounter": {
+          "reference": "urn:uuid:1faf0761-760f-4e27-8cc8-ac3c7539344d"
+        },
+        "effectiveDateTime": "2026-10-03T23:17:05+00:00",
+        "performer": [
+          {
+            "reference": "urn:uuid:bee9609d-7b33-40a6-b4a0-6d5fe223dbbf"
+          }
+        ],
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "85354-9",
+              "display": "Blood pressure panel with all children optional"
+            }
+          ]
+        },
+        "component": [
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8480-6",
+                  "display": "Systolic blood pressure"
+                }
+              ]
+            },
+            "valueQuantity": {
+              "value": 90,
+              "unit": "mmHg",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          },
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8462-4",
+                  "display": "Diastolic blood pressure"
+                }
+              ]
+            },
+            "valueQuantity": {
+              "value": 60,
+              "unit": "mmHg",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:6c8e881d-de35-49a6-9d9b-749352ae00e3",
+      "resource": {
+        "resourceType": "Observation",
+        "status": "final",
+        "subject": {
+          "reference": "urn:uuid:b2ec289d-ae75-4ac7-83f4-e1a520d69666"
+        },
+        "encounter": {
+          "reference": "urn:uuid:1faf0761-760f-4e27-8cc8-ac3c7539344d"
+        },
+        "effectiveDateTime": "2026-10-03T23:17:05+00:00",
+        "performer": [
+          {
+            "reference": "urn:uuid:bee9609d-7b33-40a6-b4a0-6d5fe223dbbf"
+          }
+        ],
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "exam"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "https://fhir.ovamha.org/CodeSystem/danger-signs",
+              "code": "vaginal-bleeding",
+              "display": "Vaginal bleeding"
+            }
+          ],
+          "text": "Vaginal bleeding"
+        },
+        "valueBoolean": true
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:1da3624b-113a-43e5-a52f-75fddf8fd3ca",
+      "resource": {
+        "resourceType": "Observation",
+        "status": "final",
+        "subject": {
+          "reference": "urn:uuid:b2ec289d-ae75-4ac7-83f4-e1a520d69666"
+        },
+        "encounter": {
+          "reference": "urn:uuid:1faf0761-760f-4e27-8cc8-ac3c7539344d"
+        },
+        "effectiveDateTime": "2026-10-03T23:17:05+00:00",
+        "performer": [
+          {
+            "reference": "urn:uuid:bee9609d-7b33-40a6-b4a0-6d5fe223dbbf"
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "https://fhir.ovamha.org/CodeSystem/observations",
+              "code": "bleeding-amount",
+              "display": "Bleeding amount"
+            }
+          ],
+          "text": "Bleeding amount"
+        },
+        "valueString": "heavy"
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:d1ad7d4e-83b0-4893-8be9-8ebde6d7aad1",
+      "resource": {
+        "resourceType": "Observation",
+        "status": "final",
+        "subject": {
+          "reference": "urn:uuid:b2ec289d-ae75-4ac7-83f4-e1a520d69666"
+        },
+        "encounter": {
+          "reference": "urn:uuid:1faf0761-760f-4e27-8cc8-ac3c7539344d"
+        },
+        "effectiveDateTime": "2026-10-03T23:17:05+00:00",
+        "performer": [
+          {
+            "reference": "urn:uuid:bee9609d-7b33-40a6-b4a0-6d5fe223dbbf"
+          }
+        ],
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "exam"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "https://fhir.ovamha.org/CodeSystem/danger-signs",
+              "code": "fainting",
+              "display": "Fainting"
+            }
+          ],
+          "text": "Fainting"
+        },
+        "valueBoolean": true
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:b7255d65-5239-4e63-9e7f-e4f077183292",
+      "resource": {
+        "resourceType": "Observation",
+        "status": "final",
+        "subject": {
+          "reference": "urn:uuid:b2ec289d-ae75-4ac7-83f4-e1a520d69666"
+        },
+        "encounter": {
+          "reference": "urn:uuid:1faf0761-760f-4e27-8cc8-ac3c7539344d"
+        },
+        "effectiveDateTime": "2026-10-03T23:17:05+00:00",
+        "performer": [
+          {
+            "reference": "urn:uuid:bee9609d-7b33-40a6-b4a0-6d5fe223dbbf"
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "https://fhir.ovamha.org/CodeSystem/observations",
+              "code": "gestational-age-weeks",
+              "display": "Gestational age (weeks)"
+            }
+          ],
+          "text": "Gestational age (weeks)"
+        },
+        "valueQuantity": {
+          "value": 28,
+          "unit": "weeks",
+          "system": "http://unitsofmeasure.org",
+          "code": "wk"
+        }
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:d705e874-3c7d-4a54-b39c-48bd097f493b",
+      "resource": {
+        "resourceType": "GuidanceResponse",
+        "identifier": [
+          {
+            "system": "https://fhir.ovamha.org/sid/guidance",
+            "value": "SMV4-ANC.DT.01"
+          }
+        ],
+        "status": "success",
+        "subject": {
+          "reference": "urn:uuid:b2ec289d-ae75-4ac7-83f4-e1a520d69666"
+        },
+        "encounter": {
+          "reference": "urn:uuid:1faf0761-760f-4e27-8cc8-ac3c7539344d"
+        },
+        "occurrenceDateTime": "2026-10-03T23:17:05+00:00",
+        "reasonCode": [
+          {
+            "text": "ANC.DT.01 Danger signs requiring referral: fired"
+          }
+        ],
+        "note": [
+          {
+            "text": "WHO DAK for antenatal care (2021), Fig. 11 quick check. Demo rule from the WHO ANC DAK PDF, pending Annex B extraction."
+          }
+        ],
+        "moduleCanonical": "http://fhir.org/guides/who/anc-cds/PlanDefinition/ANCDT01"
+      },
+      "request": {
+        "method": "POST",
+        "url": "GuidanceResponse"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:754574ee-d2b7-4b8c-b8f1-14f378edd327",
+      "resource": {
+        "resourceType": "GuidanceResponse",
+        "identifier": [
+          {
+            "system": "https://fhir.ovamha.org/sid/guidance",
+            "value": "SMV4-ANC.PE"
+          }
+        ],
+        "status": "success",
+        "subject": {
+          "reference": "urn:uuid:b2ec289d-ae75-4ac7-83f4-e1a520d69666"
+        },
+        "encounter": {
+          "reference": "urn:uuid:1faf0761-760f-4e27-8cc8-ac3c7539344d"
+        },
+        "occurrenceDateTime": "2026-10-03T23:17:05+00:00",
+        "reasonCode": [
+          {
+            "text": "ANC.PE Pre-eclampsia: not_fired"
+          }
+        ],
+        "note": [
+          {
+            "text": "WHO DAK for antenatal care (2021), Table 12 worked example (ANC.DT.16 / Table 10 ANC.DT.17). Demo rule from the WHO ANC DAK PDF, pending Annex B extraction."
+          }
+        ],
+        "moduleUri": "https://fhir.ovamha.org/rules/ANC.PE"
+      },
+      "request": {
+        "method": "POST",
+        "url": "GuidanceResponse"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:386b26e1-bba5-4334-b3ae-0f7a3cbab036",
+      "resource": {
+        "resourceType": "ServiceRequest",
+        "identifier": [
+          {
+            "system": "https://fhir.ovamha.org/sid/encounter-code",
+            "value": "SMV4"
+          }
+        ],
+        "status": "active",
+        "intent": "order",
+        "priority": "urgent",
+        "code": {
+          "text": "Urgent referral to hospital"
+        },
+        "subject": {
+          "reference": "urn:uuid:b2ec289d-ae75-4ac7-83f4-e1a520d69666"
+        },
+        "encounter": {
+          "reference": "urn:uuid:1faf0761-760f-4e27-8cc8-ac3c7539344d"
+        },
+        "authoredOn": "2026-10-03T23:17:05+00:00",
+        "requester": {
+          "reference": "urn:uuid:bee9609d-7b33-40a6-b4a0-6d5fe223dbbf"
+        },
+        "reasonCode": [
+          {
+            "text": "Vaginal bleeding"
+          }
+        ],
+        "reasonReference": [
+          {
+            "reference": "urn:uuid:6c8e881d-de35-49a6-9d9b-749352ae00e3"
+          },
+          {
+            "reference": "urn:uuid:d1ad7d4e-83b0-4893-8be9-8ebde6d7aad1"
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "ServiceRequest"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:ed4615c6-7b9f-4842-bb3c-fc0963eb23cd",
+      "resource": {
+        "resourceType": "Task",
+        "identifier": [
+          {
+            "system": "https://fhir.ovamha.org/sid/encounter-code",
+            "value": "SMV4"
+          }
+        ],
+        "status": "requested",
+        "intent": "order",
+        "priority": "urgent",
+        "focus": {
+          "reference": "urn:uuid:386b26e1-bba5-4334-b3ae-0f7a3cbab036"
+        },
+        "for": {
+          "reference": "urn:uuid:b2ec289d-ae75-4ac7-83f4-e1a520d69666"
+        },
+        "encounter": {
+          "reference": "urn:uuid:1faf0761-760f-4e27-8cc8-ac3c7539344d"
+        },
+        "authoredOn": "2026-10-03T23:17:05+00:00",
+        "requester": {
+          "reference": "urn:uuid:bee9609d-7b33-40a6-b4a0-6d5fe223dbbf"
+        },
+        "description": "Referral SMV4: awaiting ACK/FULL by SMS"
+      },
+      "request": {
+        "method": "POST",
+        "url": "Task"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:5d7af002-62da-4f99-8db2-80f9860e2299",
+      "resource": {
+        "resourceType": "Provenance",
+        "target": [
+          {
+            "reference": "urn:uuid:6c8e881d-de35-49a6-9d9b-749352ae00e3"
+          },
+          {
+            "reference": "urn:uuid:1da3624b-113a-43e5-a52f-75fddf8fd3ca"
+          },
+          {
+            "reference": "urn:uuid:d1ad7d4e-83b0-4893-8be9-8ebde6d7aad1"
+          }
+        ],
+        "recorded": "2026-10-03T23:17:05+00:00",
+        "activity": {
+          "coding": [
+            {
+              "system": "https://fhir.ovamha.org/CodeSystem/provenance-activity",
+              "code": "spoken-ai-extracted-confirmed"
+            }
+          ]
+        },
+        "agent": [
+          {
+            "type": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
+                  "code": "verifier"
+                }
+              ]
+            },
+            "who": {
+              "reference": "urn:uuid:bee9609d-7b33-40a6-b4a0-6d5fe223dbbf"
+            }
+          },
+          {
+            "type": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
+                  "code": "assembler"
+                }
+              ]
+            },
+            "who": {
+              "reference": "urn:uuid:1f59a535-93be-41ec-ae0d-fb15fd353661"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Provenance"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:235905ce-673f-48eb-821a-f3268d0faf13",
+      "resource": {
+        "resourceType": "Provenance",
+        "target": [
+          {
+            "reference": "urn:uuid:da3fb859-ab5b-40bb-a930-6e8207dbd024"
+          },
+          {
+            "reference": "urn:uuid:b7255d65-5239-4e63-9e7f-e4f077183292"
+          }
+        ],
+        "recorded": "2026-10-03T23:17:05+00:00",
+        "activity": {
+          "coding": [
+            {
+              "system": "https://fhir.ovamha.org/CodeSystem/provenance-activity",
+              "code": "keypad-entered-confirmed"
+            }
+          ]
+        },
+        "agent": [
+          {
+            "type": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
+                  "code": "author"
+                }
+              ]
+            },
+            "who": {
+              "reference": "urn:uuid:bee9609d-7b33-40a6-b4a0-6d5fe223dbbf"
+            }
+          },
+          {
+            "type": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
+                  "code": "verifier"
+                }
+              ]
+            },
+            "who": {
+              "reference": "urn:uuid:bee9609d-7b33-40a6-b4a0-6d5fe223dbbf"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Provenance"
+      }
+    }
+  ]
+}
