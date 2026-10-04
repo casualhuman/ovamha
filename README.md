@@ -4,13 +4,54 @@ Ovamha (Offline Voice Assistant for Maternal Healthcare in Africa) helps communi
 
 Focus countries: Sierra Leone and Nigeria. Prototype for the World Bank Small AI for Development Hackathon (October 2026).
 
-**Contents:** [Try it](#try-it) · [The problem](#the-problem-and-who-it-is-for) · [Built for low connectivity and low-end devices](#built-for-no-or-low-connectivity-and-low-end-devices) · [How it works](#how-it-works) · [Judging criteria](#how-ovamha-meets-the-judging-criteria) · [Digital public infrastructure](#digital-public-infrastructure-and-the-world-bank) · [What works now](#what-works-now-all-offline) · [Limits and trade-offs](#honest-limits-and-trade-offs) · [Third-party sources](#third-party-sources-and-licences) · [All documentation](#documentation)
+**Contents:** [Try it online](#try-it-online-step-by-step-about-5-minutes) · [Run it offline](#run-it-offline-on-your-own-machine) · [The problem](#the-problem-and-who-it-is-for) · [Built for low connectivity and low-end devices](#built-for-no-or-low-connectivity-and-low-end-devices) · [How it works](#how-it-works) · [Judging criteria](#how-ovamha-meets-the-judging-criteria) · [Digital public infrastructure](#digital-public-infrastructure-and-the-world-bank) · [What works now](#what-works-now-all-offline) · [Limits and trade-offs](#honest-limits-and-trade-offs) · [Third-party sources](#third-party-sources-and-licences) · [All documentation](#documentation)
 
-## Try it
+## Try it online: step by step (about 5 minutes)
 
-**Online (hosted copy for judges):** https://r8086-ovamha.hf.space. The same code, with its speech and voice models inside the container; no external AI service is called. The free host sleeps when idle: the first visit can take about a minute. Records sync to a demo FHIR hub: https://r8086-ovamha-fhir.hf.space/fhir/ServiceRequest
+Open **https://r8086-ovamha.hf.space** on a laptop or phone (Chrome works best). The free host sleeps when idle, so the first visit can take about a minute to wake up. It runs the same code as the offline version; no outside AI service is called. All data is fictional: **do not enter real patient information.**
 
-**Offline, on your own machine (how it runs in the field):**
+You can **type** everything; speaking is optional.
+
+| Step | Do this | You should see |
+| --- | --- | --- |
+| 1 | On the welcome screens, tap **Skip** | The sign-in screen |
+| 2 | Username **`fati`**, PIN **`769131`** → **Sign in** | *Hello, Nurse Fati* |
+| 3 | Under **Language for this check**, tap **English**. Then tap **Guide me** | *Who is this check for?* |
+| 4 | Tap **Returning** (a woman who has been before). Type the card number for the option you pick below (**`ANC-24T`** or **`MAM-A2A`**) → **Find** → **Continue** | *Card found*, her name, and *1 previous check on this device*. Her history is already recorded, so that step is skipped |
+| 5 | Tap **Type instead**, paste the description from your option below → **Next** | *What we understood*: each item Ovamha heard, with the words it heard it from |
+| 6 | Tap **Correct** on each item (for a headache, choose **Severe** or **Mild**). If an item was not said, tap **Not true**. Then **Next: measurements** | Only confirmed items count; nothing unconfirmed reaches the advice |
+| 7 | Type the numbers from your option and tap **Confirm** under each; for urine protein, tap the result (e.g. **++**). Then **Check the guidelines** | *Guideline advice*, every line citing its source |
+| 8 | Under **Your decision**, choose one → **Confirm my decision** | The result: referral, SMS, referral letter and the record |
+
+### Pick one of three women to try
+
+**Option A: routine visit, no danger sign.** Card **`ANC-24T`** (*Aminata Demo*, 32 weeks pregnant, pre-eclampsia in her last pregnancy).
+
+- **Type:** `Routine visit. She feels well, she only has some back pain. No bleeding, no headache, and the baby is moving well.`
+- **What we understood:** *Vaginal bleeding · No*, *Headache · No*. Ovamha records "no bleeding" as a real answer, not as missing.
+- **Measurements:** blood pressure **128 / 82**, fetal heart rate **142**, urine protein **Negative**.
+- **You should see:** *High-risk pregnancy: the guidelines suggest planning delivery at a CEmONC facility. You decide*, because of her previous pre-eclampsia (Sierra Leone guideline, Table 3.4). Under **What you can do now**: aspirin 75 mg daily, calcium, BP and urine protein every contact. Under **Care due at this contact**: IPTp SP, aspirin, multiple micronutrients, HIV retest. And the **Next contact** date.
+- **Decide:** **Plan a referral** → *Planned referral. Recorded.* No emergency SMS is sent.
+
+**Option B: emergency, severe pre-eclampsia.** Same card **`ANC-24T`**, two weeks later.
+
+- **Type:** `Since this morning she has a very bad headache and her eyes are blurry. Her face and hands are swollen.`
+- **What we understood:** *Headache · Yes* (choose **Severe**), *Visual disturbance · Yes*, *Swelling · Yes*: three danger signs found in everyday words.
+- **Measurements:** blood pressure **165 / 112**, urine protein **++**.
+- **You should see:** *The guidelines suggest urgent referral. You decide.* Rows: severe headache with visual disturbance (WHO danger signs), BP 165/112 with protein ++ (Sierra Leone guideline: severe pre-eclampsia). Under **What you can do now**: the magnesium sulphate protocol with exact doses, when to withhold it, and blood-pressure treatment.
+- **Decide:** **Refer urgently** → **She agrees** → read the iSBAR call script (tap 🔊 to hear it) → **I called just now** → **Refer digitally and prepare the letter**. You get the referral SMS to the hospital. Tap **ACK** to play the hospital's reply: *Hospital accepted the referral*. **Preview the letter** shows the printable referral letter with a feedback slip.
+
+**Option C: emergency, heavy bleeding.** Card **`MAM-A2A`** (*Mariama Demo*, 20 weeks pregnant, previous pre-eclampsia and caesarean section).
+
+- **Type:** `She has been bleeding from the vagina since this morning, a lot of blood. She fainted at the market yesterday. No fever.`
+- **What we understood:** *Vaginal bleeding · Yes*, *Bleeding amount · heavy*, *Fainting · Yes* (an event yesterday is still caught), *Fever · No*.
+- **Measurements:** blood pressure **90 / 60**.
+- **You should see:** *The guidelines suggest urgent referral. You decide*, citing WHO danger signs and the Sierra Leone guideline, plus her high-risk history (previous pre-eclampsia and caesarean section).
+- **Decide:** try **No referral now** → **Confirm my decision**. Ovamha asks you to *record your reason for not referring now*. The health worker can disagree, but the advice is never hidden and the reason is recorded.
+
+**Also try:** **First visit** instead of Returning, to register a new woman. The privacy notice is read to her first (on the hosted copy after its next update), and you get a new card number with a check character that catches typos. Or tap the microphone on the describe screen and speak instead of typing (allow microphone access). Records sync to a demo FHIR hub: https://r8086-ovamha-fhir.hf.space/fhir/ServiceRequest
+
+## Run it offline on your own machine
 
 ```
 make setup     # once, with internet: Python packages and the speech/voice models
@@ -34,12 +75,7 @@ Fictional demo accounts, checked offline on the device (PINs are stored only as 
 | CHW Aminata (Sierra Leone) | `aminata` | `507892` |
 | Midwife Funmi (Nigeria) | `funmi` | `186706` |
 
-**Demo woman for a returning check:** card number **`MAM-A2A`** (fictional "Mariama Demo", about 20 weeks pregnant, history already recorded: 3 pregnancies, previous pre-eclampsia and caesarean section). She is available on every fresh start, online and offline.
-
-Two things to try:
-
-1. **First visit:** sign in as `fati` → **Guide me** → **First visit** → register her → describe *"She is 28 weeks pregnant, she has seen blood since this morning, a lot of it. She fainted yesterday but she is fine now. No fever."* → confirm → **Check the guidelines** → decide → referral letter.
-2. **Returning woman:** **Guide me** → **Returning** → card `MAM-A2A` → describe *"Her head is pounding and she sees stars. Her feet are swollen."* → the history step is skipped (already recorded) → enter BP, e.g. *150 over 100*, and urine protein **++** → **Check the guidelines**: the national guideline flags her previous pre-eclampsia and caesarean section (Table 3.4).
+**Demo women for a returning check** (fictional; available on every fresh start, online and offline): **`ANC-24T`** *Aminata Demo*, 32 weeks, previous pre-eclampsia; **`MAM-A2A`** *Mariama Demo*, 20 weeks, 3 pregnancies, previous pre-eclampsia and caesarean section.
 
 ## Test it offline
 
