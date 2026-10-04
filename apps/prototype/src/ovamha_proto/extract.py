@@ -47,6 +47,13 @@ def _terms(table: dict[str, list[str]], lang: str) -> list[str]:
     return [normalise(t) for t in terms]
 
 
+def _term_pattern(term: str, lang: str) -> str:
+    if lang == "yo":
+        # Yoruba ASR often splits words at syllables ("e je" for eje, "da ku" for daku).
+        return r"\s?".join(re.escape(c) for c in term.replace(" ", ""))
+    return re.escape(term)
+
+
 def _has_phrase(clause: str, phrase: str) -> bool:
     return re.search(rf"(?<!\w){re.escape(phrase)}(?!\w)", clause) is not None
 
@@ -69,7 +76,7 @@ def find_mentions(text: str, lang: str, table: dict[str, dict[str, list[str]]]) 
         past = any(_has_phrase(clause, p) for p in pasts) and not any(_has_phrase(clause, o) for o in ongoing)
         for fname, by_lang in table.items():
             for term in sorted(set(_terms(by_lang, lang)), key=len, reverse=True):
-                m = re.search(rf"(?<!\w){re.escape(term)}(?!\w)", clause)
+                m = re.search(rf"(?<!\w){_term_pattern(term, lang)}(?!\w)", clause)
                 if not m:
                     continue
                 after = clause[m.end():].split()
@@ -77,7 +84,13 @@ def find_mentions(text: str, lang: str, table: dict[str, dict[str, list[str]]]) 
                     continue  # "blood pressure" is not bleeding
                 before = " ".join(clause[: m.start()].split()[-3:])
                 negated = any(_has_phrase(before, n) for n in negs)
-                out.append(Mention(fname, term, clause, negated, past))
+                near_past = past
+                if past and lang == "yo":
+                    # Yoruba ASR output has no punctuation, so one "clause" can hold several signs:
+                    # a time word only applies to the sign just before or after it.
+                    near = " ".join(clause[: m.start()].split()[-2:] + clause[m.end():].split()[:2])
+                    near_past = any(_has_phrase(near, p) for p in pasts)
+                out.append(Mention(fname, term, clause, negated, near_past))
                 break  # one mention per field per clause
     return out
 

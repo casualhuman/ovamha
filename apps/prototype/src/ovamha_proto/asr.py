@@ -15,6 +15,7 @@ No speech enhancement (it degraded medical ASR in Chondhekar et al.). A quality 
 from __future__ import annotations
 
 import os
+import unicodedata
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -77,6 +78,14 @@ def quality_gate(audio: np.ndarray) -> str | None:
     return None
 
 
+def latin_share(text: str) -> float:
+    """Share of letters that are Latin script (Yoruba and Krio letters such as ẹ, ọ, ɔ, ɛ count)."""
+    letters = [c for c in unicodedata.normalize("NFD", text) if c.isalpha()]
+    if not letters:
+        return 1.0
+    return sum(unicodedata.name(c, "").startswith("LATIN") for c in letters) / len(letters)
+
+
 def transcribe(path: str, lang: str = "en") -> AsrResult:
     from faster_whisper.audio import decode_audio
 
@@ -86,8 +95,13 @@ def transcribe(path: str, lang: str = "en") -> AsrResult:
     if problem:
         return AsrResult("", name, False, problem)
     model = _load(MODELS.get(lang, "small"))
-    segments, _info = model.transcribe(audio, language=DECODE_LANG.get(lang, "en"), beam_size=5, vad_filter=True)
+    # Few temperature retries and no conditioning on earlier text: a model that is weak in this
+    # language otherwise loops and retries for minutes on a short clip.
+    segments, _info = model.transcribe(audio, language=DECODE_LANG.get(lang, "en"), beam_size=5, vad_filter=True,
+                                       temperature=(0.0, 0.4), condition_on_previous_text=False)
     text = " ".join(s.text.strip() for s in segments).strip()
     if not text:
         return AsrResult("", name, False, "No speech recognised. Please repeat.")
+    if latin_share(text) < 0.8:  # all three languages are written in Latin script
+        return AsrResult("", name, False, "The speech was not recognised clearly. Please repeat, or type the description.")
     return AsrResult(text, name, True, FALLBACK_NOTE.get(lang, ""))
