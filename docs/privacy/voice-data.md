@@ -1,6 +1,6 @@
 # Voice data: transcribed, then deleted, never used for training
 
-**Short version:** when a health worker speaks to Ovamha, the recording exists only long enough
+**Short version:** when a health worker speaks to MaternalSave, the recording exists only long enough
 to be turned into text. It is then deleted. Recordings are never stored, never sent to an outside
 service, and never used to train or improve any model.
 
@@ -10,7 +10,7 @@ service, and never used to train or improve any model.
 |---|---|---|
 | 1. Record | The browser records into memory (no file is saved on the phone) | `apps/prototype/web/app.js` `startRecorder` |
 | 2. Replay | The worker may replay it to check it; the in-memory copy is freed when she records again, starts a new check or signs out | `app.js` `URL.revokeObjectURL` |
-| 3. Transcribe | The recording is sent over the local network to the facility's Ovamha server, written to a temporary file, transcribed on that machine by the offline speech model, and **the file is deleted**, also if transcription fails | `apps/prototype/src/ovamha_proto/server.py` `_transcribe_upload`; `asr.py` |
+| 3. Transcribe | The recording is sent over the local network to the facility's MaternalSave server, written to a temporary file, transcribed on that machine by the offline speech model, and **the file is deleted**, also if transcription fails | `apps/prototype/src/ovamha_proto/server.py` `_transcribe_upload`; `asr.py` |
 | 4. Confirm | The worker sees the text, corrects or confirms each item. Only confirmed items are kept; unconfirmed text is discarded when the encounter closes | `confirm.py`, architecture DEV-03 |
 | 5. Read aloud | When the app reads her details aloud (her description, card number, handover), the generated audio is a one-off file deleted once it has played; leftovers are removed when the server starts | `server.py` `do_speak`, `_start_sync`; `tts.py` `speak(cache=False)` |
 
@@ -46,4 +46,4 @@ Use the consent text in `ml/eval/RECORDING_GUIDE.md`, and keep signed copies.
 - *Nigeria Data Protection Act*, 2023: s.24(1)(b)-(d), s.25-26.
 - MoHS Sierra Leone, *Health Information System Policy* (2021), s.3.5.10(d).
 - *Data Protection and Right to Access Information Regulatory Commission Bill* (Sierra Leone, 2025, not yet law), s.26(1)(c)-(d), s.27(1), s.37, s.39(1).
-- Ovamha architecture, DEV-03 ("Unconfirmed drafts and audio MUST be held outside the FHIR Engine and deleted when the encounter closes").
+- MaternalSave architecture, DEV-03 ("Unconfirmed drafts and audio MUST be held outside the FHIR Engine and deleted when the encounter closes").

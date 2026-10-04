@@ -1,10 +1,10 @@
 # Clinical guidelines
 
-Ovamha does not invent clinical rules. It checks only **confirmed** facts against WHO antenatal care
+MaternalSave does not invent clinical rules. It checks only **confirmed** facts against WHO antenatal care
 guidance and the country's own national guideline, and shows the exact source with every suggestion.
 **The health worker decides.** This page lists every guideline used, how it is encoded and where.
 
-Ovamha does not invent clinical rules or data formats. Three layers are used (the third, data and identity standards, is in [../standards/README.md](../standards/README.md)), each cited inside the app and in the code:
+MaternalSave does not invent clinical rules or data formats. Three layers are used (the third, data and identity standards, is in [../standards/README.md](../standards/README.md)), each cited inside the app and in the code:
 
 1. **International clinical guidance:** WHO antenatal care recommendations, made computable through the WHO Digital Adaptation Kit (DAK).
 2. **National guidelines:** the country's own clinical guideline, encoded as a content file. **Sierra Leone is the worked example**; another country plugs in its own file the same way.
@@ -12,7 +12,7 @@ Ovamha does not invent clinical rules or data formats. Three layers are used (th
 
 ## 1. WHO antenatal care: the Digital Adaptation Kit (DAK)
 
-| WHO source | How Ovamha uses it | Where |
+| WHO source | How MaternalSave uses it | Where |
 | --- | --- | --- |
 | [WHO recommendations on antenatal care for a positive pregnancy experience (2016)](https://www.who.int/publications/i/item/9789241549912) | Minimum of 8 contacts; the basis of the contact schedule | Next-contact date |
 | [WHO DAK for antenatal care (2021)](https://www.who.int/publications/i/item/9789240020306), business process ANC.B | Order of the first contact: registration → quick check (danger signs) → history and profile **only at first contact and only if no danger sign** | [docs/decisions/dak-first-contact.md](../decisions/dak-first-contact.md) |
@@ -24,9 +24,9 @@ Ovamha does not invent clinical rules or data formats. Three layers are used (th
 
 ## 2. National guideline: Sierra Leone as the worked example
 
-The **Sierra Leone Integrated Obstetric and Newborn Care Guideline** (Ministry of Health, copy-edited draft of 19 January 2026) is encoded in [content/guidelines/sierra-leone-iong-2026.json](../../content/guidelines/sierra-leone-iong-2026.json). Only content Ovamha can evaluate from confirmed data is encoded, and every item carries its table or section.
+The **Sierra Leone Integrated Obstetric and Newborn Care Guideline** (Ministry of Health, copy-edited draft of 19 January 2026) is encoded in [content/guidelines/sierra-leone-iong-2026.json](../../content/guidelines/sierra-leone-iong-2026.json). Only content MaternalSave can evaluate from confirmed data is encoded, and every item carries its table or section.
 
-| Guideline section | What Ovamha does with it |
+| Guideline section | What MaternalSave does with it |
 | --- | --- |
 | Table 3.2 Schedule of contacts (8 contacts: 12, 20, 26, 30, 34, 36, 38, 40 weeks) | Works out the next contact date from gestational age |
 | Table 3.3 Danger signs in pregnancy | Suggests urgent referral when a listed sign is confirmed |
@@ -44,7 +44,7 @@ The **Sierra Leone Integrated Obstetric and Newborn Care Guideline** (Ministry o
 | Sickle-cell disease, at a CHP | "If at a lower facility: referral to a CEmONC facility for advanced care." | Sierra Leone guideline, Table 3.4 |
 | 22 weeks pregnant | "Contact 3 at 26 weeks, around …" | Sierra Leone guideline, Table 3.2 |
 
-**Not just "refer": what the worker can do now.** With each suggestion, Ovamha shows the guideline's own management steps, transcribed word for word and cited, labelled *"do only what you are trained and supplied to do at your level of care"*:
+**Not just "refer": what the worker can do now.** With each suggestion, MaternalSave shows the guideline's own management steps, transcribed word for word and cited, labelled *"do only what you are trained and supplied to do at your level of care"*:
 
 | Situation | Management shown (from the guideline) | Section |
 | --- | --- | --- |
@@ -55,7 +55,7 @@ The **Sierra Leone Integrated Obstetric and Newborn Care Guideline** (Ministry o
 
 The guideline's annex on interventions by level of care is in images that could not be extracted, so the level-of-care note is shown on every management step instead of filtering by level.
 
-Where the guideline does not define a threshold, Ovamha states its assumption on screen and in the file (adolescent = under 20 years; high parity = 5 or more births; fetal heart rate normal range 110–160/min, from the guideline's intrapartum chapter). These need Ministry confirmation.
+Where the guideline does not define a threshold, MaternalSave states its assumption on screen and in the file (adolescent = under 20 years; high parity = 5 or more births; fetal heart rate normal range 110–160/min, from the guideline's intrapartum chapter). These need Ministry confirmation.
 
 
 ## 3. Adapting to another country

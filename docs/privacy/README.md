@@ -1,8 +1,8 @@
 # Privacy and data protection
 
-What Ovamha does to protect a woman's information, which guidance or law each measure follows, and
+What MaternalSave does to protect a woman's information, which guidance or law each measure follows, and
 where it is in the code. Guidance is layered: **international health guidance** applies everywhere,
-**African instruments** set the regional baseline, and **national law** applies where Ovamha is used.
+**African instruments** set the regional baseline, and **national law** applies where MaternalSave is used.
 Sierra Leone (the worked example) and Nigeria (Yoruba) are covered. Status is for the prototype in
 `apps/prototype` as of 2026-10-04.
 
@@ -13,9 +13,9 @@ Sierra Leone (the worked example) and Nigeria (Yoruba) are covered. Status is fo
 | [privacy-design-policy.md](privacy-design-policy.md) | Privacy design policy, including retention (draft) |
 | [breach-response.md](breach-response.md) | What to do when data is lost, stolen or seen by the wrong person (draft) |
 
-## 1. International health guidance (applies wherever Ovamha is used)
+## 1. International health guidance (applies wherever MaternalSave is used)
 
-| Ref | Document | What it asks of Ovamha |
+| Ref | Document | What it asks of MaternalSave |
 |---|---|---|
 | **WHO-AI** | WHO, [*Ethics and governance of artificial intelligence for health*](https://iris.who.int/handle/10665/341996), 2021 | Six principles. **P1 protect autonomy**: humans stay in control of medical decisions; informed consent; privacy and confidentiality. P3 transparency, P4 responsibility and accountability, P5 inclusiveness and equity |
 | **WHO-DP** | WHO, [*Data principles*](https://www.who.int/data/principles), 2020 | Uphold the right to privacy and the highest standards of data protection; consent is the preferred basis for processing personal data |
@@ -46,7 +46,7 @@ Sierra Leone (the worked example) and Nigeria (Yoruba) are covered. Status is fo
 | **NG-NDPA** | [*Nigeria Data Protection Act*, 2023](https://www.dataguidance.com/sites/default/files/data_protection_act_2023.pdf), signed 12 June 2023; regulator: Nigeria Data Protection Commission (NDPC); implementation directive [GAID 2025](https://ndpc.gov.ng/wp-content/uploads/2025/07/NDP-ACT-GAID-2025-MARCH-20TH.pdf) | **In force.** Principles (s.24); lawful basis (s.25); notice before collection (s.27); DPIA and consulting the Commission on high risk (s.28); health data is sensitive, allowed for medical care by a professional owing confidentiality (s.30(1)(g)) or public health with safeguards (s.30(1)(h)); children: parental consent, **except for medical care under a duty of confidentiality** (s.31(1), (4)(b)); rights incl. access (s.34), object (s.36), not to be subject to solely automated decisions (s.37); security (s.39); breach notice to the NDPC within 72 hours (s.40(2)); cross-border transfers (s.41-43); registration of controllers of major importance (s.44) |
 | **NG-NHA** | *National Health Act*, 2014 ([summary](https://www.mondaq.com/nigeria/healthcare/1340876/legal-considerations-for-electronic-medical-record-systems-in-healthcare-establishment%3Csup%3E1%3Csup%3E----)) | **In force.** All information about a user's health, treatment or stay is confidential (s.26(1)); disclosure only with written consent, court order or law, or a public-health threat (s.26(2)); the head of a facility must prevent unauthorised access to records (s.29); offences include unauthorised access and **re-identifying de-identified records** (s.29) |
 
-Project design: **ARCH** = [Ovamha architecture](../architecture/README.md) (DEV-, DB-, SEC-, ID-, SY- requirements). **ID4D** = World Bank [Principles on Identification](https://id4d.worldbank.org/principles).
+Project design: **ARCH** = [MaternalSave architecture](../architecture/README.md) (DEV-, DB-, SEC-, ID-, SY- requirements). **ID4D** = World Bank [Principles on Identification](https://id4d.worldbank.org/principles).
 
 ## 4. What is in place, and where
 

@@ -1,4 +1,4 @@
-# Ovamha prototype
+# MaternalSave prototype
 
 Offline pipeline on a laptop (or Raspberry Pi): audio → ASR → field extraction → AI safety net → read-back (text + audio) → worker confirms / corrects (keypad for numbers) → rules → handover → FHIR Bundle → SMS.
 
@@ -22,7 +22,7 @@ The first transcription downloads Whisper small (~460 MB) once; after that, no i
 | Confirmation gate | Real: only confirmed items reach rules, handover, FHIR and SMS; unconfirmed items are discarded on Finish. |
 | Rules | Real code, **demo rules** from the WHO ANC DAK PDF, pending Annex B extraction. |
 | Read-back audio | Real, offline: pre-recorded clips from `content/audio/<lang>/` if present, else the system voice (macOS `say` / `espeak-ng`, English only). |
-| FHIR Bundle | Real, validated with `fhir.resources` (R4B models). Danger-sign codes are Ovamha placeholders. |
+| FHIR Bundle | Real, validated with `fhir.resources` (R4B models). Danger-sign codes are MaternalSave placeholders. |
 | SMS | **Simulated** (outbox log) unless `OVAMHA_GSM=1` and `gammu` with a GSM modem are present. |
 
 ## Modules (`src/ovamha_proto/`)

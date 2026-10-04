@@ -1,6 +1,6 @@
 # Point-of-care demo: one woman, two moments (about 5 minutes)
 
-**The idea in one line:** Ovamha is not a referral button. At every contact it tells the health worker what the national guideline expects her to do, for this woman, today; referral is one of those suggestions, and the worker decides.
+**The idea in one line:** MaternalSave is not a referral button. At every contact it tells the health worker what the national guideline expects her to do, for this woman, today; referral is one of those suggestions, and the worker decides.
 
 **The woman:** card **`ANC-24T`**, *Aminata Demo* (fictional), 24 years old, **32 weeks pregnant**, second pregnancy, **had pre-eclampsia in her first pregnancy**. Her history is already on the device, so the history step is skipped. Pre-eclampsia is chosen because it is a leading cause of maternal death and the guideline has clear actions for prevention, monitoring and emergency care.
 
@@ -30,7 +30,7 @@
 | 11 | **New check → Returning** `anc-24t` → say: *"Since this morning she has a very bad headache and her eyes are blurry. Her face and hands are swollen."* | Headache, Visual disturbance, Swelling; headache asks **Severe / Mild** | "It understood three danger signs from everyday words." |
 | 12 | Headache **Severe**, others **Correct**. BP: say *"one sixty-five over one hundred and twelve"*; urine protein **++** → **Check the guidelines** | *The guidelines suggest urgent referral. You decide.* Rows: danger signs (Table 3.3), **BP 165/112 with proteinuria ++ → severe pre-eclampsia**, previous pre-eclampsia (Table 3.4) | "Severe pre-eclampsia is defined exactly as in the national guideline: BP 160/110 or above with protein." |
 | 13 | Open **What you can do now → Severe pre-eclampsia / eclampsia** (🔊) | Magnesium sulphate loading dose with exact amounts; repeat and maintenance doses; **withhold if** breathing below 16, no reflexes or low urine; hydralazine or labetalol; dexamethasone at 24 to below 34 weeks; *do only what you are trained and supplied to do at your level* | "The nurse sees the guideline's treatment protocol at the bedside, including when to stop. This is what saves lives before the ambulance arrives." |
-| 14 | **Refer urgently → Confirm** → *She agrees* → tick *Assess and stabilise*, *IV line*, *pre-referral treatment* → 🔊 on **Call the call centre** → **I called just now** | The iSBAR script is read aloud for the phone call | "The national guideline requires consent, stabilisation and an iSBAR call. Ovamha walks her through it." |
+| 14 | **Refer urgently → Confirm** → *She agrees* → tick *Assess and stabilise*, *IV line*, *pre-referral treatment* → 🔊 on **Call the call centre** → **I called just now** | The iSBAR script is read aloud for the phone call | "The national guideline requires consent, stabilisation and an iSBAR call. MaternalSave walks her through it." |
 | 15 | **Refer digitally and prepare the letter** → **Preview the letter** → tap **ACK** in the SMS card | Referral letter with reasons, findings, treatment given and a feedback slip; SMS to the hospital; ACK turns the status to **accepted** | "Digital referral by SMS and a standards-based FHIR record; a paper letter when needed. All offline." |
 
 ## Closing line (20 seconds)
