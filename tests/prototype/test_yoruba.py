@@ -24,3 +24,9 @@ def test_past_word_only_applies_to_the_nearby_sign():
 
 def test_negation():
     assert found("kò sí ẹ̀jẹ̀, orí ń fọ́ ọ") == {"vaginal_bleeding": False, "headache": True}
+
+
+def test_extra_words_inside_a_phrase():
+    # Real app transcript of "Orí ń fọ́ ọ gidigidi, ara rẹ̀ sì gbóná" (headache, fever).
+    f = found("orin ń fọ́ gidi gidi ara rẹ̀ sín gbọ́nà")
+    assert f["headache"] is True and f["fever"] is True

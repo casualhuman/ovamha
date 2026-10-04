@@ -49,8 +49,10 @@ def _terms(table: dict[str, list[str]], lang: str) -> list[str]:
 
 def _term_pattern(term: str, lang: str) -> str:
     if lang == "yo":
-        # Yoruba ASR often splits words at syllables ("e je" for eje, "da ku" for daku).
-        return r"\s?".join(re.escape(c) for c in term.replace(" ", ""))
+        # Yoruba ASR often splits words at syllables ("e je" for eje, "da ku" for daku) and adds
+        # small words inside a phrase ("ara re si gbona" for ara gbona): allow both.
+        words = [r"\s?".join(re.escape(c) for c in w) for w in term.split()]
+        return r"\w*\s?(?:\w+\s){0,2}".join(words)
     return re.escape(term)
 
 
