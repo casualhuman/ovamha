@@ -472,8 +472,11 @@ def do_finish(v: Visit = Depends(visit)):
     v.encounter, v.bundle = e, None
     e.management = guideline.management(e.advice, confirmed, ga)
     e.routine = guideline.routine_care(ga, first_contact=v.woman.visits == 0)
-    return {**_rule_view(results), **_advice_view(e), "management": e.management, "routine": e.routine,
+    view = {**_rule_view(results), **_advice_view(e), "management": e.management, "routine": e.routine,
             "code": e.code, "card_code": registry.display(e.card_code)}
+    view["translated"] = guideline.localise(view, v.lang)  # e.g. Yoruba, shown with the English one tap away
+    view["lang"] = v.lang
+    return view
 
 
 class DecisionIn(BaseModel):

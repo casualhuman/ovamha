@@ -95,16 +95,65 @@ def mms_available(lang: str) -> bool:
         return False
 
 
-def _speak_mms(text: str, lang: str, out: Path) -> None:
-    import numpy as np
-    import scipy.io.wavfile
+def _mms_wave(text: str, lang: str):
     import torch
 
     model, tok = _mms(lang)
     inputs = tok(text, return_tensors="pt")
     with torch.no_grad():
-        wav = model(**inputs).waveform[0].numpy()
-    scipy.io.wavfile.write(out, model.config.sampling_rate, (np.clip(wav, -1, 1) * 32767).astype("int16"))
+        return model(**inputs).waveform[0].numpy(), model.config.sampling_rate
+
+
+def _write(out: Path, wav, rate: int) -> None:
+    import numpy as np
+    import scipy.io.wavfile
+
+    scipy.io.wavfile.write(out, rate, (np.clip(wav, -1, 1) * 32767).astype("int16"))
+
+
+def _speak_mms(text: str, lang: str, out: Path) -> None:
+    _write(out, *_mms_wave(text, lang))
+
+
+# Numbers, doses and units inside Yoruba or Krio text. Those voices skip digits, so these parts are
+# spoken by the English voice in the same clip ("Aspirin [75 milligrams] lójoojúmọ́"), as health
+# workers usually say doses.
+_NUMERIC = re.compile(r"MgSO4|\d+(?:\.\d+)?(?:\s*[-/]\s*\d+(?:\.\d+)?)?(?:\s*(?:mmHg|mg|mL|kg|g|%)(?!\w))?")
+_UNITS = {"mmHg": "", "mg": "milligrams", "mL": "millilitres", "kg": "kilograms", "g": "grams", "%": "percent"}
+
+
+def _numeric_english(token: str) -> str:
+    if token == "MgSO4":
+        return "magnesium sulphate"
+    m = re.fullmatch(r"([\d.]+)(?:\s*([-/])\s*([\d.]+))?\s*(mmHg|mg|mL|kg|g|%)?", token)
+    num = lambda x: number_words(float(x) if "." in x else int(x))  # noqa: E731
+    words = num(m.group(1))
+    if m.group(3):
+        words += (" over " if m.group(2) == "/" else " to ") + num(m.group(3))
+    return f"{words} {_UNITS.get(m.group(4) or '', '')}".strip()
+
+
+def mixed_segments(text: str, lang: str) -> list[tuple[str, str]]:
+    """Split text into (part, voice language): numbers and doses in English, the rest in `lang`."""
+    out, pos = [], 0
+    for m in _NUMERIC.finditer(text):
+        if text[pos:m.start()].strip(" ,"):
+            out.append((text[pos:m.start()], lang))
+        out.append((_numeric_english(m.group()), "en"))
+        pos = m.end()
+    if text[pos:].strip(" .,"):
+        out.append((text[pos:], lang))
+    return out
+
+
+def _speak_mixed(text: str, lang: str, out: Path) -> None:
+    import numpy as np
+
+    parts, rate = [], 16_000
+    for seg, seg_lang in mixed_segments(text, lang):
+        wav, rate = _mms_wave(seg, seg_lang)
+        parts += [wav, np.zeros(int(rate * 0.08), dtype=wav.dtype)]
+    _write(out, np.concatenate(parts), rate)
 
 
 def speak(text: str, lang: str, clip_key: str | None = None, cache: bool = True) -> tuple[Path | None, str]:
@@ -117,7 +166,9 @@ def speak(text: str, lang: str, clip_key: str | None = None, cache: bool = True)
         clip = CLIPS / lang / f"{clip_key}.wav"
         if clip.exists():
             return clip, "recorded clip"
-    text = re.sub(r"\d+(?:\.\d+)?", lambda m: number_words(float(m.group()) if "." in m.group() else int(m.group())), text)
+    mixed = lang in MMS and lang != "en" and bool(_NUMERIC.search(text)) and mms_available(lang) and mms_available("en")
+    if not mixed:
+        text = re.sub(r"\d+(?:\.\d+)?", lambda m: number_words(float(m.group()) if "." in m.group() else int(m.group())), text)
     CACHE.mkdir(exist_ok=True)
     if cache:
         out = CACHE / (hashlib.sha1(f"{lang}|{text}".encode()).hexdigest() + ".wav")
@@ -125,6 +176,9 @@ def speak(text: str, lang: str, clip_key: str | None = None, cache: bool = True)
             return out, "cached"
     else:
         out = CACHE / f"once-{uuid.uuid4().hex}.wav"
+    if mixed:
+        _speak_mixed(text, lang, out)
+        return out, f"MMS-TTS ({MMS[lang]}; numbers by {MMS['en']})"
     if lang in MMS and mms_available(lang):
         _speak_mms(text, lang, out)
         return out, f"MMS-TTS ({MMS[lang]})"

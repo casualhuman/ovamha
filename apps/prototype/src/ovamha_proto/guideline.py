@@ -206,3 +206,34 @@ def routine_care(ga_weeks: float | None, first_contact: bool) -> dict | None:
     week = next(c["week"] for c in contacts if c["n"] == n)
     return {"contact": n, "week": week, "items": r["contacts"][str(n)],
             "tests": r["first_contact_tests"] if first_contact else [], "cite": f"{Advice.source}: {r['_cite']}"}
+
+
+# ---------------------------------------------------------------- translation of the advice screen
+# A phrasebook keyed by the exact English sentence: content/guidelines/<guide>.<lang>.json, plus the
+# read-back field labels. Anything not in it stays in English, so a missing line never hides advice.
+@lru_cache(maxsize=4)
+def _phrasebook(lang: str) -> dict[str, str]:
+    path = GUIDE.with_name(f"{GUIDE.stem}.{lang}.json")
+    book = json.loads(path.read_text())["text"] if path.exists() else {}
+    from .tts import phrases  # read-back labels: "Vaginal bleeding" -> "Ẹ̀jẹ̀ ń jáde lójú ara"
+    p = phrases()
+    labels = {p["en"]["fields"][k]: v for k, v in p.get(lang, {}).get("fields", {}).items() if v and k in p["en"]["fields"]}
+    return {**labels, **book}
+
+
+def tr(text: str, lang: str) -> str:
+    return _phrasebook(lang).get(text, text) if lang != "en" else text
+
+
+def localise(view: dict, lang: str) -> dict | None:
+    """The advice screen's text in `lang`, alongside the English (which stays the record of what was shown)."""
+    if lang == "en" or not _phrasebook(lang):
+        return None
+    t = lambda s: tr(s, lang)  # noqa: E731
+    return {
+        "advice": [{"kind_title": t(a["kind_title"]), "reasons": [t(r) for r in a["reasons"]], "recommendation": t(a["recommendation"])}
+                   for a in view["advice"]],
+        "rules": [{"reasons": [t(r) for r in r_["reasons"]], "actions": [t(x) for x in r_["actions"]]} for r_ in view["rules"]],
+        "management": [{"title": t(m["title"]), "steps": [t(s) for s in m["steps"]], "scope_note": t(m["scope_note"])}
+                       for m in view["management"]],
+    }

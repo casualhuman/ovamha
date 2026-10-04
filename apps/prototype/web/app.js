@@ -847,7 +847,7 @@ async function finish() {
   const done = busy("Checking the guidelines…");
   try {
     S.assess = await api("/api/finish");
-    S.decision = { choice: null, reason: "" };
+    S.decision = { choice: null, reason: "" }; S.advEnglish = false;
     S.counts.checks++;
     done(); go("advice");
   } catch (e) { done(); toast(e.message); }
@@ -862,6 +862,33 @@ const SUGGEST_TEXT = {
   plan_cemonc_delivery: "High-risk pregnancy: the guidelines suggest planning delivery at a CEmONC facility.",
   none: "No referral suggested on the confirmed information.",
 };
+// Advice screen wording in Yoruba (DRAFT, pending native-speaker review). The guideline text itself
+// comes translated from the server (content/guidelines/*.yo.json); the English is one tap away.
+const ADV_UI = {
+  yo: {
+    suggest: {
+      urgent_referral: "Ìtọ́sọ́nà dábàá fífi ránṣẹ́ kíákíá.",
+      refer_cemonc: "Ìtọ́sọ́nà dábàá fífi ránṣẹ́ sí ilé-ìwòsàn CEmONC.",
+      refer_assessment: "Ìtọ́sọ́nà dábàá fífi ránṣẹ́ sí CEmONC fún àyẹ̀wò.",
+      plan_cemonc_delivery: "Oyún eléwu: ìtọ́sọ́nà dábàá ṣíṣètò ìbímọ ní ilé-ìwòsàn CEmONC.",
+      none: "A kò dábàá ìfiránṣẹ́ lórí ohun tí a ti fìdí rẹ̀ múlẹ̀.",
+    },
+    youDecide: "Ìwọ ni yóò pinnu.", say: "Ohun tí ìtọ́sọ́nà sọ", tapRow: "Tẹ ìlà kan fún àlàyé",
+    canDo: "Ohun tí o lè ṣe nísinsìnyí", national: "Láti inú ìtọ́sọ́nà orílẹ̀-èdè", steps: "ìgbésẹ̀ · tẹ̀ láti ṣí tàbí pa",
+    suggests: "Ìtọ́sọ́nà dábàá:", sl: "Ìtọ́sọ́nà Sierra Leone", who: "Ìtọ́jú oyún WHO", nothing: "Kò sí ìdábàá lórí ohun tí a ti fìdí rẹ̀ múlẹ̀.",
+    draft: "Ìtumọ̀ Yorùbá yìí jẹ́ àkọsílẹ̀ àkọ́kọ́ (draft). Iye oògùn àti nọ́mbà kò yí padà.", other: "English",
+  },
+};
+const ADV_EN = { say: "What the guidelines say", tapRow: "Tap a row for details", canDo: "What you can do now", national: "From the national guideline",
+  steps: "steps · tap to open or close", suggests: "Guideline suggests:", sl: "Sierra Leone guideline", who: "WHO antenatal care",
+  nothing: "Nothing to suggest on the confirmed information.", youDecide: "You decide." };
+// The language the advice is shown in: the visit's language when a translation exists, unless switched to English.
+function advLang() { return S.assess?.translated && S.advEnglish !== true ? S.assess.lang : "en"; }
+function advT(key) { const l = advLang(); return (l !== "en" && ADV_UI[l]?.[key]) || ADV_EN[key]; }
+function advManagement() {
+  const a = S.assess, tr = advLang() !== "en" ? a.translated : null;
+  return (a.management || []).map((m, i) => (tr ? { ...m, ...tr.management[i] } : m));
+}
 // Advice as clean list rows: the reasons are the title; tap to see the full suggestion and its source.
 function adviceRow(x, idx) {
   const style = KIND_STYLE[x.kind] || "amber";
@@ -872,17 +899,24 @@ function adviceRow(x, idx) {
         <div class="row-sub">${esc(x.kindTitle)} · ${esc(x.who)}</div></div>
       <button class="row-say" data-say-adv="${idx}" aria-label="Read aloud">${icon("speaker")}</button>
     </summary>
-    <div class="row-more"><div><span class="muted">Guideline suggests:</span> ${esc(x.rec)}</div>
+    <div class="row-more"><div><span class="muted">${advT("suggests")}</span> ${esc(x.rec)}</div>
       ${(x.assumptions || []).map((a) => `<div class="tiny" style="margin-top:6px">Assumption: ${esc(a)}</div>`).join("")}
       <div class="tiny" style="margin-top:8px">${esc(x.cite)}</div></div>
   </details>`;
 }
 function adviceItems() {
-  const a = S.assess, items = [];
-  a.rules.filter((r) => r.status === "fired").forEach((r) => items.push({ who: "WHO antenatal care", kind: "urgent_referral", kindTitle: "Danger signs requiring referral",
-    reasons: r.reasons, rec: r.actions.join(". ") + ".", cite: `${r.source}. ${r.label}.`, assumptions: [] }));
-  a.advice.forEach((x) => items.push({ who: "Sierra Leone guideline", kind: x.kind, kindTitle: x.kind_title, reasons: x.reasons,
-    rec: x.recommendation, cite: `${x.source}: ${x.cite}`, assumptions: x.assumptions }));
+  const a = S.assess, items = [], tr = advLang() !== "en" ? a.translated : null;
+  a.rules.forEach((r, i) => {
+    if (r.status !== "fired") return;
+    const t = tr ? tr.rules[i] : r;
+    items.push({ who: advT("who"), kind: "urgent_referral", kindTitle: tr ? "Àwọn àmì ewu tó nílò ìfiránṣẹ́" : "Danger signs requiring referral",
+      reasons: t.reasons, rec: t.actions.join(". ") + ".", cite: `${r.source}. ${r.label}.`, assumptions: [] });
+  });
+  a.advice.forEach((x, i) => {
+    const t = tr ? tr.advice[i] : x;
+    items.push({ who: advT("sl"), kind: x.kind, kindTitle: t.kind_title, reasons: t.reasons,
+      rec: t.recommendation, cite: `${x.source}: ${x.cite}`, assumptions: x.assumptions });
+  });
   return items;
 }
 function decRow(v, title, sub, ic) {
@@ -896,13 +930,17 @@ function advice() {
   const needsReason = (sug !== "none" && d.choice === "none") || (sug === "urgent_referral" && d.choice === "planned");
   const recording = S.reasonRec;
   return `<div class="screen">${topbar("Guideline advice", "measure")}${steps(5)}
-    <div class="status-line ${sug === "none" ? "ok" : "warn"}" style="margin:0">${icon(sug === "none" ? "check" : "alert")}${esc(SUGGEST_TEXT[sug])} You decide.</div>
-    <div class="list-head">What the guidelines say<span>Tap a row for details</span></div>
-    <div class="row-list">${items.length ? items.map(adviceRow).join("") : `<div class="row-sub" style="padding:8px 2px">Nothing to suggest on the confirmed information.</div>`}</div>
-    ${(a.management || []).length ? `<div class="list-head">What you can do now<span>From the national guideline</span></div>
-      <div class="row-list">${a.management.map((m, i) => `<details class="row-item adv mgmt" ${i === 0 ? "open" : ""}>
+    <div class="status-line ${sug === "none" ? "ok" : "warn"}" style="margin:0">${icon(sug === "none" ? "check" : "alert")}${esc((advLang() !== "en" && ADV_UI[advLang()]?.suggest[sug]) || SUGGEST_TEXT[sug])} ${advT("youDecide")}</div>
+    ${a.translated ? `<div class="lang-switch" role="group" aria-label="Language of the advice">
+        <button class="chip ${advLang() !== "en" ? "on" : ""}" data-adv-lang="tr">${esc(Object.fromEntries(LANGS)[a.lang] || a.lang)}</button>
+        <button class="chip ${advLang() === "en" ? "on" : ""}" data-adv-lang="en">English</button></div>
+      ${advLang() !== "en" ? `<div class="tiny" style="margin-top:-4px">${esc(ADV_UI[a.lang]?.draft || "")}</div>` : ""}` : ""}
+    <div class="list-head">${advT("say")}<span>${advT("tapRow")}</span></div>
+    <div class="row-list">${items.length ? items.map(adviceRow).join("") : `<div class="row-sub" style="padding:8px 2px">${advT("nothing")}</div>`}</div>
+    ${(a.management || []).length ? `<div class="list-head">${advT("canDo")}<span>${advT("national")}</span></div>
+      <div class="row-list">${advManagement().map((m, i) => `<details class="row-item adv mgmt" ${i === 0 ? "open" : ""}>
         <summary class="row-main"><span class="row-ico">${icon("heart")}</span>
-          <div class="row-text"><div class="row-title">${esc(m.title)}</div><div class="row-sub">${m.steps.length} steps · tap to open or close</div></div>
+          <div class="row-text"><div class="row-title">${esc(m.title)}</div><div class="row-sub">${m.steps.length} ${advT("steps")}</div></div>
           <button class="row-say" data-say-mgmt="${i}" aria-label="Read aloud">${icon("speaker")}</button></summary>
         <ol class="steps-list">${m.steps.map((t) => `<li>${esc(t)}</li>`).join("")}</ol>
         <div class="row-more" style="margin-top:4px"><div class="tiny">${esc(m.scope_note)}</div><div class="tiny" style="margin-top:4px">${esc(m.cite)}</div></div>
@@ -932,13 +970,14 @@ bind.advice = () => {
   document.querySelectorAll("[data-say-adv]").forEach((b) => b.onclick = (e) => {
     e.preventDefault(); e.stopPropagation();
     const x = items[Number(b.dataset.sayAdv)];
-    speakText(`${x.reasons.join(", ")}. Guideline suggests: ${x.rec}`, "en");
+    speakText(`${x.reasons.join(", ")}. ${advT("suggests")} ${x.rec}`, advLang());
   });
   document.querySelectorAll("[data-say-mgmt]").forEach((b) => b.onclick = (e) => {
     e.preventDefault(); e.stopPropagation();
-    const m = S.assess.management[Number(b.dataset.sayMgmt)];
-    speakText(`${m.title}. ${m.steps.join(" ")}`, "en");
+    const m = advManagement()[Number(b.dataset.sayMgmt)];
+    speakText(`${m.title}. ${m.steps.join(" ")}`, advLang());
   });
+  document.querySelectorAll("[data-adv-lang]").forEach((b) => b.onclick = () => { S.advEnglish = b.dataset.advLang === "en"; keepScroll(render); });
   document.querySelectorAll("[data-choice-dec]").forEach((b) => b.onclick = () => { S.decision.choice = b.dataset.choiceDec; S.decErr = ""; keepScroll(render); });
   $("#decReason") && ($("#decReason").oninput = (e) => { S.decision.reason = e.target.value; });
   $("#reasonMic") && ($("#reasonMic").onclick = async () => {
