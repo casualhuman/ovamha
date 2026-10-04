@@ -82,10 +82,16 @@ svg.i { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-widt
 .section-title { font-size: 1.1rem; font-weight: 700; margin: 26px 2px 12px; display: flex; align-items: center; justify-content: space-between; }
 
 /* Welcome */
-.welcome { display: flex; flex-direction: column; min-height: 100%; padding: 28px 24px 32px; text-align: center; }
-.welcome .art { flex: 1; display: grid; place-items: center; min-height: 300px; }
-.welcome h2 { font-size: 1.85rem; line-height: 1.15; margin: 10px 0 10px; letter-spacing: -0.02em; }
-.welcome p { color: var(--ink-2); margin: 0 auto 22px; max-width: 340px; }
+.welcome { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; text-align: center; }
+@media (min-width: 560px) { .welcome { min-height: calc(100vh - 48px); } }
+.welcome .art { flex: 1; display: grid; place-items: center; min-height: 330px; padding: 36px 20px 8px;
+  background: radial-gradient(120% 90% at 50% 0%, #DDEEFB 0%, #EEF6FD 55%, var(--bg) 100%); border-radius: 0 0 36px 36px; }
+.welcome .art svg { max-width: 360px !important; }
+.welcome .art svg { animation: in .35s ease-out; }
+.welcome-text { padding: 8px 26px 34px; }
+.welcome h2 { font-size: 1.9rem; line-height: 1.18; margin: 6px 0 10px; letter-spacing: -0.02em; }
+.welcome p { color: var(--ink-2); margin: 0 auto 20px; max-width: 330px; }
+.brand { display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 800; color: var(--blue); font-size: 1.15rem; }
 .dots { display: flex; justify-content: center; gap: 6px; margin: 4px 0 22px; }
 .dots i { width: 8px; height: 8px; border-radius: 99px; background: var(--blue-100); }
 .dots i.on { width: 26px; background: var(--blue); }

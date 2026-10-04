@@ -415,6 +415,15 @@ def index():
     return FileResponse(WEB / "index.html", headers={"Cache-Control": "no-cache"})
 
 
+@app.middleware("http")
+async def _no_stale_assets(request, call_next):
+    """Browsers revalidate the app's files on every load, so an update is never hidden by a cached copy."""
+    response = await call_next(request)
+    if not request.url.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
 app.mount("/", StaticFiles(directory=WEB), name="web")
 
 

@@ -182,30 +182,15 @@ const SLIDES = [
   { t: "Speak in Krio,<br>Yoruba or English", p: "Describe the woman's situation in your own words. Ovamha writes it down and reads the key facts back to you." },
   { t: "You confirm.<br>Then refer.", p: "Nothing counts until you confirm it. WHO danger-sign checks run on the confirmed facts and the referral SMS is ready in seconds." },
 ];
-function art(i) {
-  const plus = (x, y, s, o) => `<path d="M${x} ${y - s}v${2 * s}M${x - s} ${y}h${2 * s}" stroke="#7CC0EE" stroke-width="${s / 1.6}" stroke-linecap="round" opacity="${o}"/>`;
-  const inner = [
-    `<rect x="70" y="40" width="120" height="200" rx="22" fill="#fff" stroke="#BFDDF4" stroke-width="3"/>
-     <rect x="86" y="70" width="88" height="44" rx="12" fill="#0072C6"/><path d="M130 80v24M118 92h24" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
-     <rect x="86" y="126" width="88" height="10" rx="5" fill="#D3E8F8"/><rect x="86" y="144" width="64" height="10" rx="5" fill="#D3E8F8"/>
-     <rect x="86" y="176" width="88" height="40" rx="12" fill="#EAF4FC"/><path d="M98 196l8 8 16-16" stroke="#12805C" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,
-    `<circle cx="130" cy="130" r="74" fill="#EAF4FC"/><circle cx="130" cy="130" r="52" fill="#0072C6"/>
-     <rect x="118" y="100" width="24" height="42" rx="12" fill="#fff"/><path d="M106 132a24 24 0 0 0 48 0M130 156v12" stroke="#fff" stroke-width="6" fill="none" stroke-linecap="round"/>
-     ${[0, 1, 2, 3, 4].map((k) => `<rect x="${206 + k * 10}" y="${120 - [6, 16, 26, 16, 6][k]}" width="6" height="${[12, 32, 52, 32, 12][k]}" rx="3" fill="#7CC0EE"/>`).join("")}`,
-    `<rect x="52" y="56" width="156" height="58" rx="18" fill="#fff" stroke="#BFDDF4" stroke-width="3"/><circle cx="82" cy="85" r="14" fill="#E7F6F0"/><path d="M75 85l5 5 9-9" stroke="#12805C" stroke-width="4" fill="none" stroke-linecap="round"/><rect x="104" y="78" width="84" height="12" rx="6" fill="#D3E8F8"/>
-     <rect x="52" y="128" width="156" height="58" rx="18" fill="#fff" stroke="#BFDDF4" stroke-width="3"/><circle cx="82" cy="157" r="14" fill="#E7F6F0"/><path d="M75 157l5 5 9-9" stroke="#12805C" stroke-width="4" fill="none" stroke-linecap="round"/><rect x="104" y="150" width="64" height="12" rx="6" fill="#D3E8F8"/>
-     <rect x="96" y="204" width="112" height="44" rx="16" fill="#0072C6"/><path d="M118 226l28-12-9 24-4-8z" fill="#fff"/><rect x="152" y="221" width="40" height="9" rx="4.5" fill="#7CC0EE"/>`,
-  ][i];
-  return `<svg viewBox="0 0 260 280" width="260" height="280" role="img" aria-label="">${plus(30, 60, 10, .8)}${plus(232, 210, 13, .7)}${plus(222, 40, 7, .6)}${plus(40, 236, 7, .6)}${inner}</svg>`;
-}
 function welcome() {
   const s = SLIDES[S.slide];
   return `<div class="welcome">
-    <div class="brand">${icon("plus")}Ovamha</div>
-    <div class="art">${art(S.slide)}</div>
-    <h2>${s.t}</h2><p>${s.p}</p>
-    <div class="dots">${SLIDES.map((_, i) => `<i class="${i === S.slide ? "on" : ""}"></i>`).join("")}</div>
-    <div class="row"><button class="btn outline" id="skip">Skip</button><button class="btn primary" id="next">${S.slide < 2 ? "Next" : "Sign in"}</button></div>
+    <div class="art">${slideArt(S.slide)}</div>
+    <div class="welcome-text">
+      <h2>${s.t}</h2><p>${s.p}</p>
+      <div class="dots">${SLIDES.map((_, i) => `<i class="${i === S.slide ? "on" : ""}"></i>`).join("")}</div>
+      <div class="row"><button class="btn outline" id="skip">Skip</button><button class="btn primary" id="next">${S.slide < 2 ? "Next" : "Sign in"}</button></div>
+    </div>
   </div>`;
 }
 const bind = {};
