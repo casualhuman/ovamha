@@ -2,9 +2,10 @@
 
 At first contact Ovamha creates a woman ID (UUID, the internal key) and a short
 card code the worker writes on her ANC card. On later visits the worker types the
-card code to find her. Stored: her date of birth (exact or estimated), pregnancy
-history counts and, with consent, that a national ID card was shown. No name, phone
-number or national ID number is stored.
+card code to find her. Stored on this device: the ANC.A4 registration details (name,
+community, optional phone and emergency contact), her date of birth (exact or estimated),
+the ANC.B6 first-contact profile and, with consent, that a national ID card was shown.
+The national ID number is never stored.
 
 Card code: 5 random characters + 1 check character (weighted mod 31 over an alphabet
 without look-alikes 0/O, 1/I/L), shown as "K7P-3QZ". A single wrong or swapped
@@ -18,7 +19,7 @@ import json
 import os
 import secrets
 import uuid
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -71,8 +72,15 @@ class Woman:
     national_id: dict | None = None  # consented check only: document shown, never the number (ID-03, ID-04)
     birth_date: str | None = None  # "YYYY-MM-DD" when known; "YYYY" when estimated from her age
     birth_date_estimated: bool = False
-    previous_pregnancies: int | str | None = None  # count, or "unknown"
-    births: int | str | None = None  # babies born alive, or "unknown"
+    details: dict = field(default_factory=dict)  # ANC.A4 registration details (name, community, phone, contacts...)
+    profile: dict = field(default_factory=dict)  # ANC.B6 first-contact profile answers
+    profile_at: str | None = None
+
+
+def _woman(rec: dict) -> Woman:
+    """Build a Woman from a stored record, ignoring fields from older versions."""
+    known = Woman.__dataclass_fields__
+    return Woman(**{k: v for k, v in rec.items() if k in known})
 
 
 def _load() -> dict[str, dict]:
@@ -88,20 +96,8 @@ def _save(data: dict) -> None:
     tmp.replace(p)
 
 
-def _count(v, what: str) -> int | str | None:
-    if v is None or v == "unknown":
-        return v
-    try:
-        n = int(v)
-    except (TypeError, ValueError):
-        raise ValueError(f"{what}: enter a number or choose Don't know.")
-    if not 0 <= n <= 20:
-        raise ValueError(f"{what}: {n} looks wrong. Please check.")
-    return n
-
-
 def register(worker_id: str, national_id: str = "none", consent: bool = False, birth_date: str | None = None,
-             age_years: int | None = None, previous_pregnancies=None, births=None, today: date | None = None) -> Woman:
+             age_years: int | None = None, details: dict | None = None, today: date | None = None) -> Woman:
     """First visit: create her Ovamha woman ID and card code, always (ID-01).
 
     national_id: "nin" (she has a national ID card) or "none". With "nin" and her consent,
@@ -131,9 +127,6 @@ def register(worker_id: str, national_id: str = "none", consent: bool = False, b
         dob, estimated = str(today.year - int(age_years)), True
     else:
         raise ValueError("Enter her date of birth, or estimate her age.")
-    prev, born = _count(previous_pregnancies, "Previous pregnancies"), _count(births, "Babies born alive")
-    if isinstance(prev, int) and isinstance(born, int) and born > prev + 5:
-        raise ValueError("More babies born than pregnancies by a wide margin. Please check (twins count once as a pregnancy).")
 
     data = _load()
     code = new_code()
@@ -141,7 +134,7 @@ def register(worker_id: str, national_id: str = "none", consent: bool = False, b
         code = new_code()
     now = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     w = Woman(str(uuid.uuid4()), code, now, worker_id, episode_id=str(uuid.uuid4()),
-              birth_date=dob, birth_date_estimated=estimated, previous_pregnancies=prev, births=born)
+              birth_date=dob, birth_date_estimated=estimated, details=dict(details or {}))
     if national_id == "nin":
         w.national_id = {"document": "National ID (NIN)", "method": "document-shown", "verified": False, "consent_at": now}
     data[code] = asdict(w)
@@ -158,7 +151,17 @@ def find(code: str) -> tuple[Woman | None, str]:
     rec = _load().get(c)
     if not rec:
         return None, "No woman with this card number on this device. If it is her first visit here, choose First visit."
-    return Woman(**rec), ""
+    return _woman(rec), ""
+
+
+def save_profile(code: str, profile: dict) -> Woman:
+    """Store the ANC.B6 profile collected at her first contact."""
+    data = _load()
+    c = normalise(code)
+    data[c]["profile"] = profile
+    data[c]["profile_at"] = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    _save(data)
+    return _woman(data[c])
 
 
 def record_visit(code: str) -> None:

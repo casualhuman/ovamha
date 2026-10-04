@@ -5,6 +5,7 @@ Contains confirmed fields only (the Encounter is built from Session.finalise()).
 from __future__ import annotations
 
 from .confirm import KEYPAD_FIELDS, fmt, label
+from . import questionnaire
 from .encounter import Encounter
 
 SOURCE_TEXT = {
@@ -29,11 +30,21 @@ def handover_text(e: Encounter) -> str:
         "REPORTED SYMPTOMS (history)",
     ]
     lines += [f"  - {label(f)}: {fmt(v)}  [{_src(e.sources.get(f, ''))}]" for f, v in reported] or ["  (none confirmed)"]
-    if e.birth_date or e.history:
-        lines += ["", "HISTORY (registration)"]
-        if e.birth_date:
-            lines.append(f"  - Date of birth: {e.birth_date}{' (estimated from her age)' if e.birth_date_estimated else ''}")
-        lines += [f"  - {label(f)}: {'not known' if v == 'unknown' else v}" for f, v in e.history.items()]
+    name = " ".join(x for x in (e.details.get("first_name"), e.details.get("family_name")) if x)
+    lines += ["", "WOMAN"]
+    if name:
+        lines.append(f"  - Name: {name}")
+    if e.birth_date:
+        lines.append(f"  - Date of birth: {e.birth_date}{' (estimated from her age)' if e.birth_date_estimated else ''}")
+    lines += questionnaire.handover_lines("anc-registration", e.details, skip={"first_name", "family_name", "wants_reminders"})
+    if e.profile:
+        lines += ["", "HISTORY AND PROFILE (first contact, ANC.B6)"]
+        if e.profile_derived.get("ga_weeks"):
+            lines.append(f"  - Gestational age: {e.profile_derived['ga_weeks']} weeks"
+                         + (f", EDD {e.profile_derived['edd']}" if e.profile_derived.get("edd") else ""))
+        lines += questionnaire.handover_lines("anc-profile", e.profile)
+    else:
+        lines += ["", "HISTORY AND PROFILE: not collected at this contact"]
     lines += ["", "MEASURED OBSERVATIONS"]
     lines += [f"  - {label(f)}: {fmt(v)}  [{_src(e.sources.get(f, ''))}]" for f, v in measured] or ["  (none confirmed)"]
     lines += ["", "ACTIONS"]

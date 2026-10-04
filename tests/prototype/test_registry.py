@@ -58,7 +58,7 @@ def test_no_personal_data_stored():
     w = registry.register("nurse-test", age_years=25)
     rec = registry.find(w.card_code)[0]
     assert set(vars(rec)) == {"woman_id", "card_code", "created_at", "created_by", "visits", "last_visit", "episode_id",
-                              "national_id", "birth_date", "birth_date_estimated", "previous_pregnancies", "births"}
+                              "national_id", "birth_date", "birth_date_estimated", "details", "profile", "profile_at"}
     assert rec.national_id is None
 
 
@@ -91,8 +91,12 @@ def test_nin_needs_consent_and_number_never_stored():
     assert w.card_code  # a card number is still issued: the NIN is never a search key (ID-04)
 
 
-def test_pregnancy_history_counts_and_unknown():
-    w = registry.register("n", age_years=30, previous_pregnancies=3, births="unknown")
-    assert w.previous_pregnancies == 3 and w.births == "unknown"
-    with pytest.raises(ValueError):
-        registry.register("n", age_years=30, previous_pregnancies=-1)
+def test_profile_saved_and_old_records_load(tmp_path):
+    w = registry.register("n", age_years=30, details={"first_name": "Mariama"})
+    w2 = registry.save_profile(w.card_code, {"gravida": 3})
+    assert w2.profile == {"gravida": 3} and w2.profile_at and w2.details["first_name"] == "Mariama"
+    # a record written by an older version (extra keys) still loads
+    data = registry._load()
+    data[w.card_code]["previous_pregnancies"] = 2
+    registry._save(data)
+    assert registry.find(w.card_code)[0].woman_id == w.woman_id

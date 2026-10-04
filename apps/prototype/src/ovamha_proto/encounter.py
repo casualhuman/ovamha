@@ -38,7 +38,9 @@ class Encounter:
     national_id: dict | None = None  # consented ID check: {"document": ..., "method": "document-shown", "verified": False, "consent_at": ...}
     birth_date: str | None = None  # "YYYY-MM-DD", or "YYYY" when estimated
     birth_date_estimated: bool = False
-    history: dict = field(default_factory=dict)  # registration history: previous_pregnancies, births (int or "unknown")
+    details: dict = field(default_factory=dict)  # ANC.A4 registration details
+    profile: dict = field(default_factory=dict)  # ANC.B6 first-contact profile (empty if not collected)
+    profile_derived: dict = field(default_factory=dict)  # GA weeks / EDD from LMP
     sms: dict | None = None  # {"text", "sent", "channel"} once the referral SMS is sent
     referral_status: str = "requested"  # requested -> accepted (ACK) | rejected (FULL)
 

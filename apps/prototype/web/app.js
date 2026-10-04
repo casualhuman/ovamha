@@ -153,7 +153,7 @@ const extFor = (blob) => (blob.type.includes("mp4") ? "m4a" : blob.type.includes
 function go(screen) { S.screen = screen; render(); window.scrollTo(0, 0); }
 function render() {
   const app = $("#app");
-  const view = { welcome, login, home, woman, describe, confirm, measure, result, profile }[S.screen] || home;
+  const view = { welcome, login, home, woman, describe, confirm, history, measure, result, profile }[S.screen] || home;
   app.innerHTML = view();
   bind[S.screen]?.();
 }
@@ -168,7 +168,7 @@ document.addEventListener("click", (e) => {
     if (to === "describe") startCheck(); else go(to);
   }
 });
-function steps(n) { return `<div class="steps">${[1, 2, 3, 4].map((i) => `<i class="${i <= n ? "on" : ""}"></i>`).join("")}</div>`; }
+function steps(n) { return `<div class="steps">${[1, 2, 3, 4, 5].map((i) => `<i class="${i <= n ? "on" : ""}"></i>`).join("")}</div>`; }
 function topbar(title, back) {
   const card = S.screen !== "woman" && S.st?.woman ? `<span class="badge" title="Her card number">${icon("file")}${esc(S.st.woman.card_code)}</span>` : "";
   return `<div class="top">${back ? `<button class="icon-btn" data-back="${back}" aria-label="Back">${icon("left")}</button>` : ""}<h1>${esc(title)}</h1>
@@ -309,6 +309,92 @@ function stepper(key, value, allowUnknown = true) {
     <button class="icon-btn soft" data-step="${key}" data-d="1" aria-label="One more" ${unknown ? "disabled" : ""}>+</button>
     ${allowUnknown ? `<button class="chip ${unknown ? "on" : ""}" data-unknown="${key}">Don't know</button>` : ""}</div>`;
 }
+// ---------------------------------------------------------------- DAK question sets (content/questions/*.json)
+async function qset(name) {
+  S.qsets = S.qsets || {};
+  if (!S.qsets[name]) S.qsets[name] = await api(`/api/questions/${name}`, { method: "GET" });
+  return S.qsets[name];
+}
+function qVisible(q, ans) {
+  return Object.entries(q.show_if || {}).every(([k, rule]) => {
+    const v = ans[k];
+    if (rule === "any") return v !== undefined && v !== "" && !(Array.isArray(v) && !v.length);
+    if (typeof rule === "string" && rule.startsWith("gt")) return typeof v === "number" && v > Number(rule.slice(2));
+    if (Array.isArray(rule)) return rule.includes(v);
+    return v === rule;
+  });
+}
+function speakQ(set, question, option) {
+  api("/api/speak", { body: { questionnaire: set, question, option, lang: S.lang }, raw: true }).then(async (res) => {
+    if (res.headers.get("X-Ovamha-Lang") !== S.lang) toast("Read in English: this wording is not translated yet");
+    playBlob(await res.blob());
+  }).catch((e) => toast(e.message));
+}
+function renderQ(set, q, ans) {
+  const v = ans[q.id];
+  const sayQ = `<button class="icon-btn soft" data-sq="${set}|${q.id}" aria-label="Read the question aloud">${icon("speaker")}</button>`;
+  const head = `<div class="qhead"><h3>${esc(q.label)}${q.optional ? ' <span class="tiny">optional</span>' : ""}</h3>${sayQ}</div>`;
+  let body = "";
+  if (q.type === "single" || q.type === "multi") {
+    body = q.options.map((o) => {
+      const on = q.type === "single" ? v === o.value : Array.isArray(v) && v.includes(o.value);
+      return `<div class="opt ${on ? "on" : ""}"><button class="opt-main" data-qa="${set}|${q.id}|${esc(o.value)}">
+          <span class="tick ${q.type}">${on ? icon("check") : ""}</span><span style="flex:1;text-align:left"><b>${esc(o.label)}</b></span></button>
+        <button class="icon-btn soft opt-say" data-sq="${set}|${q.id}|${esc(o.value)}" aria-label="Read aloud">${icon("speaker")}</button></div>`;
+    }).join("");
+    if (q.type === "multi") body = `<div class="tiny" style="margin:-2px 0 8px">Choose all that apply</div>` + body;
+  } else if (q.type === "count") {
+    const unknown = v === "unknown";
+    const shown = unknown ? "?" : (v ?? "–");
+    body = `<div class="stepper"><button class="icon-btn soft" data-qc="${set}|${q.id}|-1" ${unknown ? "disabled" : ""} aria-label="One less">−</button>
+      <span class="num-big">${shown}</span><button class="icon-btn soft" data-qc="${set}|${q.id}|1" ${unknown ? "disabled" : ""} aria-label="One more">+</button>
+      ${q.dont_know ? `<button class="chip ${unknown ? "on" : ""}" data-qu="${set}|${q.id}">Don't know</button>` : ""}</div>`;
+  } else if (q.type === "date") {
+    body = `<input class="input" type="date" data-qi="${set}|${q.id}" value="${esc(v || "")}">`;
+  } else {
+    body = `<input class="input" ${q.type === "phone" ? 'type="tel" inputmode="tel" placeholder="+232 …"' : 'type="text"'} data-qi="${set}|${q.id}" value="${esc(v || "")}" autocomplete="off">`;
+  }
+  return `<div class="q">${head}${body}</div>`;
+}
+function renderSet(set, def, ans, sectionIds) {
+  return def.sections.filter((sec) => !sectionIds || sectionIds.includes(sec.id)).map((sec) => {
+    const qs = sec.questions.filter((q) => qVisible(q, ans));
+    return qs.length ? `<div class="card qcard"><div class="section-kicker">${esc(sec.title)}</div>${qs.map((q) => renderQ(set, q, ans)).join("")}</div>` : "";
+  }).join("");
+}
+function bindSet(answersOf, rerender) {
+  const find = (set, id) => S.qsets[set].sections.flatMap((s) => s.questions).find((q) => q.id === id);
+  document.querySelectorAll("[data-sq]").forEach((b) => b.onclick = (e) => { e.preventDefault(); const [set, id, opt] = b.dataset.sq.split("|"); speakQ(set, id, opt); });
+  document.querySelectorAll("[data-qa]").forEach((b) => b.onclick = () => {
+    const [set, id, val] = b.dataset.qa.split("|"); const q = find(set, id); const ans = answersOf(set);
+    if (q.type === "single") ans[id] = ans[id] === val ? undefined : val;
+    else {
+      const opt = q.options.find((o) => o.value === val);
+      let cur = Array.isArray(ans[id]) ? ans[id] : [];
+      if (cur.includes(val)) cur = cur.filter((x) => x !== val);
+      else cur = opt.exclusive ? [val] : [...cur.filter((x) => !q.options.find((o) => o.value === x)?.exclusive), val];
+      ans[id] = cur;
+    }
+    rerender();
+  });
+  document.querySelectorAll("[data-qc]").forEach((b) => b.onclick = () => {
+    const [set, id, d] = b.dataset.qc.split("|"); const q = find(set, id); const ans = answersOf(set);
+    const cur = typeof ans[id] === "number" ? ans[id] : (q.start ?? q.min ?? 0) - Number(d);
+    ans[id] = Math.max(q.min ?? 0, Math.min(q.max ?? 99, cur + Number(d)));
+    rerender();
+  });
+  document.querySelectorAll("[data-qu]").forEach((b) => b.onclick = () => {
+    const [set, id] = b.dataset.qu.split("|"); const ans = answersOf(set);
+    ans[id] = ans[id] === "unknown" ? undefined : "unknown"; rerender();
+  });
+  document.querySelectorAll("[data-qi]").forEach((el) => {
+    const [set, id] = el.dataset.qi.split("|");
+    el.oninput = () => { answersOf(set)[id] = el.value; };
+    el.onchange = () => { answersOf(set)[id] = el.value; rerender(); };  // e.g. a phone number reveals "Wants SMS reminders?"
+  });
+}
+function keepScroll(fn) { const y = window.scrollY; fn(); window.scrollTo(0, y); }
+
 function registration() {
   const r = S.reg;
   return `
@@ -327,10 +413,7 @@ function registration() {
       ${r.dobMode === "exact" ? `<input class="input" type="date" id="dob" value="${esc(r.birth_date || "")}" style="margin-top:10px">` : ""}
       ${r.dobMode === "estimate" ? `<div class="small muted" style="margin:12px 0 4px">About how old is she?</div>${stepper("age", r.age, false)}<div class="tiny">years, your best estimate · saved as an estimated birth year</div>` : ""}
     </div>
-    <div class="card">${qhead("Previous pregnancies", "prev_pregnancies")}
-      <p class="small muted" style="margin:0 0 8px">Before this pregnancy</p>${stepper("prev", r.prev)}
-    </div>
-    <div class="card">${qhead("Babies born alive", "births")}${stepper("births", r.births)}</div>
+    ${S.qsets?.["anc-registration"] ? renderSet("anc-registration", S.qsets["anc-registration"], r.details) : ""}
     <div class="err">${esc(S.cardErr)}</div>
     <button class="btn primary" id="createCard" style="margin-top:6px">${icon("plus")}Create her card number</button>`;
 }
@@ -340,9 +423,10 @@ function woman() {
   if (w) {
     const idLine = w.id_check ? `${icon("idcard")} National ID shown, with consent` : `${icon("x")} No national ID`;
     const dob = w.birth_date ? (w.birth_date_estimated ? `Born about ${w.birth_date} (estimated)` : `Born ${w.birth_date}`) : "";
+    const who = w.name ? `<div style="font-weight:700;font-size:1.15rem;margin-top:4px">${esc(w.name)}</div>` : "";
     body = `<div class="card" style="text-align:center">
       <div class="badge green" style="margin-bottom:10px">${icon("check")}${w.new ? "New card number created" : "Card found"}</div>
-      <div class="small muted">${w.new ? "Write this on her antenatal card" : "Her card number"}</div>
+      ${who}<div class="small muted">${w.new ? "Write this on her antenatal card" : "Her card number"}</div>
       <div class="card-code">${esc(w.card_code)}</div>
       <button class="btn soft" id="sayCard">${icon("speaker")}Read aloud</button>
       <div class="small muted" style="margin-top:12px;display:flex;flex-direction:column;gap:4px;align-items:center">
@@ -369,15 +453,17 @@ bind.woman = () => {
   document.querySelectorAll("[data-prompt]").forEach((b) => b.onclick = (e) => { e.preventDefault(); speakPrompt(b.dataset.prompt); });
   document.querySelectorAll("[data-mode]").forEach((b) => b.onclick = () => {
     S.cardMode = b.dataset.mode; S.cardErr = "";
-    if (S.cardMode === "new") S.reg = { national_id: null, consent: false, dobMode: null, birth_date: "", age: 25, prev: 0, births: 0 };
-    render(); window.scrollTo(0, 0);
+    if (S.cardMode === "new") S.reg = { national_id: null, consent: false, dobMode: null, birth_date: "", age: 25, details: {} };
+    const show = () => { render(); window.scrollTo(0, 0); };
+    if (S.cardMode === "new") qset("anc-registration").then(show).catch((e) => toast(e.message)); else show();
     if (S.cardMode === "find") $("#card").focus();
   });
   document.querySelectorAll("[data-nid]").forEach((b) => b.onclick = () => { S.reg.national_id = b.dataset.nid; render(); });
   document.querySelectorAll("[data-dob]").forEach((b) => b.onclick = () => { S.reg.dobMode = b.dataset.dob; render(); });
   $("#consent") && ($("#consent").onchange = (e) => { S.reg.consent = e.target.checked; });
   $("#dob") && ($("#dob").onchange = (e) => { S.reg.birth_date = e.target.value; });
-  const keyOf = { age: "age", prev: "prev", births: "births" };
+  if (S.reg) bindSet(() => S.reg.details, () => keepScroll(render));
+  const keyOf = { age: "age" };
   document.querySelectorAll("[data-step]").forEach((b) => b.onclick = () => {
     const k = keyOf[b.dataset.step], lo = k === "age" ? 10 : 0, hi = k === "age" ? 60 : 20;
     S.reg[k] = Math.max(lo, Math.min(hi, (Number(S.reg[k]) || 0) + Number(b.dataset.d)));
@@ -393,7 +479,7 @@ bind.woman = () => {
     if (!r.national_id) { S.cardErr = "Answer the national ID question first."; render(); return; }
     if (r.national_id === "nin" && !r.consent) { S.cardErr = "Ask for her consent, or choose No ID."; render(); return; }
     if (!r.dobMode) { S.cardErr = "Answer when she was born: exact date or estimate."; render(); return; }
-    const body = { national_id: r.national_id, consent: r.consent, previous_pregnancies: r.prev, births: r.births };
+    const body = { national_id: r.national_id, consent: r.consent, details: Object.fromEntries(Object.entries(r.details).filter(([, v]) => v !== undefined && v !== "")) };
     if (r.dobMode === "exact") body.birth_date = r.birth_date || null; else body.age_years = r.age;
     api("/api/woman/new", { body }).then(set).catch((e) => { S.cardErr = e.message; render(); });
   });
@@ -548,7 +634,41 @@ bind.confirm = () => {
   document.querySelectorAll("[data-undo]").forEach((b) => b.onclick = () => act("/api/unconfirm", { field: b.dataset.undo }));
   document.querySelectorAll("[data-say]").forEach((b) => b.onclick = () => speakItem(b.dataset.say));
   $("#sayAll").onclick = () => speakText(S.st?.transcript || "", S.lang === "en" ? "en" : S.lang);
-  $("#toMeasure").onclick = () => go("measure");
+  $("#toMeasure").onclick = () => {
+    if (S.st?.needs_profile && !S.st?.preview?.danger) {
+      S.ans = S.ans || {}; S.ans["anc-profile"] = S.ans["anc-profile"] || {};
+      qset("anc-profile").then(() => go("history")).catch((e) => toast(e.message));
+    } else go("measure");
+  };
+};
+
+// ---------------------------------------------------------------- 5b. history and profile (ANC.B6, first contact only)
+function history() {
+  const def = S.qsets["anc-profile"], ans = S.ans["anc-profile"];
+  const ga = ans.ga_source === "lmp" && ans.lmp ? lmpInfo(ans.lmp) : "";
+  return `<div class="screen">${topbar("Her history", "confirm")}${steps(3)}
+    <div class="banner blue">${icon("file")}First contact: WHO antenatal care asks these once (ANC.B6). Use Don't know when she is not sure.</div>
+    ${renderSet("anc-profile", def, ans)}
+    ${ga ? `<div class="banner green">${icon("calendar")}${ga}</div>` : ""}
+    <div class="err">${esc(S.histErr || "")}</div>
+  </div>
+  <div class="sticky"><button class="btn primary" id="saveHistory">${icon("check")}Save history and continue</button></div>`;
+}
+function lmpInfo(lmp) {
+  // Same arithmetic as the server (UTC calendar days): GA = (today - LMP) / 7, EDD = LMP + 280 days.
+  const d = new Date(lmp + "T00:00:00Z"), now = new Date(), today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const days = Math.round((today - d) / 864e5);
+  if (isNaN(days) || days < 0) return "";
+  const edd = new Date(d.getTime() + 280 * 864e5);
+  return `About ${(days / 7).toFixed(1)} weeks pregnant · due around ${edd.toLocaleDateString([], { dateStyle: "medium", timeZone: "UTC" })}`;
+}
+bind.history = () => {
+  bindSet((set) => S.ans[set], () => keepScroll(render));
+  $("#saveHistory").onclick = () => {
+    const answers = Object.fromEntries(Object.entries(S.ans["anc-profile"]).filter(([, v]) => v !== undefined && v !== "" && !(Array.isArray(v) && !v.length)));
+    api("/api/profile", { body: { answers } }).then((st) => { S.st = st; S.histErr = ""; go("measure"); })
+      .catch((e) => { S.histErr = e.message; keepScroll(render); const el = $(".err"); el && el.scrollIntoView({ block: "center" }); });
+  };
 };
 
 // ---------------------------------------------------------------- 6. measurements (keypad default, voice optional)
@@ -585,7 +705,8 @@ function choiceCard(field, title, opts, ic, prompt) {
 }
 function measure() {
   const danger = S.st?.preview?.danger;
-  return `<div class="screen">${topbar("Measurements", "confirm")}${steps(3)}
+  return `<div class="screen">${topbar("Measurements", "confirm")}${steps(4)}
+    ${danger && S.st?.needs_profile ? `<div class="banner amber">${icon("file")}Her history (ANC.B6) is skipped today because of the danger sign. Complete it at her next contact.</div>` : ""}
     ${danger ? `<div class="banner red">${icon("alert")}Danger sign confirmed. Refer now: measurements are optional.</div>` : `<p class="muted small" style="margin-top:0">Type the numbers, or tap the microphone and say them. Each one is read back for you to confirm.</p>`}
     ${MEASURES.map(measureCard).join("")}
     ${choiceCard("urine_protein", "Urine protein", [["negative", "Negative"], ["trace", "Trace"], ["+", "+"], ["++", "++"], ["+++", "+++"], ["unknown", "Not done"]], "flask", "ask_protein")}
@@ -682,7 +803,7 @@ function result() {
   const pillCls = { requested: "wait", accepted: "ok", rejected: "no" }[r.status] || "wait";
   const pillTxt = { requested: "Waiting for the hospital to reply", accepted: "Hospital accepted the referral", rejected: "Hospital is full: refer elsewhere" }[r.status];
   const notes = r.rules.flatMap((x) => x.notes);
-  return `<div class="screen">${topbar("Result", null)}${steps(4)}
+  return `<div class="screen">${topbar("Result", null)}${steps(5)}
     ${r.referral ? `<div class="alert">${icon("alert")}<h2>Urgent referral</h2>
         <div>${esc(fired.map((f) => f.reasons.join(", ")).join("; "))}</div>
         <ul>${[...new Set(fired.flatMap((f) => f.actions))].map((a) => `<li>${esc(a)}</li>`).join("")}</ul></div>`

@@ -1,0 +1,120 @@
+{
+  "_note": "ANC.B6 Collect woman's history and profile (WHO ANC DAK 2021, Table 7). Collected at the woman's FIRST ANC contact, after the quick check (ANC.B5), and only when no danger sign requires urgent referral. Question groups and DAK IDs follow Table 7; the option lists are drafts pending the DAK Annex A data dictionary. 'say' = read-aloud wording per language; empty kri/yo falls back to English.",
+  "id": "anc-profile",
+  "sections": [
+    {
+      "id": "pregnancy",
+      "title": "This pregnancy",
+      "questions": [
+        {"id": "pregnancy_confirmed", "dak": "ANC.B4.DE1", "type": "single", "label": "Pregnancy confirmed?", "say": {"en": "Has the pregnancy been confirmed with a test?", "kri": "", "yo": ""},
+         "options": [{"value": "test_positive", "label": "Yes, test positive"}, {"value": "not_tested", "label": "Not tested"}]},
+        {"id": "ga_source", "dak": "ANC.B6.DE18-DE22", "type": "single", "label": "How do you know how far along she is?",
+         "say": {"en": "How do you know how many weeks pregnant she is? From her last period, an ultrasound, or by feeling the belly?", "kri": "", "yo": ""},
+         "options": [{"value": "lmp", "label": "Last menstrual period"}, {"value": "ultrasound", "label": "Ultrasound"},
+                     {"value": "sfh_palpation", "label": "Fundal height or palpation"}, {"value": "unknown", "label": "Not known yet"}]},
+        {"id": "lmp", "dak": "ANC.B6.DE14-DE17", "type": "date", "label": "First day of last menstrual period", "show_if": {"ga_source": "lmp"},
+         "say": {"en": "What was the first day of her last menstrual period?", "kri": "", "yo": ""}},
+        {"id": "ga_weeks", "dak": "ANC.B6.DE14-DE17", "type": "count", "min": 4, "max": 44, "start": 20, "label": "Gestational age (weeks)", "show_if": {"ga_source": ["ultrasound", "sfh_palpation"]},
+         "say": {"en": "How many weeks pregnant is she, from the ultrasound or the examination?", "kri": "", "yo": ""}}
+      ]
+    },
+    {
+      "id": "obstetric",
+      "title": "Past pregnancies",
+      "questions": [
+        {"id": "gravida", "dak": "ANC.B6.DE23-DE26", "type": "count", "min": 1, "max": 20, "start": 1, "dont_know": true, "label": "Number of pregnancies, including this one",
+         "say": {"en": "How many times has she been pregnant, counting this pregnancy?", "kri": "", "yo": ""}},
+        {"id": "live_births", "dak": "ANC.B6.DE23-DE26", "type": "count", "min": 0, "max": 20, "start": 0, "dont_know": true, "label": "Babies born alive", "show_if": {"gravida": "gt1"},
+         "say": {"en": "How many babies has she given birth to alive?", "kri": "", "yo": ""}},
+        {"id": "stillbirths", "dak": "ANC.B6.DE23-DE26", "type": "count", "min": 0, "max": 20, "start": 0, "dont_know": true, "label": "Stillbirths", "show_if": {"gravida": "gt1"},
+         "say": {"en": "How many babies were born dead, after six months of pregnancy?", "kri": "", "yo": ""}},
+        {"id": "miscarriages", "dak": "ANC.B6.DE23-DE26", "type": "count", "min": 0, "max": 20, "start": 0, "dont_know": true, "label": "Miscarriages or abortions", "show_if": {"gravida": "gt1"},
+         "say": {"en": "How many pregnancies ended early, before six months, by miscarriage or abortion?", "kri": "", "yo": ""}},
+        {"id": "last_birth_preterm", "dak": "ANC.B6.DE27-DE33", "type": "single", "label": "Was her last baby born early?", "show_if": {"live_births": "gt0"},
+         "say": {"en": "Was her last baby born early, before eight and a half months?", "kri": "", "yo": ""},
+         "options": [{"value": "yes", "label": "Yes, preterm"}, {"value": "no", "label": "No"}, {"value": "unknown", "label": "Don't know"}]},
+        {"id": "past_complications", "dak": "ANC.B6.DE34-DE50", "type": "multi", "label": "Problems in past pregnancies", "show_if": {"gravida": "gt1"},
+         "say": {"en": "Did she have any problems in a past pregnancy or birth?", "kri": "", "yo": ""},
+         "options": [{"value": "pre_eclampsia", "label": "Pre-eclampsia (high blood pressure)"}, {"value": "eclampsia", "label": "Eclampsia (fits)"},
+                     {"value": "heavy_bleeding", "label": "Heavy bleeding before or after birth"}, {"value": "caesarean", "label": "Caesarean section"},
+                     {"value": "prolonged_labour", "label": "Very long or obstructed labour"}, {"value": "gestational_diabetes", "label": "Diabetes in pregnancy"},
+                     {"value": "baby_died_early", "label": "Baby died in the first week"}, {"value": "low_birth_weight", "label": "Very small baby"},
+                     {"value": "large_baby", "label": "Very large baby"}, {"value": "perineal_tear", "label": "Severe tear"},
+                     {"value": "none", "label": "None", "exclusive": true}, {"value": "unknown", "label": "Don't know", "exclusive": true}]},
+        {"id": "past_substance_use", "dak": "ANC.B6.DE51-DE56", "type": "multi", "label": "Substances used in a past pregnancy", "optional": true, "show_if": {"gravida": "gt1"},
+         "say": {"en": "In a past pregnancy, did she use alcohol, tobacco or other drugs?", "kri": "", "yo": ""},
+         "options": [{"value": "alcohol", "label": "Alcohol"}, {"value": "tobacco", "label": "Tobacco"}, {"value": "other_drugs", "label": "Other drugs"},
+                     {"value": "none", "label": "None", "exclusive": true}, {"value": "unknown", "label": "Don't know", "exclusive": true}]}
+      ]
+    },
+    {
+      "id": "medical",
+      "title": "Health history",
+      "questions": [
+        {"id": "chronic_conditions", "dak": "ANC.B6.DE83-DE99", "type": "multi", "label": "Long-term health conditions",
+         "say": {"en": "Does she have any long-term illness, such as high blood pressure, diabetes, HIV, sickle cell or epilepsy?", "kri": "", "yo": ""},
+         "options": [{"value": "hypertension", "label": "High blood pressure"}, {"value": "diabetes", "label": "Diabetes"}, {"value": "hiv", "label": "HIV"},
+                     {"value": "tuberculosis", "label": "Tuberculosis"}, {"value": "sickle_cell", "label": "Sickle cell disease"}, {"value": "epilepsy", "label": "Epilepsy"},
+                     {"value": "heart_disease", "label": "Heart disease"}, {"value": "kidney_disease", "label": "Kidney disease"}, {"value": "asthma", "label": "Asthma"},
+                     {"value": "mental_health", "label": "Mental health condition"}, {"value": "other", "label": "Other"},
+                     {"value": "none", "label": "None", "exclusive": true}, {"value": "unknown", "label": "Don't know", "exclusive": true}]},
+        {"id": "allergies", "dak": "ANC.B6.DE57-DE71", "type": "multi", "label": "Allergies",
+         "say": {"en": "Is she allergic to any medicine or food?", "kri": "", "yo": ""},
+         "options": [{"value": "medicine", "label": "A medicine"}, {"value": "food", "label": "A food"}, {"value": "other", "label": "Other"},
+                     {"value": "none", "label": "None", "exclusive": true}, {"value": "unknown", "label": "Don't know", "exclusive": true}]},
+        {"id": "past_surgeries", "dak": "ANC.B6.DE72-DE82", "type": "multi", "label": "Past operations",
+         "say": {"en": "Has she ever had an operation? For example a caesarean section or a womb operation.", "kri": "", "yo": ""},
+         "options": [{"value": "caesarean", "label": "Caesarean section"}, {"value": "uterine_surgery", "label": "Womb operation"}, {"value": "other", "label": "Other operation"},
+                     {"value": "none", "label": "None", "exclusive": true}, {"value": "unknown", "label": "Don't know", "exclusive": true}]},
+        {"id": "current_medications", "dak": "ANC.B6.DE109-DE138", "type": "multi", "label": "Medicines she takes now",
+         "say": {"en": "What medicines or supplements is she taking now?", "kri": "", "yo": ""},
+         "options": [{"value": "iron_folic", "label": "Iron or folic acid"}, {"value": "calcium", "label": "Calcium"}, {"value": "antimalarial", "label": "Malaria prevention (IPTp)"},
+                     {"value": "antiretroviral", "label": "HIV medicine"}, {"value": "antihypertensive", "label": "Blood pressure medicine"}, {"value": "other", "label": "Other"},
+                     {"value": "none", "label": "None", "exclusive": true}, {"value": "unknown", "label": "Don't know", "exclusive": true}]}
+      ]
+    },
+    {
+      "id": "immunisation",
+      "title": "Vaccines",
+      "questions": [
+        {"id": "ttcv_doses", "dak": "ANC.B6.DE100-DE104", "type": "count", "min": 0, "max": 6, "start": 0, "dont_know": true, "label": "Tetanus vaccine doses received",
+         "say": {"en": "How many tetanus vaccine injections has she had in her life?", "kri": "", "yo": ""}},
+        {"id": "flu_vaccine", "dak": "ANC.B6.DE105-DE108", "type": "single", "label": "Flu vaccine this year?", "optional": true,
+         "say": {"en": "Has she had this year's flu vaccine?", "kri": "", "yo": ""},
+         "options": [{"value": "yes", "label": "Yes"}, {"value": "no", "label": "No"}, {"value": "unknown", "label": "Don't know"}]}
+      ]
+    },
+    {
+      "id": "lifestyle",
+      "title": "Daily life",
+      "questions": [
+        {"id": "caffeine_high", "dak": "ANC.B6.DE139-DE144", "type": "single", "label": "More than 2 cups of coffee or strong tea a day?",
+         "say": {"en": "Does she drink more than two cups of coffee or strong tea a day?", "kri": "", "yo": ""},
+         "options": [{"value": "yes", "label": "Yes"}, {"value": "no", "label": "No"}, {"value": "unknown", "label": "Don't know"}]},
+        {"id": "alcohol_substance", "dak": "ANC.B6.DE145-DE152", "type": "single", "label": "Alcohol or drugs now?",
+         "say": {"en": "Does she drink alcohol or use other drugs now?", "kri": "", "yo": ""},
+         "options": [{"value": "yes", "label": "Yes"}, {"value": "no", "label": "No"}, {"value": "unknown", "label": "Don't know"}]},
+        {"id": "tobacco", "dak": "ANC.B6.DE153-DE155", "type": "single", "label": "Tobacco",
+         "say": {"en": "Does she smoke or use tobacco, or live with someone who smokes?", "kri": "", "yo": ""},
+         "options": [{"value": "uses", "label": "She uses tobacco"}, {"value": "exposed", "label": "Others smoke near her"}, {"value": "none", "label": "No"}, {"value": "unknown", "label": "Don't know"}]},
+        {"id": "partner_hiv", "dak": "ANC.B6.DE156-DE161", "type": "single", "label": "Partner's HIV status (as she reports it)", "sensitive": true,
+         "say": {"en": "Does she know her partner's HIV status? Ask privately.", "kri": "", "yo": ""},
+         "options": [{"value": "positive", "label": "Positive"}, {"value": "negative", "label": "Negative"}, {"value": "unknown", "label": "Not known"}, {"value": "no_partner", "label": "No partner"}]}
+      ]
+    },
+    {
+      "id": "background",
+      "title": "Background",
+      "questions": [
+        {"id": "education", "dak": "ANC.B6.DE1-DE6", "type": "single", "label": "Highest school level", "optional": true,
+         "say": {"en": "What is the highest level of school she finished?", "kri": "", "yo": ""},
+         "options": [{"value": "none", "label": "None"}, {"value": "primary", "label": "Primary"}, {"value": "secondary", "label": "Secondary"},
+                     {"value": "higher", "label": "College or university"}, {"value": "unknown", "label": "Don't know"}]},
+        {"id": "occupation", "dak": "ANC.B6.DE7-DE13", "type": "multi", "label": "Work", "optional": true,
+         "say": {"en": "What work does she do?", "kri": "", "yo": ""},
+         "options": [{"value": "farming", "label": "Farming"}, {"value": "trading", "label": "Trading or market"}, {"value": "formal", "label": "Salaried job"},
+                     {"value": "student", "label": "Student"}, {"value": "home", "label": "Home duties"}, {"value": "other", "label": "Other"}, {"value": "unemployed", "label": "No work", "exclusive": true}]}
+      ]
+    }
+  ]
+}

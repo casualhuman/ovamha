@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 
 from ovamha_proto import auth, server, sms
 
-REG = {"national_id": "none", "age_years": 24, "previous_pregnancies": 2, "births": 1}
+REG = {"national_id": "none", "age_years": 24, "details": {"first_name": "Mariama"}}
 SCENARIO = "She is 28 weeks pregnant and she has heavy vaginal bleeding since this morning. She fainted yesterday but is fine now. No fever."
 
 
@@ -96,18 +96,56 @@ def test_speak_prompt(client):
 
 
 def test_register_requires_birth_info(client):
-    r = client.post("/api/woman/new", json={"national_id": "none"})
+    r = client.post("/api/woman/new", json={"national_id": "none", "details": {"first_name": "A"}})
     assert r.status_code == 422 and "date of birth" in r.json()["detail"].lower()
 
 
-def test_registration_flows_into_bundle_and_handover(client):
-    client.post("/api/woman/new", json={"national_id": "nin", "consent": True, "age_years": 24, "previous_pregnancies": 2, "births": "unknown"})
+PROFILE = {
+    "pregnancy_confirmed": "test_positive", "ga_source": "lmp", "lmp": None,
+    "gravida": 3, "live_births": 2, "stillbirths": 0, "miscarriages": 0, "last_birth_preterm": "no",
+    "past_complications": ["pre_eclampsia"], "chronic_conditions": ["none"], "allergies": ["unknown"],
+    "past_surgeries": ["none"], "current_medications": ["iron_folic"], "ttcv_doses": "unknown",
+    "caffeine_high": "no", "alcohol_substance": "no", "tobacco": "none", "partner_hiv": "unknown",
+}
+
+
+def test_registration_and_profile_flow_into_bundle_and_handover(client):
+    from datetime import date, timedelta
+
+    st = client.post("/api/woman/new", json={"national_id": "nin", "consent": True, "age_years": 24,
+                                             "details": {"first_name": "Mariama", "phone": "+232 76 123456", "wants_reminders": "yes"}}).json()
+    assert st["needs_profile"] is True and st["woman"]["name"] == "Mariama"
+    prof = dict(PROFILE, lmp=(date.today() - timedelta(weeks=20)).isoformat())
+    st = client.post("/api/profile", json={"answers": prof}).json()
+    assert st["needs_profile"] is False and st["woman"]["profile_derived"]["ga_weeks"] == 20.0
     client.post("/api/extract", json={"transcript": "heavy bleeding", "lang": "en"})
     client.post("/api/confirm", json={"field": "vaginal_bleeding"})
     r = client.post("/api/finish").json()
-    pat = next(e["resource"] for e in r["bundle"]["entry"] if e["resource"]["resourceType"] == "Patient")
+    assert r["valid"]["ok"], r["valid"]
+    entries = [e["resource"] for e in r["bundle"]["entry"]]
+    pat = next(x for x in entries if x["resourceType"] == "Patient")
+    assert pat["name"][0]["given"] == ["Mariama"] and pat["telecom"][0]["value"] == "+232 76 123456"
     assert len(pat["birthDate"]) == 4 and pat["_birthDate"]["extension"][0]["valueBoolean"] is True
-    types = [e["resource"]["resourceType"] for e in r["bundle"]["entry"]]
-    assert "Consent" in types
-    assert "estimated" in r["handover"] and "Previous pregnancies: 2" in r["handover"] and "Babies born alive: not known" in r["handover"]
-    assert r["valid"]["ok"]
+    lmp = [x for x in entries if x["resourceType"] == "Observation" and x["code"]["coding"][0].get("code") == "8665-2"]
+    assert len(lmp) == 1
+    hiv = next(x for x in entries if x["resourceType"] == "Observation" and any(c.get("code") == "partner_hiv" for c in x["code"]["coding"]))
+    assert hiv["meta"]["security"][0]["code"] == "R" and hiv["dataAbsentReason"]
+    assert "Mariama" not in r["sms"]["text"]  # SMS never carries her name
+    assert "Gestational age: 20.0 weeks" in r["handover"] and "Pre-eclampsia" in r["handover"]
+
+
+def test_profile_rejects_missing_answers(client):
+    client.post("/api/woman/new", json=REG)
+    r = client.post("/api/profile", json={"answers": {"ga_source": "lmp"}})
+    assert r.status_code == 422 and "please answer" in r.json()["detail"]
+
+
+def test_registration_requires_first_name(client):
+    r = client.post("/api/woman/new", json={"national_id": "none", "age_years": 24, "details": {}})
+    assert r.status_code == 422 and "First name" in r.json()["detail"]
+
+
+def test_speak_question_and_option(client):
+    for body in ({"questionnaire": "anc-profile", "question": "gravida"}, {"questionnaire": "anc-profile", "question": "tobacco", "option": "exposed"}):
+        r = client.post("/api/speak", json=body | {"lang": "en"})
+        assert r.status_code == 200, body

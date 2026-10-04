@@ -244,3 +244,15 @@ pre.mono { white-space: pre-wrap; font: .82rem/1.5 ui-monospace, Menlo, monospac
 .stepper .chip.on { border-color: var(--blue); }
 .card-code { font-size: 2.6rem; font-weight: 800; letter-spacing: .12em; color: var(--blue-700); margin: 10px 0 6px; font-family: ui-monospace, Menlo, monospace; }
 .card-input { font-size: 1.6rem; text-align: center; letter-spacing: .15em; font-weight: 700; font-family: ui-monospace, Menlo, monospace; }
+
+/* DAK question cards */
+.qcard .q + .q { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
+.section-kicker { font-size: .8rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--blue); margin-bottom: 10px; }
+.tick { width: 30px; height: 30px; flex: none; border: 2px solid var(--ink-3); display: grid; place-items: center; color: #fff; }
+.tick.single { border-radius: 50%; }
+.tick.multi { border-radius: 8px; }
+.opt.on .tick { background: var(--blue); border-color: var(--blue); }
+.tick svg.i { width: 18px; height: 18px; stroke-width: 3; }
+.q .opt { padding: 4px 6px 4px 8px; }
+.q .opt-main { min-height: 50px; }
+.q .opt + .opt { margin-top: 8px; }

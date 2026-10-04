@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import uuid
 
+from . import questionnaire
 from .confirm import label
 from .encounter import Encounter
 
@@ -33,6 +34,14 @@ ID = f"{FHIR}/id"
 DANGER_CS = f"{FHIR}/CodeSystem/danger-signs"
 OBS_CS = f"{FHIR}/CodeSystem/observations"
 CAPTURE_CS = f"{FHIR}/CodeSystem/capture"
+PROFILE_CS = f"{FHIR}/CodeSystem/anc-profile"  # placeholder: SMART ANC codes after Annex A extraction
+DAR = "http://terminology.hl7.org/CodeSystem/data-absent-reason"
+SOCIAL = {"education", "occupation", "caffeine_high", "alcohol_substance", "tobacco", "partner_hiv", "past_substance_use"}
+
+
+def _opt(qid: str, value: str) -> dict:
+    return {"coding": [{"system": f"{PROFILE_CS}-{qid.replace('_', '-')}", "code": value,
+                        "display": questionnaire.display("anc-profile", qid, value)}]}
 LOINC = "http://loinc.org"
 UCUM = "http://unitsofmeasure.org"
 OBS_CAT = "http://terminology.hl7.org/CodeSystem/observation-category"
@@ -90,6 +99,21 @@ def build_bundle(e: Encounter) -> dict:
 
     # ---- identity, places, people, devices ----
     patient = {"resourceType": "Patient", "identifier": [_ident(f"{ID}/card", e.card_code)], "gender": "female"}
+    d = e.details
+    if d.get("first_name") or d.get("family_name"):
+        patient["name"] = [{k: v for k, v in (("given", [d["first_name"]] if d.get("first_name") else None),
+                                              ("family", d.get("family_name"))) if v}]
+    if d.get("phone"):
+        patient["telecom"] = [{"system": "phone", "value": d["phone"], "use": "mobile"}]
+    if d.get("address"):
+        patient["address"] = [{"text": d["address"]}]
+    if d.get("alt_contact_name") or d.get("alt_contact_phone"):
+        contact = {"relationship": [{"text": "Emergency contact"}]}
+        if d.get("alt_contact_name"):
+            contact["name"] = {"text": d["alt_contact_name"]}
+        if d.get("alt_contact_phone"):
+            contact["telecom"] = [{"system": "phone", "value": d["alt_contact_phone"]}]
+        patient["contact"] = [contact]
     if e.birth_date:
         patient["birthDate"] = e.birth_date  # FHIR allows year-only precision for an estimate
         if e.birth_date_estimated:
@@ -182,16 +206,35 @@ def build_bundle(e: Encounter) -> dict:
             u = obs(f, r, f)
             (measure_obs if f == "urine_protein" else sign_obs if f == "bleeding_amount" else measure_obs).append(u)
 
-    # Obstetric history from registration (keyed by the worker). Placeholder codes until SMART ANC mapping.
-    for f, v in e.history.items():
-        r = {"category": [{"coding": [{"system": OBS_CAT, "code": "social-history"}]}], "code": _ov_code(OBS_CS, f)}
-        if isinstance(v, int):
+    # ANC.B6 first-contact profile (keyed by the worker). One Observation per answered question, coded in
+    # the Ovamha profile code system with the DAK data element ID; LMP uses LOINC 8665-2 (spec 7.4).
+    for qid, v in e.profile.items():
+        q = questionnaire.find_question("anc-profile", qid)
+        if not q:
+            continue
+        code = {"coding": [{"system": PROFILE_CS, "code": qid, "display": q["label"]}], "text": f"{q['label']} ({q['dak']})"}
+        if qid == "lmp":
+            code["coding"].insert(0, {"system": LOINC, "code": "8665-2", "display": "Last menstrual period start date"})
+        r = {"category": [{"coding": [{"system": OBS_CAT, "code": "social-history" if q["id"] in SOCIAL else "exam"}]}], "code": code}
+        if v == "unknown" or v == ["unknown"]:
+            r["dataAbsentReason"] = {"coding": [{"system": DAR, "code": "asked-unknown"}]}
+        elif q["type"] == "count":
             r["valueInteger"] = v
-        else:
-            r["dataAbsentReason"] = {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/data-absent-reason", "code": "asked-unknown"}]}
+        elif q["type"] == "date":
+            r["valueDateTime"] = v
+        elif q["type"] == "single":
+            r["valueCodeableConcept"] = _opt(qid, v)
+        elif q["type"] == "multi":
+            r["component"] = [{"code": _opt(qid, x), "valueBoolean": True} for x in v]
+        if q.get("sensitive"):
+            r["meta"] = {"security": [{"system": "http://terminology.hl7.org/CodeSystem/v3-Confidentiality", "code": "R"}]}
         u = b.add({"resourceType": "Observation", "status": "final", "subject": subj, "encounter": enc_ref,
-                   "effectiveDateTime": e.at, "performer": [{"reference": role}], **r}, rid(f"history/{f}"))
+                   "effectiveDateTime": e.at, "performer": [{"reference": role}], **r}, rid(f"profile/{qid}"))
         by_capture["keyed"].append(u)
+    if e.profile_derived.get("edd"):
+        b.add({"resourceType": "Observation", "status": "final", "subject": subj, "encounter": enc_ref, "effectiveDateTime": e.at,
+               "code": {"coding": [{"system": PROFILE_CS, "code": "edd", "display": "Estimated date of delivery (LMP + 280 days)"}]},
+               "valueDateTime": e.profile_derived["edd"]}, rid("profile/edd"))
 
     # ---- rule results ----
     for res in e.results:

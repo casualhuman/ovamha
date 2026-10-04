@@ -1,0 +1,25 @@
+{
+  "_note": "ANC.A4 Gather client details (WHO ANC DAK 2021, Table 7). Ovamha woman ID, card code, national ID check and date of birth/age are handled on the First visit screen; these are the remaining details. Option lists are drafts pending the DAK Annex A data dictionary. 'say' holds the read-aloud wording per language; empty kri/yo falls back to English.",
+  "id": "anc-registration",
+  "sections": [
+    {
+      "id": "details",
+      "title": "Her details",
+      "questions": [
+        {"id": "first_name", "dak": "ANC.A4.DE2", "type": "text", "label": "First name", "say": {"en": "What is her first name?", "kri": "", "yo": ""}},
+        {"id": "family_name", "dak": "ANC.A4.DE3", "type": "text", "label": "Family name", "optional": true, "say": {"en": "What is her family name?", "kri": "", "yo": ""}},
+        {"id": "address", "dak": "ANC.A4.DE7", "type": "text", "label": "Community or village", "optional": true, "say": {"en": "Where does she live? Her community or village.", "kri": "", "yo": ""}},
+        {"id": "phone", "dak": "ANC.A4.DE8", "type": "phone", "label": "Mobile phone number", "optional": true, "say": {"en": "Her mobile phone number, if she has one.", "kri": "", "yo": ""}},
+        {"id": "wants_reminders", "dak": "ANC.A4.DE9", "type": "single", "label": "Wants SMS reminders?", "optional": true, "show_if": {"phone": "any"},
+         "say": {"en": "Does she want SMS reminders about her antenatal visits?", "kri": "", "yo": ""},
+         "options": [{"value": "yes", "label": "Yes"}, {"value": "no", "label": "No"}]},
+        {"id": "alt_contact_name", "dak": "ANC.A4.DE10", "type": "text", "label": "Emergency contact name", "optional": true, "say": {"en": "Who should we contact in an emergency? For example her partner, mother or sister.", "kri": "", "yo": ""}},
+        {"id": "alt_contact_phone", "dak": "ANC.A4.DE11", "type": "phone", "label": "Emergency contact phone", "optional": true, "say": {"en": "The emergency contact's phone number.", "kri": "", "yo": ""}},
+        {"id": "cohabitants", "dak": "ANC.A4.DE12", "type": "multi", "label": "Who does she live with?", "optional": true,
+         "say": {"en": "Who does she live with?", "kri": "", "yo": ""},
+         "options": [{"value": "partner", "label": "Partner"}, {"value": "parents", "label": "Parents"}, {"value": "siblings", "label": "Siblings"},
+                     {"value": "extended_family", "label": "Extended family"}, {"value": "friends", "label": "Friends"}, {"value": "no_one", "label": "No one", "exclusive": true}]}
+      ]
+    }
+  ]
+}

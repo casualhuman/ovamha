@@ -19,7 +19,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import fhir_client, registry, sms, sync
+from . import fhir_client, questionnaire, registry, sms, sync
 from .asr import model_name, transcribe
 from .auth import Worker, login
 from .confirm import KEYPAD_FIELDS, Session, fmt, label
@@ -76,7 +76,8 @@ def _woman_view(w: registry.Woman | None) -> dict | None:
         return None
     return {"card_code": registry.display(w.card_code), "visits": w.visits, "last_visit": w.last_visit, "new": w.visits == 0,
             "id_check": w.national_id, "birth_date": w.birth_date, "birth_date_estimated": w.birth_date_estimated,
-            "previous_pregnancies": w.previous_pregnancies, "births": w.births}
+            "name": " ".join(x for x in (w.details.get("first_name"), w.details.get("family_name")) if x),
+            "profile_done": bool(w.profile), "profile_derived": questionnaire.derived(w.profile) if w.profile else {}}
 
 
 def _rule_view(results) -> dict:
@@ -107,6 +108,7 @@ def state(v: Visit) -> dict:
         "worker": v.worker.__dict__, "lang": v.lang, "transcript": v.transcript, "notes": v.notes,
         "items": items, "preview": _rule_view(evaluate(s.confirmed)) if s.confirmed else None,
         "finished": v.encounter is not None, "woman": _woman_view(v.woman),
+        "needs_profile": bool(v.woman and not v.woman.profile),
     }
 
 
@@ -156,18 +158,46 @@ class RegisterIn(BaseModel):
     consent: bool = False
     birth_date: str | None = None  # exact, YYYY-MM-DD
     age_years: int | None = None  # or her estimated age
-    previous_pregnancies: int | str | None = None  # count or "unknown"
-    births: int | str | None = None
+    details: dict = {}  # ANC.A4 answers (content/questions/anc-registration.json)
 
 
 @app.post("/api/woman/new")
 def woman_new(body: RegisterIn, v: Visit = Depends(visit)):
     """First visit: ID question first, then her woman ID and card number are created (always)."""
+    details, problems = questionnaire.validate("anc-registration", body.details)
+    if problems:
+        raise HTTPException(422, " ".join(problems))
     try:
         v.woman = registry.register(v.worker.worker_id, body.national_id, body.consent, body.birth_date,
-                                    body.age_years, body.previous_pregnancies, body.births)
+                                    body.age_years, details)
     except ValueError as exc:
         raise HTTPException(422, str(exc))
+    return state(v)
+
+
+QUESTION_SETS = {"anc-registration", "anc-profile"}
+
+
+@app.get("/api/questions/{name}")
+def get_questions(name: str, v: Visit = Depends(visit)):
+    if name not in QUESTION_SETS:
+        raise HTTPException(404, "Unknown question set.")
+    return questionnaire.load(name)
+
+
+class ProfileIn(BaseModel):
+    answers: dict
+
+
+@app.post("/api/profile")
+def save_profile(body: ProfileIn, v: Visit = Depends(visit)):
+    """ANC.B6: her history and profile, collected at her first contact (after the quick check)."""
+    if not v.woman:
+        raise HTTPException(409, "Choose First visit or Returning first.")
+    profile, problems = questionnaire.validate("anc-profile", body.answers)
+    if problems:
+        raise HTTPException(422, " ".join(problems))
+    v.woman = registry.save_profile(v.woman.card_code, profile)
     return state(v)
 
 
@@ -316,6 +346,9 @@ def number_voice(audio: UploadFile = File(...), field: str = Form(...), lang: st
 # ---------------- read aloud ----------------
 
 class SpeakIn(BaseModel):
+    questionnaire: str | None = None
+    question: str | None = None
+    option: str | None = None
     prompt: str | None = None
     field: str | None = None
     value: str | float | bool | None = None
@@ -326,7 +359,12 @@ class SpeakIn(BaseModel):
 @app.post("/api/speak")
 def do_speak(body: SpeakIn, v: Visit = Depends(visit)):
     lang = body.lang or v.lang
-    if body.prompt:
+    if body.questionnaire and body.question:
+        q = questionnaire.find_question(body.questionnaire, body.question) if body.questionnaire in QUESTION_SETS else None
+        if not q:
+            raise HTTPException(404, "Unknown question.")
+        text, spoken_lang = questionnaire.say(q, lang, body.option)
+    elif body.prompt:
         text, spoken_lang = text_in(lang, body.prompt, body.text or body.prompt)
     elif body.field:
         val = v.session.proposals[body.field].value if body.value is None and body.field in v.session.proposals else body.value
@@ -359,7 +397,8 @@ def do_finish(v: Visit = Depends(visit)):
     e.episode_id = v.woman.episode_id or e.episode_id
     e.national_id = v.woman.national_id
     e.birth_date, e.birth_date_estimated = v.woman.birth_date, v.woman.birth_date_estimated
-    e.history = {k: getattr(v.woman, k) for k in ("previous_pregnancies", "births") if getattr(v.woman, k) is not None}
+    e.details, e.profile = dict(v.woman.details), dict(v.woman.profile)
+    e.profile_derived = questionnaire.derived(v.woman.profile) if v.woman.profile else {}
     v.encounter = e
     out_sms = None
     if e.referral:
