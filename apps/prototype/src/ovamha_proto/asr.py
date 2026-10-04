@@ -15,22 +15,29 @@ No speech enhancement (it degraded medical ASR in Chondhekar et al.). A quality 
 from __future__ import annotations
 
 import os
+import unicodedata
 from dataclasses import dataclass
 from functools import lru_cache
+from pathlib import Path
 
 import numpy as np
 
 SAMPLE_RATE = 16_000
+# Yoruba: LyngualLabs/whisper-small-yoruba (Apache 2.0) converted to CTranslate2 int8 by
+# scripts/convert_yoruba_asr.sh; used automatically when present (not committed: weights).
+_YO_LOCAL = Path(__file__).resolve().parents[4] / "ml/models/whisper-small-yoruba-ct2"
+_YO_DEFAULT = str(_YO_LOCAL) if (_YO_LOCAL / "model.bin").exists() else "small"
 MODELS = {
     "en": os.environ.get("OVAMHA_ASR_EN", "small"),
-    "yo": os.environ.get("OVAMHA_ASR_YO", "small"),
+    "yo": os.environ.get("OVAMHA_ASR_YO", _YO_DEFAULT),
     "kri": os.environ.get("OVAMHA_ASR_KRI", "small"),
 }
 # Whisper language code used for decoding.
 DECODE_LANG = {"en": "en", "yo": "yo", "kri": "en"}
 FALLBACK_NOTE = {
     "kri": "Krio: Whisper has no Krio model; decoded as English (fallback). MMS/DONDO pending.",
-    "yo": "Yoruba: base Whisper small (weak on Yoruba). LyngualLabs model pending conversion.",
+    "yo": ("Yoruba: Yoruba fine-tuned Whisper small (see ml/eval/results/yoruba-asr-fleurs.txt)."
+           if MODELS["yo"] != "small" else "Yoruba: base Whisper small (weak on Yoruba); Yoruba model not installed."),
 }
 
 
@@ -44,7 +51,8 @@ class AsrResult:
 
 def model_name(lang: str) -> str:
     m = MODELS.get(lang, "small")
-    return f"faster-whisper {'openai/whisper-small' if m == 'small' else m} (CTranslate2 int8)"
+    label = "openai/whisper-small" if m == "small" else ("LyngualLabs/whisper-small-yoruba" if "yoruba" in m else m)
+    return f"faster-whisper {label} (CTranslate2 int8)"
 
 
 @lru_cache(maxsize=3)
@@ -70,6 +78,14 @@ def quality_gate(audio: np.ndarray) -> str | None:
     return None
 
 
+def latin_share(text: str) -> float:
+    """Share of letters that are Latin script (Yoruba and Krio letters such as ẹ, ọ, ɔ, ɛ count)."""
+    letters = [c for c in unicodedata.normalize("NFD", text) if c.isalpha()]
+    if not letters:
+        return 1.0
+    return sum(unicodedata.name(c, "").startswith("LATIN") for c in letters) / len(letters)
+
+
 def transcribe(path: str, lang: str = "en") -> AsrResult:
     from faster_whisper.audio import decode_audio
 
@@ -79,8 +95,13 @@ def transcribe(path: str, lang: str = "en") -> AsrResult:
     if problem:
         return AsrResult("", name, False, problem)
     model = _load(MODELS.get(lang, "small"))
-    segments, _info = model.transcribe(audio, language=DECODE_LANG.get(lang, "en"), beam_size=5, vad_filter=True)
+    # Few temperature retries and no conditioning on earlier text: a model that is weak in this
+    # language otherwise loops and retries for minutes on a short clip.
+    segments, _info = model.transcribe(audio, language=DECODE_LANG.get(lang, "en"), beam_size=5, vad_filter=True,
+                                       temperature=(0.0, 0.4), condition_on_previous_text=False)
     text = " ".join(s.text.strip() for s in segments).strip()
     if not text:
         return AsrResult("", name, False, "No speech recognised. Please repeat.")
+    if latin_share(text) < 0.8:  # all three languages are written in Latin script
+        return AsrResult("", name, False, "The speech was not recognised clearly. Please repeat, or type the description.")
     return AsrResult(text, name, True, FALLBACK_NOTE.get(lang, ""))

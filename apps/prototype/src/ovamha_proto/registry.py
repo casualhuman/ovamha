@@ -183,8 +183,14 @@ def seed_demo(today: date | None = None) -> list[str]:
         history = [{**{k: v for k, v in h.items() if k != "weeks_ago"},
                     "at": (today - timedelta(weeks=h.get("weeks_ago", 0))).isoformat()} for h in d.get("history", [])]
         if code in data:
-            if history and not data[code].get("history"):  # backfill demo women seeded by an earlier version
-                data[code]["history"] = history
+            # A demo woman seeded by an earlier version picks up what was added since:
+            # her earlier check (history) and new demo details (e.g. her demo phone).
+            old, changed = data[code], False
+            if history and not old.get("history"):
+                old["history"], changed = history, True
+            if old.get("created_by") == "demo-seed" and any(k not in old["details"] for k in d.get("details", {})):
+                old["details"], changed = {**d["details"], **old["details"]}, True
+            if changed:
                 added.append(code)
             continue
         profile = dict(d["profile"])

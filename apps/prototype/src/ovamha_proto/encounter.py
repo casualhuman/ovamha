@@ -51,6 +51,7 @@ class Encounter:
     decision: dict | None = None  # the WORKER's decision: {"choice": "urgent"|"planned"|"none", "reason", "at"}
     referral_steps: dict = field(default_factory=dict)  # consent, checklist done, call/ambulance times
     sms: dict | None = None  # {"text", "sent", "channel"} once the referral SMS is sent
+    reminder: dict | None = None  # {"text", "channel", "at", "to"} once the appointment reminder SMS is sent
     referral_status: str = "requested"  # requested -> accepted (ACK) | rejected (FULL)
 
     @property

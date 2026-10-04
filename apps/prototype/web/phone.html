@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0072C6">
+  <title>Demo phone</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230072C6'/%3E%3Cpath d='M16 8v16M8 16h16' stroke='white' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+  <style>
+    /* Demo phone: shows the SMS messages Ovamha sends (simulated or by GSM modem), as they arrive. */
+    :root { --blue: #0072C6; --blue-50: #EAF4FC; --ink: #0E2235; --ink-2: #4A6075; --ink-3: #8397A9; --line: #E3ECF4; --bg: #F4F7FA; --card: #fff; --amber: #B45F06; --amber-50: #FFF4E5; --green: #12805C; --green-50: #E7F6F0; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; justify-content: center; min-height: 100vh; }
+    .phone { width: 100%; max-width: 400px; background: var(--card); min-height: 100vh; display: flex; flex-direction: column; }
+    @media (min-width: 520px) { body { padding: 24px 16px; } .phone { min-height: 760px; max-height: 860px; border-radius: 36px; border: 10px solid #0E2235; overflow: hidden; } }
+    .status { display: flex; justify-content: space-between; padding: 10px 20px 4px; font-size: .8rem; font-weight: 600; }
+    header { padding: 8px 16px 12px; border-bottom: 1px solid var(--line); }
+    header h1 { font-size: 1.15rem; margin: 0 0 10px; }
+    .tabs { display: flex; gap: 8px; }
+    .tabs button { flex: 1; border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 8px 10px; font: inherit; font-size: .9rem; font-weight: 600; color: var(--ink-2); cursor: pointer; }
+    .tabs button.on { background: var(--blue); border-color: var(--blue); color: #fff; }
+    .who { font-size: .8rem; color: var(--ink-3); margin-top: 8px; }
+    main { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+    .day { align-self: center; font-size: .75rem; color: var(--ink-3); }
+    .msg { max-width: 85%; padding: 10px 14px; border-radius: 18px; font-size: .95rem; word-break: break-word; }
+    .msg.in { align-self: flex-start; background: var(--blue-50); border-bottom-left-radius: 6px; }
+    .msg.out { align-self: flex-end; background: var(--blue); color: #fff; border-bottom-right-radius: 6px; }
+    .msg .meta { display: block; font-size: .72rem; opacity: .7; margin-top: 4px; }
+    .msg.new { animation: pop .5s ease; }
+    @keyframes pop { from { transform: scale(.9); opacity: 0; } to { transform: none; opacity: 1; } }
+    .badge { display: inline-block; font-size: .7rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-left: 6px; }
+    .badge.sim { background: var(--amber-50); color: var(--amber); }
+    .badge.gsm { background: var(--green-50); color: var(--green); }
+    .empty { color: var(--ink-3); text-align: center; margin-top: 40px; font-size: .95rem; }
+    .banner { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 14px; font-size: .9rem; box-shadow: 0 8px 24px rgba(14,34,53,.25); display: none; max-width: 360px; }
+    form { padding: 24px 16px; display: grid; gap: 12px; }
+    form label { font-size: .85rem; color: var(--ink-2); display: grid; gap: 6px; }
+    form input { font: inherit; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; }
+    form button { font: inherit; font-weight: 700; padding: 14px; border: 0; border-radius: 14px; background: var(--blue); color: #fff; cursor: pointer; }
+    .err { color: #C62828; font-size: .9rem; min-height: 1em; }
+    footer { padding: 10px 16px 14px; font-size: .75rem; color: var(--ink-3); border-top: 1px solid var(--line); }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <div class="status"><span id="clock"></span><span>SMS · offline</span></div>
+    <header>
+      <h1>Messages</h1>
+      <div class="tabs" role="tablist">
+        <button class="on" data-tab="her" role="tab">Her phone</button>
+        <button data-tab="hospital" role="tab">Hospital phone</button>
+      </div>
+      <div class="who" id="who"></div>
+    </header>
+    <main id="list"></main>
+    <footer>Demo phone: shows the SMS MaternalSave sends. Without a GSM modem they are simulated and never leave this device.</footer>
+  </div>
+  <div class="banner" id="banner"></div>
+  <script>
+    const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    let token = null, tab = "her", seen = null, data = { messages: [], hospital: "" };
+    try { token = (JSON.parse(localStorage.getItem("ovamha") || sessionStorage.getItem("ovamha")) || {}).token || null; } catch { /* storage blocked */ }
+    try { token = token || sessionStorage.getItem("ovamha-phone"); } catch { /* storage blocked */ }
+
+    function clock() { document.getElementById("clock").textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); }
+    setInterval(clock, 10000); clock();
+
+    function signIn(msg = "") {
+      document.getElementById("list").innerHTML = `<form id="f"><div>Sign in to see the messages (the same username and PIN as the app).</div>
+        <label>Username<input id="u" autocomplete="username" required></label>
+        <label>PIN<input id="p" type="password" inputmode="numeric" autocomplete="current-password" required></label>
+        <div class="err">${esc(msg)}</div><button>Sign in</button></form>`;
+      document.getElementById("f").onsubmit = async (e) => {
+        e.preventDefault();
+        const r = await fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: document.getElementById("u").value, pin: document.getElementById("p").value }) });
+        if (!r.ok) return signIn((await r.json()).detail || "Could not sign in.");
+        token = (await r.json()).token;
+        try { sessionStorage.setItem("ovamha-phone", token); } catch { /* fine */ }
+        poll();
+      };
+    }
+
+    function render() {
+      const hosp = data.hospital;
+      const mine = data.messages.filter((m) => tab === "hospital" ? m.number === hosp : m.number !== hosp);
+      document.getElementById("who").textContent = tab === "hospital" ? `Referral hospital ${hosp}` : `The woman's phone${mine[0] ? " " + mine[mine.length - 1].number : ""}`;
+      const list = document.getElementById("list");
+      if (!mine.length) {
+        list.innerHTML = `<div class="empty">${tab === "hospital" ? "No referral messages yet. They arrive when a worker refers urgently." : "No reminders yet. One arrives when a visit ends and she agreed to SMS reminders."}</div>`;
+        return;
+      }
+      list.innerHTML = mine.map((m) => {
+        const t = new Date(m.at), dir = m.direction === "out" ? "in" : "out";  // Ovamha's "out" is this phone's "in"
+        const ch = m.channel === "SIMULATED" ? `<span class="badge sim">Simulated</span>` : `<span class="badge gsm">${m.channel === "android-emulator" ? "Android emulator" : "GSM"}</span>`;
+        const isNew = seen && !seen.has(m.at + m.text);
+        return `<div class="msg ${dir} ${isNew ? "new" : ""}">${dir === "in" ? "<b>OVAMHA</b><br>" : ""}${esc(m.text)}
+          <span class="meta">${t.toLocaleDateString([], { day: "numeric", month: "short" })} ${t.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}${ch}</span></div>`;
+      }).join("");
+      list.scrollTop = list.scrollHeight;
+    }
+
+    async function poll() {
+      if (!token) return signIn();
+      const r = await fetch("/api/sms/log", { headers: { Authorization: "Bearer " + token } }).catch(() => null);
+      if (!r) return setTimeout(poll, 3000);
+      if (r.status === 401) { token = null; try { sessionStorage.removeItem("ovamha-phone"); } catch { /* fine */ } return signIn("Please sign in again."); }
+      data = await r.json();
+      const keys = new Set(data.messages.map((m) => m.at + m.text));
+      const fresh = seen ? data.messages.filter((m) => !seen.has(m.at + m.text) && m.direction === "out") : [];
+      if (fresh.length) {
+        const m = fresh[fresh.length - 1], to = m.number === data.hospital ? "hospital" : "her";
+        tab = to; document.querySelectorAll("[data-tab]").forEach((b) => b.classList.toggle("on", b.dataset.tab === tab));
+        const b = document.getElementById("banner");
+        b.textContent = `New SMS to ${to === "hospital" ? "the hospital" : "her phone"}: ${m.text.slice(0, 60)}…`;
+        b.style.display = "block"; setTimeout(() => { b.style.display = "none"; }, 4000);
+        if (navigator.vibrate) navigator.vibrate(200);
+      }
+      render();
+      seen = keys;
+      setTimeout(poll, 3000);
+    }
+    document.querySelectorAll("[data-tab]").forEach((b) => b.onclick = () => {
+      tab = b.dataset.tab; document.querySelectorAll("[data-tab]").forEach((x) => x.classList.toggle("on", x === b)); render();
+    });
+    poll();
+  </script>
+</body>
+</html>

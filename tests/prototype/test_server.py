@@ -194,3 +194,23 @@ def test_speak_question_and_option(client):
     for body in ({"questionnaire": "anc-profile", "question": "gravida"}, {"questionnaire": "anc-profile", "question": "tobacco", "option": "exposed"}):
         r = client.post("/api/speak", json=body | {"lang": "en"})
         assert r.status_code == 200, body
+
+
+def test_routine_visit_sends_reminder_only_with_consent(client):
+    reg = {**REG, "details": {"first_name": "Mariama", "phone": "+23276000999", "wants_reminders": "yes"}, "lmp": None}
+    client.post("/api/woman/new", json=reg)
+    client.post("/api/measure", json={"field": "gestational_age_weeks", "value": "30"})
+    client.post("/api/confirm", json={"field": "gestational_age_weeks"})
+    client.post("/api/finish")
+    r = client.post("/api/decision", json={"choice": "none"}).json()
+    assert r["reminder"]["to"] == "+23276000999" and "Mariama" not in r["reminder"]["text"]
+    log = client.get("/api/sms/log").json()
+    assert log["messages"][-1]["kind"] == "reminder"
+
+
+def test_no_reminder_without_consent(client):
+    client.post("/api/woman/new", json={**REG, "details": {"first_name": "Mariama", "phone": "+23276000999", "wants_reminders": "no"}})
+    client.post("/api/measure", json={"field": "gestational_age_weeks", "value": "30"})
+    client.post("/api/confirm", json={"field": "gestational_age_weeks"})
+    client.post("/api/finish")
+    assert client.post("/api/decision", json={"choice": "none"}).json()["reminder"] is None

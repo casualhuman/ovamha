@@ -477,8 +477,12 @@ def do_finish(v: Visit = Depends(visit)):
     v.encounter, v.bundle = e, None
     e.management = guideline.management(e.advice, confirmed, ga)
     e.routine = guideline.routine_care(ga, first_contact=v.woman.visits == 0)
-    return {**_rule_view(results), **_advice_view(e), "management": e.management, "routine": e.routine,
+    view = {**_rule_view(results), **_advice_view(e), "management": e.management, "routine": e.routine,
             "code": e.code, "card_code": registry.display(e.card_code)}
+    # Translated copies (e.g. Yoruba), shown with the English one tap away; the English stays the record.
+    view["translations"] = {l: t for l in ("yo", "kri") if (t := guideline.localise(view, l))}
+    view["lang"] = v.lang
+    return view
 
 
 class DecisionIn(BaseModel):
@@ -573,6 +577,13 @@ def _complete(v: Visit) -> dict:
         audit.log("sms-sent", v.worker.worker_id, encounter=e.code, channel=m.channel)
         out_sms = {"text": m.text, "channel": m.channel, "at": m.at}
         e.sms = {"text": m.text, "sent": m.at, "channel": m.channel}
+    out_reminder = None
+    if not e.urgent and sms.wants_reminder(e) and not e.reminder:
+        text = sms.reminder_text(e)
+        if text:
+            m = sms.send(text, e.details["phone"], kind="reminder")
+            audit.log("sms-reminder-sent", v.worker.worker_id, encounter=e.code, channel=m.channel)
+            out_reminder = e.reminder = {"text": m.text, "channel": m.channel, "at": m.at, "to": m.number}
     v.bundle = build_bundle(e)
     try:
         validate(v.bundle)
@@ -582,8 +593,14 @@ def _complete(v: Visit) -> dict:
         valid = {"ok": False, "message": str(exc)}
     return {"decision": e.decision, "referral": e.referral, "urgent": e.urgent, "code": e.code,
             "card_code": registry.display(e.card_code), "sync": sync.status(e.code), "handover": handover_text(e),
-            "isbar": isbar(e), "letter": letter(e) if e.referral else None, "sms": out_sms, "status": e.referral_status, "bundle": v.bundle, "valid": valid,
+            "isbar": isbar(e), "letter": letter(e) if e.referral else None, "sms": out_sms, "reminder": out_reminder, "status": e.referral_status, "bundle": v.bundle, "valid": valid,
             "next_contact": e.next_contact}
+
+
+@app.get("/api/sms/log")
+def sms_log(v: Visit = Depends(visit)):
+    """Messages sent and received (the demo phone shows them as they arrive)."""
+    return {"messages": sms.log(), "hospital": sms.REFERRAL_NUMBER}
 
 
 class ReplyIn(BaseModel):
