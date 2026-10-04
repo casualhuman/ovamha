@@ -369,3 +369,21 @@ details.row-item[open] .row-sub { white-space: normal; }
 .modal-x { position: absolute; top: 14px; right: 14px; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; color: var(--ink-2); }
 .modal-x:hover { background: var(--blue-50); }
 .modal .btn { margin-top: 6px; }
+
+/* Sign-in (clean form) */
+.auth { padding: 28px 24px 32px; }
+.auth .brand span { font-size: 1.2rem; }
+.auth-title { font-size: 2rem; margin: 0 0 6px; letter-spacing: -0.02em; }
+.auth-sub { color: var(--ink-2); margin: 0 0 28px; }
+.field-label { display: block; font-weight: 650; font-size: .95rem; margin: 0 0 8px; }
+.field-row { display: flex; justify-content: space-between; align-items: baseline; margin-top: 20px; }
+.field-link { color: var(--blue); font-weight: 650; font-size: .88rem; }
+.field { width: 100%; height: 54px; border: 1.5px solid var(--line); border-radius: 14px; padding: 0 16px; font-size: 1.05rem; outline: none; background: #fff; }
+.field:focus { border-color: var(--blue); box-shadow: 0 0 0 4px var(--blue-50); }
+.field-wrap { position: relative; }
+.field-wrap .field { padding-right: 52px; letter-spacing: .08em; }
+.field-eye { position: absolute; right: 6px; top: 7px; width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; color: var(--ink-3); }
+.keep { display: flex; gap: 12px; align-items: center; margin: 20px 0 6px; font-weight: 500; }
+.keep input { width: 22px; height: 22px; accent-color: var(--blue); }
+.auth .btn { margin-top: 10px; border-radius: 999px; }
+.auth-foot { text-align: center; color: var(--ink-2); margin-top: 28px; font-size: .95rem; }

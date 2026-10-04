@@ -20,6 +20,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(auth, "_failures", {})
     monkeypatch.setattr(sms, "OUTBOX", tmp_path)
     monkeypatch.setenv("OVAMHA_DATA", str(tmp_path))
+    monkeypatch.setenv("OVAMHA_DETECTOR", "rules")  # flow tests must not depend on the (uncommitted) classifier model
     c = TestClient(server.app)
     token = c.post("/api/login", json={"username": "test", "pin": "123456"}).json()["token"]
     c.headers["Authorization"] = f"Bearer {token}"

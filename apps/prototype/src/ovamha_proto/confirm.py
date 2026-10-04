@@ -41,7 +41,7 @@ def label(f: str) -> str:
 class Proposal:
     field: str
     value: object
-    source: str  # "voice-ai-extracted" | "ai-safety-net" | "keypad"
+    source: str  # "voice-ai-extracted" | "voice-ai-classifier" | "ai-safety-net" | "ai-classifier" | "keypad"
     evidence: str = ""
 
 
@@ -63,17 +63,17 @@ class Session:
     sources: dict[str, str] = field(default_factory=dict)
 
     # ---- proposals ----
-    def propose_from_extraction(self, ex: Extraction) -> None:
+    def propose_from_extraction(self, ex: Extraction, source: str = "voice-ai-extracted") -> None:
         for f, fv in ex.fields.items():
             if f == "gestational_age_weeks":
                 continue  # number: keypad (a voiced GA is shown as a hint only)
             if fv.value != NOT_CAPTURED:
-                self.proposals[f] = Proposal(f, fv.value, "voice-ai-extracted", fv.evidence)
+                self.proposals[f] = Proposal(f, fv.value, source, fv.evidence)
 
     def propose_flags(self, flags: list[Flag]) -> None:
         for fl in flags:
             if fl.field not in self.proposals:
-                self.proposals[fl.field] = Proposal(fl.field, True, "ai-safety-net", f"{fl.evidence} ({fl.reason})")
+                self.proposals[fl.field] = Proposal(fl.field, True, fl.source, f"{fl.evidence} ({fl.reason})")
 
     def propose_keypad(self, f: str, value) -> None:
         self.proposals[f] = Proposal(f, value, "keypad")

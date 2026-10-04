@@ -12,7 +12,9 @@ from .encounter import Encounter
 
 SOURCE_TEXT = {
     "voice-ai-extracted": "reported (voice, confirmed)",
+    "voice-ai-classifier": "reported (voice, AI text classifier, confirmed)",
     "ai-safety-net": "raised by AI safety net, confirmed by worker",
+    "ai-classifier": "raised by AI text classifier, confirmed by worker",
     "keypad": "entered on keypad",
 }
 DECISION_TEXT = {"urgent": "Urgent referral", "planned": "Planned referral (not an emergency)", "none": "No referral at this contact"}

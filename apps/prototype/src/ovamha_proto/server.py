@@ -24,12 +24,11 @@ from .asr import model_name, transcribe
 from .auth import Worker, login
 from .confirm import KEYPAD_FIELDS, Session, fmt, label
 from .encounter import Encounter
-from .extract import extract
+from .detect import detect
 from .fhir_bundle import build_bundle, validate
 from .handover import handover_text, isbar, letter
 from .numbers import parse_bp, parse_number
 from .rules import evaluate, questions_to_ask
-from .safety_net import scan
 from .tts import item_text, speak, text_in
 
 WEB = Path(__file__).resolve().parents[2] / "web"
@@ -257,10 +256,11 @@ def do_extract(body: ExtractIn, v: Visit = Depends(visit)):
     _new_session(v)
     v.lang, v.transcript = body.lang, body.transcript
     v.asr_model = v.asr_model or model_name(body.lang)
-    ex = extract(body.transcript, body.lang)
-    v.session.propose_from_extraction(ex)
-    flags = scan(ex)
-    v.session.propose_flags(flags)
+    det = detect(body.transcript, body.lang)
+    ex = det.extraction
+    v.session.propose_from_extraction(ex, det.field_source)
+    v.session.propose_flags(det.flags)
+    v.notes.extend(det.notes)
     ga = ex.fields["gestational_age_weeks"]
     if ga.captured:
         v.notes.append(f"Heard {ga.value} weeks. Enter gestational age in Measurements to confirm it.")

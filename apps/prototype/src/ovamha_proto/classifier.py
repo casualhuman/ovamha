@@ -33,12 +33,10 @@ def sentences(text: str) -> list[str]:
     return parts or [text.strip()]
 
 
-def windows(text: str) -> list[tuple[str, str]]:
-    """(text to score, evidence sentence): every sentence, plus each sentence with the one before it."""
+def windows(text: str) -> list[tuple[str, list[int]]]:
+    """(text to score, indices of its sentences): every sentence, plus each adjacent pair."""
     s = sentences(text)
-    out = [(x, x) for x in s]
-    out += [(f"{s[i - 1]} {s[i]}", s[i]) for i in range(1, len(s))]
-    return out
+    return [(x, [i]) for i, x in enumerate(s)] + [(f"{s[i - 1]} {s[i]}", [i - 1, i]) for i in range(1, len(s))]
 
 
 def build_model(encoder_name_or_dir, n_labels: int):
@@ -80,13 +78,17 @@ class DangerSignClassifier:
             return self.torch.sigmoid(self.model(enc["input_ids"], enc["attention_mask"])).tolist()
 
     def predict(self, text: str, threshold: float | None = None) -> list[Hit]:
-        """Signs scoring at or above the threshold, best evidence sentence for each."""
+        """Signs scoring at or above the threshold. Evidence is the sentence with the highest
+        own score for that sign, so a pair window never points at its neighbour sentence."""
         th = self.threshold if threshold is None else threshold
-        wins = windows(text)
+        sents, wins = sentences(text), windows(text)
+        rows = self.scores([w for w, _ in wins])
+        single = rows[:len(sents)]  # windows() lists single sentences first, in order
         best: dict[str, Hit] = {}
-        for (_, ev), row in zip(wins, self.scores([w for w, _ in wins])):
-            for sign, p in zip(self.labels, row):
+        for (_, idx), row in zip(wins, rows):
+            for j, (sign, p) in enumerate(zip(self.labels, row)):
                 if p >= th and (sign not in best or p > best[sign].score):
+                    ev = sents[max(idx, key=lambda i: single[i][j])]
                     best[sign] = Hit(sign, round(p, 3), ev)
         return sorted(best.values(), key=lambda h: -h.score)
 

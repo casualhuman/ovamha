@@ -37,6 +37,7 @@ class Flag:
     label: str
     evidence: str
     reason: str
+    source: str = "ai-safety-net"  # or "ai-classifier" (detect.py, mode "both")
 
 
 def scan(ex: Extraction) -> list[Flag]:

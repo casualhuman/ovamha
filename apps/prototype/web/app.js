@@ -31,6 +31,8 @@ const P = {
   sms: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h8"/>',
   keyboard: '<rect x="3" y="6" width="18" height="12" rx="2.5"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/>',
   back: '<path d="M7 4L3 8l4 4"/><path d="M3 8h11a5 5 0 0 1 0 10h-3"/>',
+  eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  eyeoff: '<path d="M3 3l18 18M10.6 5.1A10.6 10.6 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a10 10 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
   idcard: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16a3.4 3.4 0 0 1 6.4 0M14 10h4M14 13.5h3"/>',
   cloud: '<path d="M7 18h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.1 11 3.5 3.5 0 0 0 7 18z"/>',
   device: '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
@@ -55,6 +57,17 @@ const store = {
   get(k) { try { return JSON.parse(sessionStorage.getItem(k)); } catch { return null; } },
   set(k, v) { try { sessionStorage.setItem(k, JSON.stringify(v)); } catch { /* private mode: fine */ } },
   del(k) { try { sessionStorage.removeItem(k); } catch { /* ignore */ } },
+};
+// Sign-in session: this tab only, or (Keep me signed in) this device until sign-out.
+const session = {
+  load() { try { return JSON.parse(localStorage.getItem("ovamha") || sessionStorage.getItem("ovamha")); } catch { return null; } },
+  save(v, keep) {
+    try {
+      const where = keep || localStorage.getItem("ovamha") ? localStorage : sessionStorage;
+      where.setItem("ovamha", JSON.stringify(v));
+    } catch { /* private mode: stays signed in for this page only */ }
+  },
+  clear() { try { localStorage.removeItem("ovamha"); sessionStorage.removeItem("ovamha"); } catch { /* ignore */ } },
 };
 
 function toast(msg, ms = 2600) {
@@ -207,48 +220,51 @@ const LOGO = `<svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true"
   <circle cx="40.5" cy="44" r="7.5" fill="#fff"/><path d="M45 17v12M39 23h12" stroke="#7CC0EE" stroke-width="4.5" stroke-linecap="round"/></svg>`;
 const initials = (n) => n.replace(/^(Nurse|CHW|Midwife)\s+/i, "").slice(0, 2).toUpperCase();
 function login() {
-  const keys = [1, 2, 3, 4, 5, 6, 7, 8, 9].map((k) => `<button data-k="${k}">${k}</button>`).join("");
-  return `<div class="screen" style="padding-bottom:28px">
-    <div style="text-align:center;margin:8px 0 22px">${LOGO}
-      <div style="font-weight:800;color:var(--blue);font-size:1.5rem;margin-top:10px">Ovamha</div></div>
-    <h1 style="margin:0 0 4px;font-size:1.35rem">Sign in</h1>
-    <p class="muted small" style="margin:0 0 14px">Checked on this device: no internet needed.</p>
-    <label class="small muted" for="user" style="font-weight:650">Username</label>
-    <input class="input" id="user" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false"
-      placeholder="e.g. fati" value="${esc(S.username || "")}" style="margin:6px 0 4px">
-    <div class="small muted" style="margin-top:14px;font-weight:650">PIN</div>
-    <div class="pin-dots">${[0, 1, 2, 3, 4, 5].map((i) => `<i class="${i < S.pin.length ? "on" : ""}"></i>`).join("")}</div>
-    <div class="err" id="err">${esc(S.err)}</div>
-    <div class="pinpad">${keys}<button class="fn" data-k="clear">Clear</button><button data-k="0">0</button><button class="fn" data-k="del" aria-label="Delete">${icon("back")}</button></div>
+  return `<div class="screen auth">
+    <div class="brand" style="justify-content:flex-start;margin:6px 0 34px">${LOGO.replace('width="64" height="64"', 'width="40" height="40"')}<span>Ovamha</span></div>
+    <h1 class="auth-title">Sign in</h1>
+    <p class="auth-sub">Welcome back. Your account is checked on this device, no internet needed.</p>
+    <form id="loginForm" novalidate>
+      <label class="field-label" for="user">Username</label>
+      <input class="field" id="user" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false"
+        placeholder="e.g. fati" value="${esc(S.username || "")}">
+      <div class="field-row"><label class="field-label" for="pin">PIN</label>
+        <button type="button" class="field-link" id="forgot">Forgot PIN?</button></div>
+      <div class="field-wrap">
+        <input class="field" id="pin" name="pin" type="${S.showPin ? "text" : "password"}" inputmode="numeric" pattern="[0-9]*" maxlength="6"
+          autocomplete="current-password" placeholder="6-digit PIN" value="${esc(S.pin || "")}">
+        <button type="button" class="field-eye" id="eye" aria-label="${S.showPin ? "Hide PIN" : "Show PIN"}">${icon(S.showPin ? "eyeoff" : "eye")}</button>
+      </div>
+      <label class="keep"><input type="checkbox" id="keep" ${S.keep ? "checked" : ""}><span>Keep me signed in on this device</span></label>
+      <div class="err" id="err">${esc(S.err)}</div>
+      <button class="btn primary" type="submit" id="signin">Sign in</button>
+    </form>
+    <p class="auth-foot">No account? Ask your facility admin to create one.</p>
   </div>`;
 }
 bind.login = () => {
-  const u = $("#user");
+  const u = $("#user"), p = $("#pin");
   u.oninput = () => { S.username = u.value; };
-  if (!S.username) u.focus();
-  document.querySelectorAll("[data-k]").forEach((b) => b.onclick = () => pinKey(b.dataset.k));
-};
-document.addEventListener("keydown", (e) => {
-  if (S.screen !== "login" || document.activeElement?.id === "user") return;
-  if (/^\d$/.test(e.key)) pinKey(e.key); else if (e.key === "Backspace") pinKey("del");
-});
-async function pinKey(k) {
-  if (k === "clear") S.pin = ""; else if (k === "del") S.pin = S.pin.slice(0, -1); else if (S.pin.length < 6) S.pin += k;
-  S.err = "";
-  if (S.pin.length === 6 && !(S.username || "").trim()) { S.err = "Enter your username first."; S.pin = ""; }
-  render();
-  if (S.pin.length === 6) {
+  p.oninput = () => { p.value = p.value.replace(/\D/g, "").slice(0, 6); S.pin = p.value; };
+  $("#keep").onchange = (e) => { S.keep = e.target.checked; };
+  $("#eye").onclick = () => { S.showPin = !S.showPin; render(); $("#pin").focus(); };
+  $("#forgot").onclick = () => toast("Ask your facility admin to reset your PIN.", 3500);
+  $("#loginForm").onsubmit = async (e) => {
+    e.preventDefault();
+    if (!(S.username || "").trim() || (S.pin || "").length !== 6) { S.err = "Enter your username and your 6-digit PIN."; render(); return; }
+    const btn = $("#signin"); btn.disabled = true; btn.textContent = "Signing in…";
     try {
       const r = await api("/api/login", { body: { username: S.username, pin: S.pin } });
       S.token = r.token; S.worker = r.worker; S.lang = r.worker.languages?.[0] || "en";
-      store.set("ovamha", { token: S.token, worker: S.worker, lang: S.lang });
-      S.pin = ""; S.username = ""; go("home");
-    } catch (e) { S.err = e.message; S.pin = ""; render(); }
-  }
-}
+      session.save({ token: S.token, worker: S.worker, lang: S.lang }, S.keep);
+      S.pin = ""; S.username = ""; S.err = ""; S.showPin = false; go("home");
+    } catch (err) { S.err = err.message; S.pin = ""; render(); $("#pin").focus(); }
+  };
+  if (!S.username) u.focus(); else p.focus();
+};
 function signOut(silent) {
   if (!silent) api("/api/logout").catch(() => {});
-  S.token = null; S.worker = null; S.username = ""; store.del("ovamha");
+  S.token = null; S.worker = null; S.username = ""; session.clear();
   go("login");
 }
 
@@ -281,7 +297,7 @@ function home() {
 }
 bind.home = () => {
   $("#start").onclick = startCheck;
-  document.querySelectorAll("[data-lang]").forEach((b) => b.onclick = () => { S.lang = b.dataset.lang; store.set("ovamha", { token: S.token, worker: S.worker, lang: S.lang }); render(); });
+  document.querySelectorAll("[data-lang]").forEach((b) => b.onclick = () => { S.lang = b.dataset.lang; session.save({ token: S.token, worker: S.worker, lang: S.lang }); render(); });
 };
 async function startCheck() {
   try {
@@ -588,7 +604,7 @@ async function readBack(text) {
 // ---------------------------------------------------------------- 5. confirm (read-back)
 // Compact list rows: tinted icon, title + one-line subtitle, quiet actions.
 function itemCard(it) {
-  const warn = it.source === "ai-safety-net", ok = it.confirmed;
+  const warn = it.source === "ai-safety-net" || it.source === "ai-classifier", ok = it.confirmed;
   const value = ok ? it.confirmed_value : it.display;
   const sub = warn ? "AI noticed this. Please check." : `Heard: “${it.evidence || ""}”`;
   let acts = "";
@@ -1117,7 +1133,7 @@ function showHostedNotice() {
 (async function boot() {
   try { S.hosted = (await (await fetch("/api/config")).json()).hosted; } catch { S.hosted = false; }
   if (S.hosted) showHostedNotice();
-  const saved = store.get("ovamha");
+  const saved = session.load();
   if (saved?.token) {
     S.token = saved.token; S.worker = saved.worker; S.lang = saved.lang || "en";
     try { await api("/api/state", { method: "GET" }); S.screen = "home"; } catch { S.token = null; S.screen = "login"; }

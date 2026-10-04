@@ -1,0 +1,46 @@
+500 rows from ml/eval/text/maternal_health_afrispeech_mixed_500.csv
+classifier: ml/models/danger-sign-clf (threshold 0.15)
+
+== HELD-OUT synthetic (E201-E400): 200 rows
+  rules: extraction  precision  81.8%  recall  25.1%  (tp  45, fp  10, fn 134); no alarm on 'none' rows: 43/50
+  rules + net        precision  84.3%  recall  48.0%  (tp  86, fp  16, fn  93); no alarm on 'none' rows: 40/50
+  classifier         precision  90.9%  recall  94.4%  (tp 169, fp  17, fn  10); no alarm on 'none' rows: 42/50
+  both               precision  84.2%  recall  95.5%  (tp 171, fp  32, fn   8); no alarm on 'none' rows: 32/50
+
+== HELD-OUT AfriSpeech originals (E401-E500): 100 rows
+  rules: extraction  precision   4.3%  recall 100.0%  (tp   1, fp  22, fn   0); no alarm on 'none' rows: 80/99
+  rules + net        precision   3.3%  recall 100.0%  (tp   1, fp  29, fn   0); no alarm on 'none' rows: 74/99
+  classifier         precision   2.8%  recall 100.0%  (tp   1, fp  35, fn   0); no alarm on 'none' rows: 73/99
+  both               precision   1.8%  recall 100.0%  (tp   1, fp  55, fn   0); no alarm on 'none' rows: 57/99
+
+== dev rows (E001-E200; classifier trained on these): 200 rows
+  rules: extraction  precision  69.4%  recall  19.3%  (tp  34, fp  15, fn 142); no alarm on 'none' rows: 41/50
+  rules + net        precision  78.8%  recall  38.1%  (tp  67, fp  18, fn 109); no alarm on 'none' rows: 39/50
+  classifier         precision  96.7%  recall  99.4%  (tp 175, fp   6, fn   1); no alarm on 'none' rows: 48/50
+  both               precision  88.0%  recall 100.0%  (tp 176, fp  24, fn   0); no alarm on 'none' rows: 37/50
+
+== per sign, held-out rows (P / R)  rules: extraction        rules + net         classifier               both
+  abdominal_pain               50.0 /  16.7       60.0 /  25.0       66.7 / 100.0       63.2 / 100.0
+  breathing_difficulty         50.0 /   9.1       66.7 /  18.2       60.0 /  81.8       56.2 /  81.8
+  convulsions                  62.5 /  50.0       75.0 /  90.0       83.3 / 100.0       66.7 / 100.0
+  dizziness                    75.0 /  50.0       75.0 /  50.0       92.3 / 100.0       80.0 / 100.0
+  fainting                     85.7 /  54.5       88.9 /  72.7       78.6 / 100.0       73.3 / 100.0
+  fever                        66.7 /  71.4       70.6 /  85.7       93.3 / 100.0       73.7 / 100.0
+  foul_discharge                -   /   0.0       50.0 /  18.2      100.0 /  90.9       83.3 /  90.9
+  headache                     66.7 /  33.3       75.0 /  50.0       84.6 /  91.7       75.0 / 100.0
+  reduced_fetal_movement        -   /   0.0      100.0 /   7.7       69.2 /  69.2       69.2 /  69.2
+  swelling                      -   /   0.0       61.9 /  92.9       82.4 / 100.0       63.6 / 100.0
+  unconscious                   -   /   0.0       87.5 /  63.6       90.9 /  90.9       90.9 /  90.9
+  vaginal_bleeding             40.0 /  76.9       42.3 /  84.6       50.0 /  92.3       36.1 / 100.0
+  visual_disturbance           66.7 /  18.2       66.7 /  18.2       73.3 / 100.0       68.8 / 100.0
+  vomiting                      -   /   0.0       66.7 /  30.8      100.0 / 100.0       86.7 / 100.0
+  waters_broken                 -   /   0.0      100.0 /   8.3       63.2 / 100.0       63.2 / 100.0
+
+== by category, held-out rows (classifier)
+  distractor  recall   -  %  false alarms on unlabelled rows: 25/106
+  euphemism   recall  80.0%  false alarms on unlabelled rows: 0/0
+  indirect    recall  96.2%  false alarms on unlabelled rows: 0/0
+  mixed       recall  91.4%  false alarms on unlabelled rows: 0/0
+  negation    recall   -  %  false alarms on unlabelled rows: 6/34
+  none        recall   -  %  false alarms on unlabelled rows: 3/9
+  past        recall 100.0%  false alarms on unlabelled rows: 0/0

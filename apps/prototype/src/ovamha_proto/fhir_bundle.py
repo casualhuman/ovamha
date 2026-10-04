@@ -61,7 +61,8 @@ NUMERIC_UNITS = {
     "fetal_heart_rate": ("/min", "/min"),
 }
 # Capture method -> Ovamha capture code (spec section 12).
-CAPTURE = {"keypad": "keyed", "voice-ai-extracted": "spoken-ai-extracted-confirmed", "ai-safety-net": "ai-flag-confirmed"}
+CAPTURE = {"keypad": "keyed", "voice-ai-extracted": "spoken-ai-extracted-confirmed", "voice-ai-classifier": "spoken-ai-extracted-confirmed",
+           "ai-safety-net": "ai-flag-confirmed", "ai-classifier": "ai-flag-confirmed"}
 
 
 def _urn() -> str:
@@ -187,7 +188,7 @@ def build_bundle(e: Encounter) -> dict:
     }, _ident(f"{ID}/device-model", f"asr/{e.asr_model}/{e.lang}"))
     nlp = b.add({
         "resourceType": "Device",
-        "deviceName": [{"name": "Ovamha lexicon extraction and AI safety net v0.1", "type": "model-name"}],
+        "deviceName": [{"name": "Ovamha danger-sign detection (text classifier, lexicon extraction, AI safety net) v0.2", "type": "model-name"}],
         "type": {"text": "Field extraction and danger-sign safety net"},
     }, _ident(f"{ID}/device-model", "extract-safety-net/v0.1"))
 
