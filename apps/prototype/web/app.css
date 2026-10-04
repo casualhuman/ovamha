@@ -82,10 +82,10 @@ svg.i { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-widt
 .section-title { font-size: 1.1rem; font-weight: 700; margin: 26px 2px 12px; display: flex; align-items: center; justify-content: space-between; }
 
 /* Welcome */
-.welcome { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; text-align: center; }
+.welcome { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; text-align: center; background: #fff; }
 @media (min-width: 560px) { .welcome { min-height: calc(100vh - 48px); } }
 .welcome .art { flex: 1; display: grid; place-items: center; min-height: 330px; padding: 36px 20px 8px;
-  background: radial-gradient(120% 90% at 50% 0%, #DDEEFB 0%, #EEF6FD 55%, var(--bg) 100%); border-radius: 0 0 36px 36px; }
+  background: #fff; }
 .welcome .art svg { max-width: 360px !important; }
 .welcome .art svg { animation: in .35s ease-out; }
 .welcome-text { padding: 8px 26px 34px; }
