@@ -614,7 +614,7 @@ function itemCard(it) {
 function confirm() {
   const items = (S.st?.items || []).filter((i) => !["gestational_age_weeks", "systolic", "diastolic", "systolic_repeat", "diastolic_repeat", "pulse", "temperature", "fetal_heart_rate", "urine_protein", "severe_pe_symptoms"].includes(i.field));
   const pending = items.filter((i) => !i.confirmed).length;
-  return `<div class="screen">${topbar("Check what was heard", "describe")}${steps(2)}
+  return `<div class="screen">${topbar("What we understood", "describe")}${steps(2)}
     <div class="said"><div style="flex:1"><div class="row-sub" style="margin:0 0 2px">What was said</div>${esc(S.st?.transcript || "")}</div>
       <button class="row-say" id="sayAll" aria-label="Read aloud">${icon("speaker")}</button></div>
     ${(S.st?.notes || []).map((n) => `<div class="note-line">${icon("calendar")}${esc(n)}</div>`).join("")}
@@ -800,56 +800,86 @@ const SUGGEST_TEXT = {
   plan_cemonc_delivery: "High-risk pregnancy: the guidelines suggest planning delivery at a CEmONC facility.",
   none: "No referral suggested on the confirmed information.",
 };
-function adviceCard(title, kind, reasons, rec, cite, assumptions, idx) {
-  const style = KIND_STYLE[kind] || "amber";
-  return `<div class="card advice ${style}">
-    <div class="qhead"><div style="flex:1"><div class="tiny" style="font-weight:800;letter-spacing:.06em;text-transform:uppercase">${esc(title)}</div>
-      <b style="font-size:1.08rem">${esc(reasons.join(", "))}</b></div>
-      <button class="icon-btn soft" data-say-adv="${idx}" aria-label="Read aloud">${icon("speaker")}</button></div>
-    <div style="margin-top:6px"><span class="muted">Guideline suggests:</span> ${esc(rec)}</div>
-    ${(assumptions || []).map((a) => `<div class="tiny" style="margin-top:6px">Assumption: ${esc(a)}</div>`).join("")}
-    <div class="tiny" style="margin-top:8px">${esc(cite)}</div></div>`;
+// Advice as clean list rows: the reasons are the title; tap to see the full suggestion and its source.
+function adviceRow(x, idx) {
+  const style = KIND_STYLE[x.kind] || "amber";
+  return `<details class="row-item adv ${style}">
+    <summary class="row-main">
+      <span class="row-ico">${icon(x.kind === "plan_cemonc_delivery" ? "calendar" : "alert")}</span>
+      <div class="row-text"><div class="row-title">${esc(x.reasons.join(", "))}</div>
+        <div class="row-sub">${esc(x.kindTitle)} · ${esc(x.who)}</div></div>
+      <button class="row-say" data-say-adv="${idx}" aria-label="Read aloud">${icon("speaker")}</button>
+    </summary>
+    <div class="row-more"><div><span class="muted">Guideline suggests:</span> ${esc(x.rec)}</div>
+      ${(x.assumptions || []).map((a) => `<div class="tiny" style="margin-top:6px">Assumption: ${esc(a)}</div>`).join("")}
+      <div class="tiny" style="margin-top:8px">${esc(x.cite)}</div></div>
+  </details>`;
 }
 function adviceItems() {
   const a = S.assess, items = [];
-  a.rules.filter((r) => r.status === "fired").forEach((r) => items.push({ title: `WHO ANC · ${r.id} ${r.name}`, kind: "urgent_referral", reasons: r.reasons,
-    rec: r.actions.join(". ") + ".", cite: `${r.source}. ${r.label}.`, assumptions: [] }));
-  a.advice.forEach((x) => items.push({ title: `Sierra Leone guideline · ${x.kind_title}`, kind: x.kind, reasons: x.reasons,
+  a.rules.filter((r) => r.status === "fired").forEach((r) => items.push({ who: "WHO antenatal care", kind: "urgent_referral", kindTitle: "Danger signs requiring referral",
+    reasons: r.reasons, rec: r.actions.join(". ") + ".", cite: `${r.source}. ${r.label}.`, assumptions: [] }));
+  a.advice.forEach((x) => items.push({ who: "Sierra Leone guideline", kind: x.kind, kindTitle: x.kind_title, reasons: x.reasons,
     rec: x.recommendation, cite: `${x.source}: ${x.cite}`, assumptions: x.assumptions }));
   return items;
+}
+function decRow(v, title, sub, ic) {
+  const on = S.decision.choice === v;
+  return `<button class="row-item choice ${on ? "on" : ""}" data-choice-dec="${v}"><div class="row-main">
+    <span class="row-ico">${icon(on ? "check" : ic)}</span>
+    <div class="row-text"><div class="row-title">${title}</div><div class="row-sub">${sub}</div></div></div></button>`;
 }
 function advice() {
   const a = S.assess, items = adviceItems(), sug = a.suggestion, d = S.decision;
   const needsReason = (sug !== "none" && d.choice === "none") || (sug === "urgent_referral" && d.choice === "planned");
-  const opt = (v, title, sub, ic) => `<div class="opt ${d.choice === v ? "on" : ""}"><button class="opt-main" data-choice-dec="${v}">
-      <span class="icon-btn ${d.choice === v ? "blue" : "soft"}" style="flex:none">${icon(d.choice === v ? "check" : ic)}</span>
-      <span style="flex:1;text-align:left"><b>${title}</b><br><span class="small muted">${sub}</span></span></button></div>`;
+  const recording = S.reasonRec;
   return `<div class="screen">${topbar("Guideline advice", "measure")}${steps(5)}
-    <div class="banner ${sug === "none" ? "green" : KIND_STYLE[sug]}">${icon(sug === "none" ? "check" : "alert")}${esc(SUGGEST_TEXT[sug])} You decide.</div>
-    ${items.map((x, i) => adviceCard(x.title, x.kind, x.reasons, x.rec, x.cite, x.assumptions, i)).join("")}
-    ${a.ask_next?.length && !a.danger ? `<div class="banner amber">${icon("alert")}Not checked (missing): ${esc(a.ask_next.map((q) => q.label).join(", "))}</div>` : ""}
-    ${a.next_contact?.text ? `<div class="card" style="display:flex;gap:12px;align-items:center"><span class="icon-btn soft" style="flex:none">${icon("calendar")}</span>
-      <div><b>Next contact</b><div class="small muted">${esc(a.next_contact.text)}</div><div class="tiny">${esc(a.next_contact.cite)}</div></div></div>` : ""}
-    <div class="section-title">Your decision</div>
-    <div class="card">
-      ${opt("urgent", "Refer urgently", "Emergency: consent, stabilise, call the ambulance", "alert")}
-      ${opt("planned", "Plan a referral", "Not an emergency: assessment or delivery at CEmONC", "calendar")}
-      ${opt("none", "No referral now", "Continue care here", "check")}
-      ${needsReason ? `<div class="small" style="margin:12px 0 6px;font-weight:650">Your reason (required, because it differs from the guideline suggestion)</div>
-        <textarea class="input" id="decReason" style="min-height:90px" placeholder="e.g. Reviewed by the midwife on site; bleeding has stopped">${esc(d.reason)}</textarea>` : ""}
-      <div class="err">${esc(S.decErr || "")}</div>
+    <div class="status-line ${sug === "none" ? "ok" : "warn"}" style="margin:0">${icon(sug === "none" ? "check" : "alert")}${esc(SUGGEST_TEXT[sug])} You decide.</div>
+    <div class="list-head">What the guidelines say<span>Tap a row for details</span></div>
+    <div class="row-list">${items.length ? items.map(adviceRow).join("") : `<div class="row-sub" style="padding:8px 2px">Nothing to suggest on the confirmed information.</div>`}</div>
+    ${a.ask_next?.length && !a.danger ? `<div class="note-line warn">${icon("alert")}Not checked (missing): ${esc(a.ask_next.map((q) => q.label).join(", "))}</div>` : ""}
+    ${a.next_contact?.text ? `<div class="note-line">${icon("calendar")}Next contact: ${esc(a.next_contact.text)}</div>` : ""}
+    <div class="list-head">Your decision</div>
+    <div class="row-list">
+      ${decRow("urgent", "Refer urgently", "Emergency: consent, stabilise, call the ambulance", "alert")}
+      ${decRow("planned", "Plan a referral", "Assessment or delivery at a CEmONC facility", "calendar")}
+      ${decRow("none", "No referral now", "Continue care here", "home")}
     </div>
+    ${needsReason ? `<div class="list-head">Your reason<span>Needed when you differ from the suggestion</span></div>
+      <div class="reason-box"><textarea id="decReason" placeholder="Say or type your reason">${esc(d.reason)}</textarea>
+        <button class="mic-sm ${recording ? "live" : ""}" id="reasonMic" aria-label="${recording ? "Stop" : "Say your reason"}">${icon(recording ? "stop" : "mic")}</button></div>` : ""}
+    <div class="err">${esc(S.decErr || "")}</div>
   </div>
   <div class="sticky"><button class="btn primary" id="confirmDecision" ${d.choice ? "" : "disabled"}>${icon("check")}Confirm my decision</button></div>`;
 }
+let reasonRecorder = null;
 bind.advice = () => {
   const items = adviceItems();
-  document.querySelectorAll("[data-say-adv]").forEach((b) => b.onclick = () => {
+  document.querySelectorAll("[data-say-adv]").forEach((b) => b.onclick = (e) => {
+    e.preventDefault(); e.stopPropagation();
     const x = items[Number(b.dataset.sayAdv)];
-    speakText(`${x.reasons.join(", ")}. ${x.rec}`, "en");
+    speakText(`${x.reasons.join(", ")}. Guideline suggests: ${x.rec}`, "en");
   });
   document.querySelectorAll("[data-choice-dec]").forEach((b) => b.onclick = () => { S.decision.choice = b.dataset.choiceDec; S.decErr = ""; keepScroll(render); });
   $("#decReason") && ($("#decReason").oninput = (e) => { S.decision.reason = e.target.value; });
+  $("#reasonMic") && ($("#reasonMic").onclick = async () => {
+    if (reasonRecorder) { reasonRecorder.stop(); return; }
+    try {
+      reasonRecorder = await startRecorder(async (blob) => {
+        reasonRecorder = null; S.reasonRec = false; keepScroll(render);
+        const done = busy("Writing down your reason…");
+        try {
+          const fd = new FormData();
+          fd.append("audio", blob, `reason.${extFor(blob)}`); fd.append("lang", S.lang);
+          const r = await api("/api/transcribe", { form: fd });
+          done();
+          S.decision.reason = [S.decision.reason, r.text].filter(Boolean).join(" ");
+          keepScroll(render);
+        } catch (e) { done(); toast(e.data?.message || e.message, 4000); }
+      });
+      if (reasonRecorder) { S.reasonRec = true; keepScroll(render); }
+    } catch (e) { toast("Microphone not available: " + e.message, 4000); }
+  });
   $("#confirmDecision").onclick = async () => {
     try {
       const r = await api("/api/decision", { body: { choice: S.decision.choice, reason: S.decision.reason || null } });
@@ -861,31 +891,33 @@ bind.advice = () => {
 
 // ---------------------------------------------------------------- 7b. urgent referral pathway (national guideline)
 const nowHM = () => new Date().toTimeString().slice(0, 5);
+const ISBAR = [["I", "Identification"], ["S", "Situation"], ["B", "Background"], ["A", "Assessment"], ["R", "Recommendation"]];
 function referral() {
   const p = S.assess.pathway, r = S.ref, sb = S.isbar;
-  const yes = r.consent === true, no = r.consent === false;
+  const no = r.consent === false;
+  const consentRow = (v, title, sub, ic) => `<button class="row-item choice ${r.consent === v ? "on" : ""}" data-consent="${v ? "yes" : "no"}"><div class="row-main">
+      <span class="row-ico">${icon(r.consent === v ? "check" : ic)}</span><div class="row-text"><div class="row-title">${title}</div><div class="row-sub">${sub}</div></div></div></button>`;
   return `<div class="screen">${topbar("Urgent referral", "advice")}
-    <div class="banner red">${icon("alert")}You decided on urgent referral. Follow the national referral pathway.</div>
-    <div class="card"><div class="qhead"><h3>1 · Explain and ask for consent</h3><button class="icon-btn soft" data-say-text="consent" aria-label="Read aloud">${icon("speaker")}</button></div>
-      <p class="small muted" style="margin:0 0 10px">${esc(p.consent)}</p>
-      <div class="row"><button class="btn ${yes ? "primary" : "soft"}" data-consent="yes">${icon("check")}She agrees</button>
-        <button class="btn ${no ? "danger" : "soft"}" data-consent="no">${icon("x")}She refuses</button></div>
-      ${no ? `<div class="banner amber" style="margin-top:10px">${icon("alert")}Record her refusal. Keep caring for her and counsel on danger signs.</div>` : ""}</div>
-    ${no ? "" : `<div class="card"><div class="qhead"><h3>2 · Before she leaves</h3></div>
-      ${p.emergency_checklist.map((t, i) => `<label class="check-row"><input type="checkbox" data-check="${i}" ${r.checklist.includes(i) ? "checked" : ""}><span>${esc(t)}</span></label>`).join("")}
-      <div class="tiny" style="margin-top:6px">Do what your level of care allows.</div></div>
-    <div class="card"><div class="qhead"><h3>3 · Call the call centre (iSBAR)</h3><button class="icon-btn soft" data-say-text="isbar" aria-label="Read iSBAR aloud">${icon("speaker")}</button></div>
-      <p class="small muted" style="margin:0 0 10px">${esc(p.call)}</p>
-      <div class="isbar">${[["I", "Identification"], ["S", "Situation"], ["B", "Background"], ["A", "Assessment"], ["R", "Recommendation"]]
-        .map(([k, n]) => `<div><span class="isbar-k">${k}</span><div><div class="tiny" style="font-weight:700">${n}</div>${esc(sb[k])}</div></div>`).join("")}</div>
+    <div class="status-line warn" style="margin:0">${icon("alert")}You decided on urgent referral. Follow the national referral pathway.</div>
+    <div class="list-head">1 · Consent<button class="row-say" data-say-text="consent" aria-label="Read aloud">${icon("speaker")}</button></div>
+    <div class="row-sub" style="white-space:normal;margin:-4px 2px 10px">${esc(p.consent)}</div>
+    <div class="row-list">${consentRow(true, "She agrees", "Continue the referral", "check")}${consentRow(false, "She refuses", "Record her refusal and keep caring for her", "x")}</div>
+    ${no ? "" : `<div class="list-head">2 · Before she leaves<span>Do what your level allows</span></div>
+      <div class="row-list">${p.emergency_checklist.map((t, i) => {
+        const on = r.checklist.includes(i);
+        return `<label class="row-item check ${on ? "on" : ""}"><div class="row-main"><input type="checkbox" data-check="${i}" ${on ? "checked" : ""}>
+          <span class="row-title" style="font-weight:600">${esc(t)}</span></div></label>`;
+      }).join("")}</div>
+      <div class="list-head">3 · Call the call centre<button class="row-say" data-say-text="isbar" aria-label="Read iSBAR aloud">${icon("speaker")}</button></div>
+      <div class="isbar-list">${ISBAR.map(([k, n]) => `<div class="isbar-row"><span class="isbar-k">${k}</span>
+        <div><div class="row-sub" style="white-space:normal;margin:0">${n}</div><div>${esc(sb[k])}</div></div></div>`).join("")}</div>
       <div class="row" style="margin-top:12px">
-        <div><div class="small" style="font-weight:650">Called at</div><input class="input" type="time" id="callTime" value="${esc(r.call_time)}"></div>
-        <div><div class="small" style="font-weight:650">Ambulance arrived</div><input class="input" type="time" id="ambTime" value="${esc(r.ambulance_time)}"></div></div>
-      <button class="link small" id="calledNow">Called now</button>
-      <div class="tiny">${esc(p.document)}</div></div>`}
+        <label class="time-box"><span class="row-sub">Called at</span><input type="time" id="callTime" value="${esc(r.call_time)}"></label>
+        <label class="time-box"><span class="row-sub">Ambulance arrived</span><input type="time" id="ambTime" value="${esc(r.ambulance_time)}"></label></div>
+      <button class="row-link" style="margin-left:2px" id="calledNow">I called just now</button>`}
     <div class="err">${esc(S.refErr || "")}</div>
   </div>
-  <div class="sticky"><button class="btn ${no ? "soft" : "danger"}" id="completeRef" ${r.consent === null ? "disabled" : ""}>${icon(no ? "file" : "send")}${no ? "Record refusal" : "Complete referral and notify the hospital"}</button></div>`;
+  <div class="sticky"><button class="btn ${no ? "soft" : "danger"}" id="completeRef" ${r.consent === null ? "disabled" : ""}>${icon(no ? "file" : "send")}${no ? "Record refusal" : "Refer digitally and prepare the letter"}</button></div>`;
 }
 bind.referral = () => {
   const r = S.ref;
@@ -893,13 +925,14 @@ bind.referral = () => {
   document.querySelectorAll("[data-check]").forEach((el) => el.onchange = () => {
     const i = Number(el.dataset.check);
     r.checklist = el.checked ? [...new Set([...r.checklist, i])] : r.checklist.filter((x) => x !== i);
+    keepScroll(render);
   });
   $("#callTime") && ($("#callTime").onchange = (e) => { r.call_time = e.target.value; });
   $("#ambTime") && ($("#ambTime").onchange = (e) => { r.ambulance_time = e.target.value; });
   $("#calledNow") && ($("#calledNow").onclick = () => { r.call_time = nowHM(); keepScroll(render); });
   document.querySelectorAll("[data-say-text]").forEach((b) => b.onclick = () => {
     if (b.dataset.sayText === "consent") speakText(S.assess.pathway.consent, "en");
-    else speakText(["I", "S", "B", "A", "R"].map((k) => S.isbar[k]).join(" "), "en");
+    else speakText(ISBAR.map(([k]) => S.isbar[k]).join(" "), "en");
   });
   $("#completeRef").onclick = async () => {
     try {
@@ -909,6 +942,69 @@ bind.referral = () => {
     } catch (e) { S.refErr = e.message; keepScroll(render); }
   };
 };
+
+// ---------------------------------------------------------------- referral letter (printable, two logo slots)
+// Slot 1: facility / Ministry logo, supplied by the team as web/branding/logo-left.png (with permission).
+// Slot 2: Ovamha. Elements follow the guideline's referral form: findings, treatment before referral,
+// specific reasons, and a feedback slip for the receiving facility (two-way referral).
+function letterHtml(L, leftLogo) {
+  const li = (xs) => xs && xs.length ? `<ul>${xs.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : `<div class="small">None recorded</div>`;
+  const when = new Date(L.date);
+  const row = (k, v) => v ? `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>` : "";
+  return `<div class="letter">
+    <div class="lh">
+      <div class="logo">${leftLogo ? `<img src="${leftLogo}" alt="Facility logo">` : `<div class="ph">Facility / MoHS logo</div>`}</div>
+      <div class="mid"><b>${esc(L.from.facility)}</b><span class="small">${esc(L.from.level)} · Antenatal care</span></div>
+      <div class="logo">${LOGO}</div>
+    </div>
+    <h1>REFERRAL LETTER</h1>
+    ${L.urgent ? `<div class="urgent">URGENT · EMERGENCY REFERRAL</div>` : `<div class="small" style="text-align:center">${esc(L.type)}</div>`}
+    <div class="meta">
+      <div><b>Date:</b> ${esc(when.toLocaleDateString([], { dateStyle: "long" }))}, ${esc(when.toLocaleTimeString([], { timeStyle: "short" }))}</div>
+      <div><b>Referral no.:</b> ${esc(L.ref)}</div>
+      <div><b>To:</b> The Medical Officer / Midwife in charge, ${esc(L.to.facility)} (${esc(L.to.level)})</div>
+      <div><b>From:</b> ${esc(L.from.worker)}, ${esc(L.from.role)}, ${esc(L.from.facility)}</div>
+    </div>
+    <p>Dear Colleague,</p>
+    <p>Re: <b>${esc(L.patient.name)}</b>, ${esc(L.patient.age)}, card ${esc(L.patient.card)}${L.patient.community ? `, ${esc(L.patient.community)}` : ""}.</p>
+    <p>I am referring this woman, ${esc(L.patient.ga.toLowerCase())} pregnant, for the reasons below. ${esc(L.request)}</p>
+    <h2>Reason for referral</h2>${li(L.reasons)}
+    <h2>Clinical findings</h2>
+    <table>${row("Presenting complaints", L.complaints.join("; "))}${row("Examination / measurements", L.findings.join("; "))}
+      ${row("Gestational age", L.patient.ga + (L.patient.edd ? `, EDD ${L.patient.edd}` : ""))}${row("Obstetric history", L.patient.obstetric)}
+      ${row("Relevant history", L.history.join("; "))}</table>
+    <h2>Treatment and actions before referral</h2>${li(L.treatment)}
+    <table>${row("Woman's consent to referral", L.consent)}${row("Ambulance called", L.call.called)}${row("Ambulance arrived", L.call.arrived)}
+      ${row("Referring worker's note", L.worker_reason)}</table>
+    <h2>Guideline basis</h2><div class="small">${L.basis.map(esc).join("<br>")}</div>
+    <p style="margin-top:12px">Thank you for receiving her. Please send your feedback using the slip below.</p>
+    <div class="sign">
+      <div><div class="line"></div><div class="small">Signature</div></div>
+      <div><div class="line"></div><div class="small">${esc(L.from.worker)} · ${esc(L.from.role)}</div></div>
+    </div>
+    <div class="slip">
+      <b>FEEDBACK FROM THE RECEIVING FACILITY</b> <span class="small">(return to ${esc(L.from.facility)}, referral no. ${esc(L.ref)})</span>
+      <table style="margin-top:6px">
+        <tr><td>Date and time received</td><td><div class="line"></div></td></tr>
+        <tr><td>Diagnosis</td><td><div class="line"></div></td></tr>
+        <tr><td>Treatment given</td><td><div class="line"></div></td></tr>
+        <tr><td>Outcome / plan</td><td><div class="line"></div></td></tr>
+        <tr><td>Follow-up at referring facility</td><td><div class="line"></div></td></tr>
+        <tr><td>Name, role and signature</td><td><div class="line"></div></td></tr>
+      </table>
+    </div>
+    <div class="small" style="margin-top:10px">Prepared with Ovamha (prototype). Use alongside the national standardized referral form.</div>
+  </div>`;
+}
+async function leftLogoUrl() {
+  try { const r = await fetch("/branding/logo-left.png", { method: "HEAD" }); return r.ok ? "/branding/logo-left.png" : null; } catch { return null; }
+}
+async function printLetter() {
+  $("#printArea").innerHTML = letterHtml(S.result.letter, await leftLogoUrl());
+  const imgs = [...document.querySelectorAll("#printArea img")];
+  await Promise.all(imgs.map((i) => (i.complete ? null : new Promise((r) => { i.onload = i.onerror = r; }))));
+  window.print();
+}
 
 // ---------------------------------------------------------------- 8. result (after the worker's decision)
 function syncLine(st, valid) {
@@ -931,8 +1027,19 @@ function result() {
     : `<div class="alert ok">${icon("check")}<h2>No referral now</h2><div>${r.decision?.reason ? "Your reason is recorded." : "Continue routine care."}</div></div>`;
   return `<div class="screen">${topbar("Result", null)}${steps(5)}
     ${head}
-    ${r.next_contact?.text ? `<div class="card" style="display:flex;gap:12px;align-items:center;margin-top:14px"><span class="icon-btn soft" style="flex:none">${icon("calendar")}</span>
-      <div><b>Next contact</b><div class="small muted">${esc(r.next_contact.text)}</div></div></div>` : ""}
+    ${r.letter ? `<div class="list-head">Referral<span>Digital and paper</span></div>
+      <div class="row-list">
+        <div class="row-item on"><div class="row-main"><span class="row-ico">${icon("send")}</span>
+          <div class="row-text"><div class="row-title">Referred digitally</div><div class="row-sub">${esc(r.letter.to.facility)} · ${r.sms ? "SMS notice sent" : "record shared"} · record syncs to the hub</div></div></div></div>
+        <button class="row-item" id="printLetter"><div class="row-main"><span class="row-ico">${icon("file")}</span>
+          <div class="row-text"><div class="row-title">Print referral letter</div><div class="row-sub">Letter with both logos and a feedback slip</div></div>
+          <span class="row-say">${icon("right")}</span></div></button>
+        <button class="row-item" id="viewLetter"><div class="row-main"><span class="row-ico">${icon("file")}</span>
+          <div class="row-text"><div class="row-title">Preview the letter</div><div class="row-sub">See it before printing</div></div>
+          <span class="row-say">${icon("right")}</span></div></button>
+      </div>
+      <div id="letterPreview"></div>` : ""}
+    ${r.next_contact?.text ? `<div class="note-line">${icon("calendar")}Next contact: ${esc(r.next_contact.text)}</div>` : ""}
     ${r.sms ? `<div class="section-title">Referral SMS <span class="badge ${r.sms.channel === "SIMULATED" ? "amber" : "green"}">${r.sms.channel === "SIMULATED" ? "Simulated" : "Sent by GSM"}</span></div>
       <div class="card"><div class="small muted">To the referral hospital · ${esc(new Date(r.sms.at).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }))}</div><div class="sms">${esc(r.sms.text)}</div>
         <div style="margin-top:14px"><span class="status-pill ${pillCls}">${icon(pillCls === "ok" ? "check" : pillCls === "no" ? "x" : "sms")}${pillTxt}</span></div>
@@ -968,6 +1075,11 @@ bind.result = () => {
     api("/api/sync", { method: "GET" }).then(refreshSync).catch(() => {});
   }, 5000);
   $("#newCheck").onclick = startCheck;
+  $("#printLetter") && ($("#printLetter").onclick = printLetter);
+  $("#viewLetter") && ($("#viewLetter").onclick = async () => {
+    const box = $("#letterPreview");
+    box.innerHTML = box.innerHTML ? "" : `<div class="letter-preview">${letterHtml(S.result.letter, await leftLogoUrl())}</div>`;
+  });
 };
 
 // ---------------------------------------------------------------- profile

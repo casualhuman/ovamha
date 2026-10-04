@@ -26,7 +26,7 @@ from .confirm import KEYPAD_FIELDS, Session, fmt, label
 from .encounter import Encounter
 from .extract import extract
 from .fhir_bundle import build_bundle, validate
-from .handover import handover_text, isbar
+from .handover import handover_text, isbar, letter
 from .numbers import parse_bp, parse_number
 from .rules import evaluate, questions_to_ask
 from .safety_net import scan
@@ -489,7 +489,7 @@ def _complete(v: Visit) -> dict:
         valid = {"ok": False, "message": str(exc)}
     return {"decision": e.decision, "referral": e.referral, "urgent": e.urgent, "code": e.code,
             "card_code": registry.display(e.card_code), "sync": sync.status(e.code), "handover": handover_text(e),
-            "isbar": isbar(e), "sms": out_sms, "status": e.referral_status, "bundle": v.bundle, "valid": valid,
+            "isbar": isbar(e), "letter": letter(e) if e.referral else None, "sms": out_sms, "status": e.referral_status, "bundle": v.bundle, "valid": valid,
             "next_contact": e.next_contact}
 
 

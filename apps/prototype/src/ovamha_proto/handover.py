@@ -120,3 +120,58 @@ def handover_text(e: Encounter) -> str:
     lines += ["", "WHO DAK rules are demo rules pending Annex B extraction; national advice from the Sierra Leone",
               "Integrated Obstetric and Newborn Care Guideline (2026 draft)."]
     return "\n".join(lines)
+
+
+def letter(e: Encounter) -> dict:
+    """Printable referral letter. Elements follow the guideline's referral form requirements:
+    clinical findings, treatment given before referral, specific reasons for referral, and a
+    feedback section for the receiving facility (two-way referral)."""
+    d = e.details
+    name = " ".join(x for x in (d.get("first_name"), d.get("family_name")) if x) or "Name not recorded"
+    ga = e.confirmed.get("gestational_age_weeks") or e.profile_derived.get("ga_weeks")
+    p = e.profile
+    obstetric = []
+    if isinstance(p.get("gravida"), int):
+        obstetric.append(f"Gravida {p['gravida']}")
+    if isinstance(p.get("live_births"), int):
+        obstetric.append(f"{p['live_births']} live birth(s)")
+    complaints = [f"{label(f)}: {fmt(v)}" for f, v in e.confirmed.items()
+                  if f not in KEYPAD_FIELDS and f not in ("urine_protein", "severe_pe_symptoms") and v not in (False,)]
+    c = e.confirmed
+    findings = []
+    for suffix, name in (("", "BP"), ("_repeat", "Repeat BP")):
+        if isinstance(c.get(f"systolic{suffix}"), (int, float)) and isinstance(c.get(f"diastolic{suffix}"), (int, float)):
+            findings.append(f"{name} {c[f'systolic{suffix}']}/{c[f'diastolic{suffix}']} mmHg")
+    units = {"pulse": "/min", "temperature": " °C", "fetal_heart_rate": "/min", "gestational_age_weeks": " weeks"}
+    for f, unit in units.items():
+        if isinstance(c.get(f), (int, float)):
+            findings.append(f"{label(f).split(' (')[0]} {c[f]}{unit}")
+    for f in ("urine_protein", "severe_pe_symptoms"):
+        if f in c:
+            findings.append(f"{label(f)}: {fmt(c[f])}")
+    history = questionnaire.handover_lines("anc-profile", {k: v for k, v in p.items()
+                                                           if k in ("past_complications", "chronic_conditions", "allergies", "current_medications", "past_surgeries")})
+    # National wording first; drop a WHO reason already covered by it (e.g. "Fever" inside "High fever").
+    national = list(dict.fromkeys(x for a in e.advice for x in a.reasons))
+    who = [x for r in e.fired for x in r.reasons if not any(x.lower() in n.lower() for n in national)]
+    reasons = national + list(dict.fromkeys(who))
+    basis = list(dict.fromkeys([f"WHO ANC DAK {r.rule_id} {r.name}" for r in e.fired] + [f"{a.source}: {a.cite}" for a in e.advice]))
+    choice = (e.decision or {}).get("choice")
+    st = e.referral_steps
+    return {
+        "date": e.at, "ref": e.code, "card": _card(e), "urgent": e.urgent, "type": DECISION_TEXT.get(choice, "Referral"),
+        "from": {"facility": e.facility, "level": e.facility_level, "worker": e.worker_name or e.worker_id, "role": e.worker_role},
+        "to": {"facility": e.referral_facility, "level": "CEmONC"},
+        "patient": {"name": name, "age": _age_text(e), "card": _card(e), "community": d.get("address"), "phone": d.get("phone"),
+                    "ga": f"About {ga} weeks" if ga else "Not known", "edd": e.profile_derived.get("edd"), "obstetric": ", ".join(obstetric)},
+        "reasons": reasons or ["See clinical findings"],
+        "complaints": complaints, "findings": findings,
+        "history": [h.strip(" -") for h in history],
+        "treatment": st.get("checklist", []),
+        "consent": "Given" if st.get("consent") else ("Not given" if st else "Not applicable"),
+        "call": {"called": st.get("call_time"), "arrived": st.get("ambulance_time")},
+        "worker_reason": (e.decision or {}).get("reason"),
+        "basis": basis,
+        "request": ("Please receive her for urgent assessment and management." if e.urgent
+                    else "Please assess her and advise on the plan of care and place of delivery."),
+    }
