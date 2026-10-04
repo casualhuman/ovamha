@@ -1,4 +1,4 @@
-# AI in Ovamha
+# AI in MaternalSave
 
 Small, offline AI that helps the health worker capture what she sees, never AI that makes the clinical decision. **AI proposes, the worker confirms, cited guideline rules advise, the worker decides.** Why rules and not a generative model: [docs/decisions/guideline-advice-not-fine-tuning.md](../decisions/guideline-advice-not-fine-tuning.md).
 
@@ -16,7 +16,7 @@ Measured speed (Kaggle notebook, 4 CPU threads): the int8 Whisper model transcri
 
 ## 2. Understanding what the worker says: danger-sign detection
 
-Speech is transcribed offline (Whisper small). Ovamha then has to work out which danger signs were described, often in everyday words ("her wrapper is red", "she sees stars"). Two detectors are built in; the **text classifier is the default**, and everything either one proposes must be confirmed by the worker.
+Speech is transcribed offline (Whisper small). MaternalSave then has to work out which danger signs were described, often in everyday words ("her wrapper is red", "she sees stars"). Two detectors are built in; the **text classifier is the default**, and everything either one proposes must be confirmed by the worker.
 
 | Detector | How it works | Danger signs caught (recall) | Correct when it raises a sign (precision) | "No danger sign" rows left alone |
 | --- | --- | --- | --- | --- |
@@ -31,7 +31,7 @@ Measured on 200 held-out written descriptions (E201–E400 of [ml/eval/text](../
 
 WHO, [*Ethics and governance of artificial intelligence for health*](https://iris.who.int/handle/10665/341996) (2021), six principles:
 
-| WHO principle | In Ovamha |
+| WHO principle | In MaternalSave |
 | --- | --- |
 | 1. Protect autonomy | The worker confirms every AI suggestion and makes every decision; declining a suggested referral needs a reason but the advice is never hidden; privacy and consent: [docs/privacy/README.md](../privacy/README.md) |
 | 2. Promote well-being, safety and the public interest | AI may add a concern, never remove one (add-only safety net); unknown is never treated as normal; recall favoured over precision |

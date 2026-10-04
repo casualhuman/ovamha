@@ -1,6 +1,6 @@
 # Recording the Krio and Yoruba evaluation set
 
-Goal: measure how many danger signs Ovamha catches when health workers describe a situation **in their own words**, and the speech-recognition error rate, in Krio, Yoruba and English. Report only what is measured, with the number of recordings.
+Goal: measure how many danger signs MaternalSave catches when health workers describe a situation **in their own words**, and the speech-recognition error rate, in Krio, Yoruba and English. Report only what is measured, with the number of recordings.
 
 ## Who records
 
@@ -13,7 +13,7 @@ Goal: measure how many danger signs Ovamha catches when health workers describe 
 ## How
 
 1. Open `scenario_cards.csv`. For each card, the speaker reads the situation silently, then describes it to the phone **as they would to a colleague**, in Krio or Yoruba. Do not translate word for word; paraphrase is the point. 10 to 30 seconds each.
-2. Record on a phone like the ones in the field, 16 kHz mono if possible (any format is fine; Ovamha converts). Record half in a quiet room and half with normal clinic background noise. No noise filtering.
+2. Record on a phone like the ones in the field, 16 kHz mono if possible (any format is fine; MaternalSave converts). Record half in a quiet room and half with normal clinic background noise. No noise filtering.
 3. Save as `<lang>_<speaker>_<card>.wav`, e.g. `kri_s1_S03.wav`, `yo_s2_S12.wav`.
 4. The speaker (or another native speaker) types **exactly what was said**, in the language, into `manifest.csv`. This reference transcript gives the speech-recognition error rate.
 5. If a speaker said something different from the card (e.g. forgot a sign), note it in `manifest.csv` so the expected answer matches what was actually said.

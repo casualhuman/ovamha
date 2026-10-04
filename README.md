@@ -1,6 +1,6 @@
-# Ovamha: offline voice guidance for safer maternal care
+# MaternalSave: offline voice guidance for safer maternal care
 
-Ovamha (Offline Voice Assistant for Maternal Healthcare in Africa) helps community health workers, nurses and midwives assess a pregnant woman by voice, with no internet. The worker describes the situation; Ovamha writes down what it understood and reads it back for confirmation. It then checks only the **confirmed** facts against **WHO antenatal care guidance and the country's own national guideline**, and **suggests** what to do, citing the exact source. **The health worker decides.** If she refers, Ovamha follows the national referral pathway and produces the referral SMS, a standards-based health record (HL7 FHIR) and a printable referral letter.
+MaternalSave, an offline voice assistant for maternal healthcare in Africa, helps community health workers, nurses and midwives assess a pregnant woman by voice, with no internet. The worker describes the situation; MaternalSave writes down what it understood and reads it back for confirmation. It then checks only the **confirmed** facts against **WHO antenatal care guidance and the country's own national guideline**, and **suggests** what to do, citing the exact source. **The health worker decides.** If she refers, MaternalSave follows the national referral pathway and produces the referral SMS, a standards-based health record (HL7 FHIR) and a printable referral letter.
 
 Focus countries: Sierra Leone and Nigeria. Prototype for the World Bank Small AI for Development Hackathon (October 2026).
 
@@ -10,7 +10,7 @@ Focus countries: Sierra Leone and Nigeria. Prototype for the World Bank Small AI
 
 Open **https://r8086-ovamha.hf.space** on a phone or laptop with a microphone (Chrome works best). The free host sleeps when idle, so the first visit can take about a minute to wake up. It runs the same code as the offline version; no outside AI service is called. All data is fictional: **do not enter real patient information.**
 
-Ovamha is a **voice** assistant: you describe the woman out loud, the way a health worker would to a colleague.
+MaternalSave is a **voice** assistant: you describe the woman out loud, the way a health worker would to a colleague.
 
 | Step | Do this | You should see |
 | --- | --- | --- |
@@ -18,7 +18,7 @@ Ovamha is a **voice** assistant: you describe the woman out loud, the way a heal
 | 2 | Username **`fati`**, PIN **`769131`** → **Sign in** | *Hello, Nurse Fati* |
 | 3 | Under **Language for this check**, tap **English**. Then tap **Guide me** | *Who is this check for?* |
 | 4 | Tap **Returning** (a woman who has been before). Enter the card number for the option you pick below (**`MAM-A2A`** or **`ANC-24T`**) → **Find** → **Continue** | *Card found*, her name, and *1 previous check on this device*. Her history is already recorded, so that step is skipped |
-| 5 | Tap the large **microphone** (allow microphone access the first time) and **say** the description from your option below. Tap the microphone again when you finish. **Replay guidance** plays back what you said → **Next** | Speech is turned into text on the device, then *What we understood*: each danger sign Ovamha heard, with the words it heard it from |
+| 5 | Tap the large **microphone** (allow microphone access the first time) and **say** the description from your option below. Tap the microphone again when you finish. **Replay guidance** plays back what you said → **Next** | Speech is turned into text on the device, then *What we understood*: each danger sign MaternalSave heard, with the words it heard it from |
 | 6 | Tap **Correct** on each item (for a headache, choose **Severe** or **Mild**). If something was misheard, tap **Not true**. Then **Next: measurements** | Only confirmed items count; nothing unconfirmed reaches the advice |
 | 7 | Enter the numbers from your option on the keypad (or tap the microphone beside a field and say them, e.g. *"one sixty-five over one twelve"*) → **Confirm** under each; for urine protein, tap the result. Repeat BP and urine protein appear only when BP is 140/90 or higher or a pre-eclampsia sign was confirmed; pulse, temperature and fetal heart rate are under **More measurements**. Then **Check the guidelines** | *Guideline advice*, every line citing its source, and **What you can do now**: the guideline's own steps for this woman |
 | 8 | Under **Your decision**, choose one → **Confirm my decision** | The result: referral, SMS, referral letter and the record |
@@ -52,7 +52,7 @@ Numbers go on the keypad by default on purpose: a misheard blood pressure is dan
 - **Measurements:** blood pressure **90 / 60**.
 - **You should see:** *The guidelines suggest urgent referral. You decide*, citing the danger signs and her high-risk history.
 - **What you can do now:** *Bleeding after 24 weeks (antepartum haemorrhage): initial resuscitation*: shout for help; check danger, response, airway, breathing, circulation; **no vaginal examination**; left lateral tilt if in shock; check the fetal heart; blood sample, then IV fluids.
-- **Decide:** try **No referral now** → **Confirm my decision**. Ovamha asks you to *record your reason for not referring now*. The health worker can disagree, but the advice is never hidden and the reason is recorded.
+- **Decide:** try **No referral now** → **Confirm my decision**. MaternalSave asks you to *record your reason for not referring now*. The health worker can disagree, but the advice is never hidden and the reason is recorded.
 
 **Also try:** **First visit** instead of Returning, to register a new woman: the privacy notice is read to her first (on the hosted copy after its next update), and she gets a card number with a check character that catches typos. Records sync to a demo FHIR hub: https://r8086-ovamha-fhir.hf.space/fhir/ServiceRequest
 
@@ -86,10 +86,10 @@ Fictional demo accounts, checked offline on the device (PINs are stored only as 
 
 Three ways, from most realistic to quickest:
 
-1. **Health-post simulation (no internet anywhere).** Turn mobile data **off** on a phone and switch on its hotspot. Connect a laptop to that hotspot and run `make run-https` there. On the phone, open `https://<laptop-ip>:8000`, accept the local certificate, and **Add to Home Screen**: Ovamha installs like an app (own icon, full screen). Everything works: speech, voices, guideline advice, referral letter. The phone and laptop only talk over the local network.
+1. **Health-post simulation (no internet anywhere).** Turn mobile data **off** on a phone and switch on its hotspot. Connect a laptop to that hotspot and run `make run-https` there. On the phone, open `https://<laptop-ip>:8000`, accept the local certificate, and **Add to Home Screen**: MaternalSave installs like an app (own icon, full screen). Everything works: speech, voices, guideline advice, referral letter. The phone and laptop only talk over the local network.
 2. **The hosted image, offline.** Run the exact hosted demo locally with Docker, then switch the internet off:
    `docker run -it -p 7860:7860 --platform=linux/amd64 registry.hf.space/r8086-ovamha:latest` → open http://localhost:7860
-3. **Automated check in a real browser.** `.venv/bin/python scripts/offline_check.py` (needs `pip install playwright && playwright install chromium`). It runs a check through the hub, then cuts the browser's network completely and reloads: the installed app still opens, keeps the worker signed in, and says *"Can't reach the Ovamha hub. Connect to the health post Wi-Fi. No internet is needed."*
+3. **Automated check in a real browser.** `.venv/bin/python scripts/offline_check.py` (needs `pip install playwright && playwright install chromium`). It runs a check through the hub, then cuts the browser's network completely and reloads: the installed app still opens, keeps the worker signed in, and says *"Can't reach the MaternalSave hub. Connect to the health post Wi-Fi. No internet is needed."*
 
 **What runs where:** the phone shows the app; the hub (laptop or Raspberry Pi at the health post) runs speech recognition, read-aloud voices, the guideline rules and the FHIR record store. Nothing calls the internet; the hub uploads records to the district/national level only when a connection exists. A fully on-phone Android version is the production target.
 
@@ -99,11 +99,11 @@ Nigeria accounted for **28.7% of all maternal deaths worldwide in 2023** (about 
 
 Full problem statement and proposed solution: [concept note](docs/concept/README.md).
 
-**Users:** community health workers, nurses and midwives at health posts and primary health centres, often with no internet, intermittent power, a basic Android phone, and patients who speak Krio, Yoruba or English. **What changes:** the worker describes the woman in her own words; Ovamha catches danger signs she mentions, checks them against WHO and national guidance, and gets a referral, SMS and record out in minutes, all without a connection.
+**Users:** community health workers, nurses and midwives at health posts and primary health centres, often with no internet, intermittent power, a basic Android phone, and patients who speak Krio, Yoruba or English. **What changes:** the worker describes the woman in her own words; MaternalSave catches danger signs she mentions, checks them against WHO and national guidance, and gets a referral, SMS and record out in minutes, all without a connection.
 
 ## Built for no or low connectivity and low-end devices
 
-| Constraint | How Ovamha handles it |
+| Constraint | How MaternalSave handles it |
 | --- | --- |
 | **No internet** | Every step of an encounter runs offline: speech recognition, danger-sign detection, read-aloud, guideline rules, records. Proven with the network cut ([offline check](ml/eval/results/offline-reload.png)) |
 | **Intermittent connectivity** | Finished records wait in an encrypted outbox on the device and sync to the facility hub automatically when reachable; uploads are safe to retry (FHIR conditional create) |
@@ -145,7 +145,7 @@ World Bank Group Small AI for Development Hackathon:
 
 ## Digital public infrastructure and the World Bank
 
-The World Bank treats **digital identity, trusted data sharing and digital payments** as the foundational building blocks of digital public infrastructure (DPI), built to be interoperable, open, modular, inclusive and private by design ([*Digital Public Infrastructure and Development: A World Bank Group Approach*, 2025](https://documents1.worldbank.org/curated/en/099031025172027713/pdf/P505739-84c5073b-9d40-4b83-a211-98b2263e87dd.pdf)). Ovamha is a health service designed to **sit on top of DPI rather than rebuild it**:
+The World Bank treats **digital identity, trusted data sharing and digital payments** as the foundational building blocks of digital public infrastructure (DPI), built to be interoperable, open, modular, inclusive and private by design ([*Digital Public Infrastructure and Development: A World Bank Group Approach*, 2025](https://documents1.worldbank.org/curated/en/099031025172027713/pdf/P505739-84c5073b-9d40-4b83-a211-98b2263e87dd.pdf)). MaternalSave is a health service designed to **sit on top of DPI rather than rebuild it**:
 
 - **Identity:** its own functional ID and card number so care never waits for an ID document; the national ID (NIN) is linked only with consent and never stored as a number or used as a key, following the World Bank's [ID4D principles](https://id4d.worldbank.org/principles).
 - **Data sharing:** every encounter is an HL7 FHIR R4 record (official validator: 0 errors, 0 warnings) exchanged through a facility hub and mediator, following OpenHIE, so it can feed a national health information exchange or HMIS when one exists.
@@ -171,7 +171,7 @@ Full mapping: [docs/standards/README.md](docs/standards/README.md).
 - **Danger-sign detection was measured on written text, not speech:** the text classifier catches 94% of danger signs on 200 held-out descriptions, but these were AI-written, so real spoken descriptions will score lower ([AI](docs/ai/README.md))
 - **Speech recognition fine-tuning is at smoke-test stage** (accented English WER 40% → 30% on 200 clips); full runs pending ([notebook](ml/notebooks/README.md))
 - **Krio and Yoruba** speech recognition, danger-sign words and read-back wording still need native-speaker data and review; the text classifier is English only
-- WHO DAK rules are demo rules from the DAK PDF; danger-sign and profile codes are Ovamha placeholders until the DAK annex spreadsheets are extracted and replaced with WHO SMART ANC codes
+- WHO DAK rules are demo rules from the DAK PDF; danger-sign and profile codes are MaternalSave placeholders until the DAK annex spreadsheets are extracted and replaced with WHO SMART ANC codes
 - The Sierra Leone guideline used is a January 2026 draft; Nigeria's national guideline is not encoded yet ([placeholder](docs/guidelines/README.md#4-nigeria-placeholder))
 - SMS is simulated without a GSM modem; the hub FHIR server (HAPI) needs Docker
 - FHIR records validate against base R4, not yet against WHO SMART ANC profiles
@@ -192,7 +192,7 @@ Full mapping: [docs/standards/README.md](docs/standards/README.md).
 | HL7 FHIR, LOINC, UCUM | Data standards | Free to use under their terms |
 | Python packages (FastAPI, faster-whisper, transformers, PyTorch, cryptography, fhir.resources) | Software | Open-source licences |
 
-Non-commercial licences (MMS-TTS, AfriSpeech-200, WHO DAK) suit this prototype; any commercial use needs replacements or permission. The Ovamha repository does not have a licence file yet.
+Non-commercial licences (MMS-TTS, AfriSpeech-200, WHO DAK) suit this prototype; any commercial use needs replacements or permission. The MaternalSave repository does not have a licence file yet.
 
 ## Documentation
 

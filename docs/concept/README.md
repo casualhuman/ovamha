@@ -1,4 +1,4 @@
-# Offline Voice Assistant for Maternal Healthcare in Africa (Ovamha): concept note
+# MaternalSave: offline voice assistant for maternal healthcare in Africa (concept note)
 
 The project's concept: the problem, the proposed solution, its users and components, two illustrative scenarios, and how it fits digital public infrastructure. It describes the **intended product**. What the hackathon prototype implements today is in the [main README](../../README.md#what-works-now-all-offline). The labour-care workflow below is proposed and not yet built.
 
@@ -34,7 +34,7 @@ The intended contribution is stronger continuity across maternal care. Authorise
 
 ## Intended users and language accessibility
 
-Ovamha would support community health workers, midwives, nurses, doctors and other trained maternity personnel, with guidance appropriate to their professional scope.
+MaternalSave would support community health workers, midwives, nurses, doctors and other trained maternity personnel, with guidance appropriate to their professional scope.
 
 The product would be designed to accommodate multiple languages rather than depend on a single language. Users could switch between supported languages for spoken interaction, written guidance and patient explanations, including when the worker and woman prefer different languages. Switching languages would preserve the encounter context and confirmed information.
 

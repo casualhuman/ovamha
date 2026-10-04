@@ -1,10 +1,10 @@
-# Data protection impact assessment (DPIA): Ovamha
+# Data protection impact assessment (DPIA): MaternalSave
 
 **Status: DRAFT for review**, 2026-10-04. Prepared for the project team; not yet reviewed by the
 Ministry of Health, a data protection specialist or clinicians.
 
-**Why a DPIA:** Ovamha processes health data about pregnant women, including adolescents. Health
-data is sensitive everywhere Ovamha may run: ECOWAS Supplementary Act A/SA.1/01/10 Art. 1, 30;
+**Why a DPIA:** MaternalSave processes health data about pregnant women, including adolescents. Health
+data is sensitive everywhere MaternalSave may run: ECOWAS Supplementary Act A/SA.1/01/10 Art. 1, 30;
 Nigeria Data Protection Act 2023 s.30; Sierra Leone draft Bill 2025 s.1, s.29. A DPIA is required
 before high-risk processing in **Nigeria** (NDPA s.28, consulting the NDPC if high risk remains) and
 will be in **Sierra Leone** once the Bill is enacted (s.33, submitting it 60 days before processing
@@ -14,7 +14,7 @@ that structure.
 
 References use the abbreviations in [README.md](README.md): **WHO-AI**, **WHO-DP**, **WHO-DAK**
 (international); **ECOWAS**, **AU-M**, **AU-DPF** (Africa); **SL-HIS**, **SL-Bill** (Sierra Leone);
-**NDPA**, **NHA** (Nigeria); **ARCH** = [Ovamha architecture](../architecture/README.md). Unprefixed
+**NDPA**, **NHA** (Nigeria); **ARCH** = [MaternalSave architecture](../architecture/README.md). Unprefixed
 "Bill" and "HIS" below mean SL-Bill and SL-HIS.
 
 ## 1. Description of the processing (s.33(2)(a))
@@ -25,7 +25,7 @@ Countries in scope: Sierra Leone (worked example) and Nigeria (Yoruba).
 
 **Controller.** To be confirmed per country: in Sierra Leone the facility / District Health
 Management Team under the Ministry of Health and Sanitation; in Nigeria the health facility or State
-Ministry of Health (the head of facility is responsible for records, NHA s.29). The Ovamha project is the developer (processor role
+Ministry of Health (the head of facility is responsible for records, NHA s.29). The MaternalSave project is the developer (processor role
 for support only, if any).
 
 **People whose data is processed.** Pregnant women attending antenatal care (some under 18);
@@ -35,7 +35,7 @@ health workers (users); a woman's alternative contact, if she gives one.
 
 | Category | Examples | Where |
 |---|---|---|
-| Identification | Ovamha woman ID (random), card code, name, address, phone, alternative contact | Phone/hub registry (encrypted) |
+| Identification | MaternalSave woman ID (random), card code, name, address, phone, alternative contact | Phone/hub registry (encrypted) |
 | Health | Symptoms, danger signs, measurements (BP, pulse, temperature), pregnancy history, medications, HIV partner status, substance use | Encounter, hub FHIR store |
 | National ID | Only that a card was shown, with consent; never the number | Registry |
 | Voice | Health worker's spoken description | Memory and a temporary file only; deleted after transcription ([voice-data.md](voice-data.md)) |
@@ -127,7 +127,7 @@ least yearly. Record reviewer, date and changes below.
 
 | Date | Reviewer | Change |
 |---|---|---|
-| 2026-10-04 | Ovamha project (draft) | First draft |
+| 2026-10-04 | MaternalSave project (draft) | First draft |
 
 ## Sources
 
@@ -151,4 +151,4 @@ Nigeria
 
 Other
 - World Bank ID4D, *Principles on Identification for Sustainable Development*.
-- Ovamha architecture (AP-05, AP-06, DEV-02, DEV-03, DB-02, DB-07, ID-03, SEC-01, SEC-02, SEC-06).
+- MaternalSave architecture (AP-05, AP-06, DEV-02, DEV-03, DB-02, DB-07, ID-03, SEC-01, SEC-02, SEC-06).

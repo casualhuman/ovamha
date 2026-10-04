@@ -1,6 +1,6 @@
 {
-  "name": "Ovamha: offline voice guidance for safer maternal care",
-  "short_name": "Ovamha",
+  "name": "MaternalSave: offline voice guidance for safer maternal care",
+  "short_name": "MaternalSave",
   "description": "Offline voice assistant for antenatal care: danger signs, guideline advice and referral.",
   "start_url": "/",
   "scope": "/",

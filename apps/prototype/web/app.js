@@ -84,7 +84,7 @@ function busy(msg) {
   return () => b.remove();
 }
 
-const HUB_DOWN = "Can't reach the Ovamha hub. Connect to the health post Wi-Fi. No internet is needed.";
+const HUB_DOWN = "Can't reach the MaternalSave hub. Connect to the health post Wi-Fi. No internet is needed.";
 async function api(path, { method = "POST", body, form, raw } = {}) {
   const headers = {};
   if (S.token) headers.Authorization = `Bearer ${S.token}`;
@@ -199,8 +199,8 @@ document.addEventListener("click", (e) => { const b = e.target.closest("[data-ba
 
 // ---------------------------------------------------------------- 1. welcome (onboarding)
 const SLIDES = [
-  { t: "Offline voice guidance<br>for safer maternal care", p: "Ovamha helps nurses, midwives and community health workers spot danger signs early and refer fast, with no internet." },
-  { t: "Speak in Krio,<br>Yoruba or English", p: "Describe the woman's situation in your own words. Ovamha writes it down and reads the key facts back to you." },
+  { t: "Offline voice guidance<br>for safer maternal care", p: "MaternalSave helps nurses, midwives and community health workers spot danger signs early and refer fast, with no internet." },
+  { t: "Speak in Krio,<br>Yoruba or English", p: "Describe the woman's situation in your own words. MaternalSave writes it down and reads the key facts back to you." },
   { t: "You confirm.<br>Then refer.", p: "Nothing counts until you confirm it. WHO danger-sign checks run on the confirmed facts and the referral SMS is ready in seconds." },
 ];
 function welcome() {
@@ -227,7 +227,7 @@ const LOGO = `<svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true"
 const initials = (n) => n.replace(/^(Nurse|CHW|Midwife)\s+/i, "").slice(0, 2).toUpperCase();
 function login() {
   return `<div class="screen auth">
-    <div class="brand" style="justify-content:flex-start;margin:6px 0 34px">${LOGO.replace('width="64" height="64"', 'width="40" height="40"')}<span>Ovamha</span></div>
+    <div class="brand" style="justify-content:flex-start;margin:6px 0 34px">${LOGO.replace('width="64" height="64"', 'width="40" height="40"')}<span>MaternalSave</span></div>
     <h1 class="auth-title">Sign in</h1>
     <p class="auth-sub">Welcome back. Your account is checked on this device, no internet needed.</p>
     <form id="loginForm" novalidate>
@@ -286,7 +286,7 @@ function home() {
     <div class="hero">
       <svg class="plus" width="150" height="150" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16" stroke="#fff" stroke-width="5" stroke-linecap="round"/></svg>
       <h2>New pregnancy check</h2>
-      <p>Describe the woman's situation. Ovamha checks for danger signs and prepares the referral.</p>
+      <p>Describe the woman's situation. MaternalSave checks for danger signs and prepares the referral.</p>
       <button class="btn" id="start">${icon("mic")}Guide me</button>
     </div>
     <div class="section-title">Language for this check</div>
@@ -435,9 +435,9 @@ function registration() {
       ${choice("data-nid", "nin", "National NIN", "She has a national ID card", "idcard", "id_nin", r.national_id === "nin")}
       ${choice("data-nid", "none", "No ID", "She has no national ID card", "x", "id_none", r.national_id === "none")}
       ${r.national_id === "nin" ? `<label class="consent"><input type="checkbox" id="consent" ${r.consent ? "checked" : ""}>
-        <span>She agrees to link her Ovamha record to her national ID.</span>
+        <span>She agrees to link her MaternalSave record to her national ID.</span>
         <button class="icon-btn soft" data-prompt="id_consent" aria-label="Read aloud" type="button">${icon("speaker")}</button></label>
-        <p class="tiny" style="margin:6px 0 0">Do not write down the number. Ovamha records only that the card was shown; it is linked later through the national ID service.</p>` : ""}
+        <p class="tiny" style="margin:6px 0 0">Do not write down the number. MaternalSave records only that the card was shown; it is linked later through the national ID service.</p>` : ""}
     </div>
     <div class="card">${qhead("When was she born?", "dob_question")}
       ${choice("data-dob", "exact", "Exact date", "She knows her date of birth", "calendar", "dob_exact", r.dobMode === "exact")}
@@ -1139,7 +1139,7 @@ function letterHtml(L, leftLogo) {
         <tr><td>Name, role and signature</td><td><div class="line"></div></td></tr>
       </table>
     </div>
-    <div class="small" style="margin-top:10px">Prepared with Ovamha (prototype). Use alongside the national standardized referral form.</div>
+    <div class="small" style="margin-top:10px">Prepared with MaternalSave (prototype). Use alongside the national standardized referral form.</div>
   </div>`;
 }
 async function leftLogoUrl() {
@@ -1249,7 +1249,7 @@ function showHostedNotice() {
     <button class="modal-x" aria-label="Close">${icon("x")}</button>
     <span class="row-ico" style="margin-bottom:12px">${icon("wifioff")}</span>
     <h3 id="hn-title">Hosted demo</h3>
-    <p>This online copy is for judges to try Ovamha. In the field, Ovamha runs <b>fully offline</b> on a phone and a local hub at the health post, with no internet.</p>
+    <p>This online copy is for judges to try MaternalSave. In the field, MaternalSave runs <b>fully offline</b> on a phone and a local hub at the health post, with no internet.</p>
     <p class="small" style="color:var(--danger,#b42318)"><b>Do not enter real patient information.</b> This copy runs on servers outside Sierra Leone.</p>
     <p class="small muted">Fictional data only. Sign in with <b>fati</b> / <b>769131</b>; returning woman card <b>MAM-A2A</b>.</p>
     <button class="btn primary modal-ok">Got it</button></div>`;
