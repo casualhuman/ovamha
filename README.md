@@ -18,6 +18,17 @@ make run       # then switch the internet off and open http://localhost:8000
 
 Phone on the same Wi-Fi as the laptop "hub": `make run-https` (phone microphones need HTTPS). In the field, a laptop or Raspberry Pi at the health post is the hub and nurses' phones connect to it over local Wi-Fi; nothing needs the internet.
 
+## Test it offline
+
+Three ways, from most realistic to quickest:
+
+1. **Health-post simulation (no internet anywhere).** Turn mobile data **off** on a phone and switch on its hotspot. Connect a laptop to that hotspot and run `make run-https` there. On the phone, open `https://<laptop-ip>:8000`, accept the local certificate, and **Add to Home Screen**: Ovamha installs like an app (own icon, full screen). Everything works: speech, voices, guideline advice, referral letter. The phone and laptop only talk over the local network.
+2. **The hosted image, offline.** Run the exact hosted demo locally with Docker, then switch the internet off:
+   `docker run -it -p 7860:7860 --platform=linux/amd64 registry.hf.space/r8086-ovamha:latest` → open http://localhost:7860
+3. **Automated check in a real browser.** `.venv/bin/python scripts/offline_check.py` (needs `pip install playwright && playwright install chromium`). It runs a check through the hub, then cuts the browser's network completely and reloads: the installed app still opens, keeps the worker signed in, and says *"Can't reach the Ovamha hub. Connect to the health post Wi-Fi. No internet is needed."*
+
+**What runs where:** the phone shows the app; the hub (laptop or Raspberry Pi at the health post) runs speech recognition, read-aloud voices, the guideline rules and the FHIR record store. Nothing calls the internet; the hub uploads records to the district/national level only when a connection exists. A fully on-phone Android version is the production target.
+
 ## For judges: demo logins
 
 Fictional demo accounts, checked offline on the device (PINs are stored only as salted hashes).

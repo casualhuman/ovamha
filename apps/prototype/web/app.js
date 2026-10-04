@@ -84,13 +84,19 @@ function busy(msg) {
   return () => b.remove();
 }
 
+const HUB_DOWN = "Can't reach the Ovamha hub. Connect to the health post Wi-Fi. No internet is needed.";
 async function api(path, { method = "POST", body, form, raw } = {}) {
   const headers = {};
   if (S.token) headers.Authorization = `Bearer ${S.token}`;
   let payload;
   if (form) payload = form;
   else if (body !== undefined) { headers["Content-Type"] = "application/json"; payload = JSON.stringify(body); }
-  const res = await fetch(path, { method, headers, body: payload });
+  let res;
+  try { res = await fetch(path, { method, headers, body: payload }); } catch {
+    S.hubDown = true;  // the phone cannot reach the hub (local Wi-Fi), not "no internet"
+    throw Object.assign(new Error(HUB_DOWN), { hubDown: true });
+  }
+  if (S.hubDown) { S.hubDown = false; }
   if (raw) {
     if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || "Request failed");
     return res;
@@ -275,6 +281,7 @@ function home() {
     <div class="hello"><span class="avatar">${esc(initials(w.display_name))}</span>
       <div class="who"><small>Hello,</small><b>${esc(w.display_name)}</b></div>
       </div>
+    ${S.hubDown ? `<div class="note-line warn" style="margin-top:16px">${icon("wifioff")}${HUB_DOWN}</div>` : ""}
     <div class="hero">
       <svg class="plus" width="150" height="150" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16" stroke="#fff" stroke-width="5" stroke-linecap="round"/></svg>
       <h2>New pregnancy check</h2>
@@ -1111,9 +1118,8 @@ function profile() {
 bind.profile = () => { $("#signout").onclick = () => signOut(false); };
 
 // ---------------------------------------------------------------- boot
-// Hosted copies only: a one-time pop-up explaining that the field deployment is offline.
+// Hosted copies only: a pop-up on every load explaining that the field deployment is offline.
 function showHostedNotice() {
-  if (store.get("hostedNoticeSeen")) return;
   const m = document.createElement("div");
   m.className = "modal-back";
   m.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="hn-title">
@@ -1123,11 +1129,15 @@ function showHostedNotice() {
     <p>This online copy is for judges to try Ovamha. In the field, Ovamha runs <b>fully offline</b> on a phone and a local hub at the health post, with no internet.</p>
     <p class="small muted">Fictional data only. Sign in with <b>fati</b> / <b>769131</b>; returning woman card <b>MAM-A2A</b>.</p>
     <button class="btn primary modal-ok">Got it</button></div>`;
-  const close = () => { store.set("hostedNoticeSeen", true); m.remove(); };
+  const close = () => m.remove();
   m.querySelector(".modal-x").onclick = close;
   m.querySelector(".modal-ok").onclick = close;
   m.onclick = (e) => { if (e.target === m) close(); };
   document.body.appendChild(m);
+}
+
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+  navigator.serviceWorker.register("/sw.js").catch(() => { /* self-signed certificate: app still works, just not installable */ });
 }
 
 (async function boot() {
@@ -1136,7 +1146,8 @@ function showHostedNotice() {
   const saved = session.load();
   if (saved?.token) {
     S.token = saved.token; S.worker = saved.worker; S.lang = saved.lang || "en";
-    try { await api("/api/state", { method: "GET" }); S.screen = "home"; } catch { S.token = null; S.screen = "login"; }
+    try { await api("/api/state", { method: "GET" }); S.screen = "home"; }
+    catch (e) { if (e.hubDown) S.screen = "home"; else { S.token = null; S.screen = "login"; } }  // hub unreachable: stay signed in
   }
   render();
 })();
