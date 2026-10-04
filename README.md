@@ -18,6 +18,10 @@ make run       # then switch the internet off and open http://localhost:8000
 
 Phone on the same Wi-Fi as the laptop "hub": `make run-https` (phone microphones need HTTPS). In the field, a laptop or Raspberry Pi at the health post is the hub and nurses' phones connect to it over local Wi-Fi; nothing needs the internet.
 
+## Demo script
+
+[docs/demo/point-of-care-demo.md](docs/demo/point-of-care-demo.md): a five-minute point-of-care demo with one woman at two moments (a routine visit where the guideline's suggestions do the work, then an emergency), with what to tap and what to say at each step.
+
 ## Test it offline
 
 Three ways, from most realistic to quickest:
@@ -114,6 +118,19 @@ Where the guideline does not define a threshold, Ovamha states its assumption on
 | FHIR conditional create (`ifNoneExist`) and `If-Match` | Uploads are safe to retry without duplicates; referral status changes cannot overwrite newer data |
 | [OpenHIE architecture](https://guides.ohie.org/arch-spec/architecture-specification/standards-and-profiles.md) | Device → facility hub → national systems design, with a mediator for national exchange (see the architecture document) |
 | [World Bank ID4D principles](https://id4d.worldbank.org/principles) | Ovamha creates its own woman ID and card number; the national ID is optional, consented, never stored as a number and never used as a key or sent by SMS |
+
+## Understanding what the worker says
+
+Speech is transcribed offline (Whisper small). Ovamha then has to work out which danger signs were described, often in everyday words ("her wrapper is red", "she sees stars"). Two detectors are built in; the **text classifier is the default**, and everything either one proposes must be confirmed by the worker.
+
+| Detector | How it works | Danger signs caught (recall) | Correct when it raises a sign (precision) | "No danger sign" rows left alone |
+| --- | --- | --- | --- | --- |
+| **Text classifier (default)** | A small fine-tuned sentence encoder ([all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2), Apache 2.0, about 90 MB, runs offline on CPU) scores each sentence for 15 danger signs | **94.4%** (169 of 179) | **90.9%** | 42 of 50 |
+| Keyword rules + AI safety net | Phrase list per danger sign, with negation ("no fever") and past-event ("fainted yesterday") handling | 48.0% (86 of 179) | 84.3% | 40 of 50 |
+
+Measured on 200 held-out written descriptions (E201–E400 of [ml/eval/text](ml/eval/text/)) never used for training or tuning; full per-sign and per-category results in [ml/eval/results/text-detection-classifier-vs-rules.txt](ml/eval/results/text-detection-classifier-vs-rules.txt). The decision threshold (0.15) was chosen on separate validation rows to favour catching danger signs over avoiding false alarms, because every proposal is checked by the worker. How it was built: [ml/textclf/README.md](ml/textclf/README.md).
+
+**Limits, stated plainly:** the held-out rows come from the same AI-written dataset as the training rows, so real spoken descriptions will score lower; it raised false alarms on 25 of 106 distractor sentences (signs about someone else, blood tests) and 6 of 34 denials; it is English only (Krio and Yoruba fall back to the keyword rules). Labels were curated by the team, not adjudicated by clinicians. Set `OVAMHA_DETECTOR=rules` or `both` to switch detector.
 
 ## How it works
 

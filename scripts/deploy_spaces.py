@@ -26,6 +26,10 @@ with tempfile.TemporaryDirectory() as tmp:
     shutil.copytree(ROOT / "apps/prototype/src", stage / "apps/prototype/src", ignore=ignore)
     shutil.copytree(ROOT / "apps/prototype/web", stage / "apps/prototype/web", ignore=ignore)
     shutil.copytree(ROOT / "content", stage / "content", ignore=ignore)
+    clf = ROOT / "ml/models/danger-sign-clf"
+    if not (clf / "labels.json").exists():
+        raise SystemExit("Classifier not trained: run ml/textclf/train.py first (the hosted app must match the local one).")
+    shutil.copytree(clf, stage / "ml/models/danger-sign-clf")
     api.create_repo(f"{USER}/ovamha", repo_type="space", space_sdk="docker", exist_ok=True)
     api.upload_folder(repo_id=f"{USER}/ovamha", repo_type="space", folder_path=str(stage), commit_message="Deploy Ovamha demo")
 print(f"App:  https://{USER}-ovamha.hf.space\nFHIR: https://{USER}-ovamha-fhir.hf.space/fhir/metadata")

@@ -1,19 +1,99 @@
 {
-  "_note": "Fictional returning woman, added on every fresh start (local and hosted) so a returning check can be tested. Card MAM-A2A. lmp_weeks_ago keeps her about 20 weeks pregnant whenever the server starts.",
+  "_note": "Fictional demo women, added on every fresh start (local and hosted). MAM-A2A: returning woman for a quick test. ANC-24T: the point-of-care demo (32 weeks, previous pre-eclampsia), see docs/demo/point-of-care-demo.md. lmp_weeks_ago keeps their gestational age the same whenever the server starts.",
   "women": [
     {
       "card_code": "MAMA2A",
       "age_years": 27,
       "lmp_weeks_ago": 20,
-      "details": {"first_name": "Mariama", "family_name": "Demo", "address": "Demo community"},
+      "details": {
+        "first_name": "Mariama",
+        "family_name": "Demo",
+        "address": "Demo community"
+      },
       "profile": {
-        "pregnancy_confirmed": "test_positive", "ga_source": "lmp",
-        "gravida": 3, "live_births": 2, "stillbirths": 0, "miscarriages": 0, "last_birth_preterm": "no",
-        "past_complications": ["pre_eclampsia", "caesarean"], "past_substance_use": ["none"],
-        "chronic_conditions": ["none"], "allergies": ["none"], "past_surgeries": ["caesarean"],
-        "current_medications": ["iron_folic"], "ttcv_doses": 2, "flu_vaccine": "no",
-        "caffeine_high": "no", "alcohol_substance": "no", "tobacco": "none", "partner_hiv": "unknown",
-        "education": "primary", "occupation": ["trading"]
+        "pregnancy_confirmed": "test_positive",
+        "ga_source": "lmp",
+        "gravida": 3,
+        "live_births": 2,
+        "stillbirths": 0,
+        "miscarriages": 0,
+        "last_birth_preterm": "no",
+        "past_complications": [
+          "pre_eclampsia",
+          "caesarean"
+        ],
+        "past_substance_use": [
+          "none"
+        ],
+        "chronic_conditions": [
+          "none"
+        ],
+        "allergies": [
+          "none"
+        ],
+        "past_surgeries": [
+          "caesarean"
+        ],
+        "current_medications": [
+          "iron_folic"
+        ],
+        "ttcv_doses": 2,
+        "flu_vaccine": "no",
+        "caffeine_high": "no",
+        "alcohol_substance": "no",
+        "tobacco": "none",
+        "partner_hiv": "unknown",
+        "education": "primary",
+        "occupation": [
+          "trading"
+        ]
+      }
+    },
+    {
+      "card_code": "ANC24T",
+      "age_years": 24,
+      "lmp_weeks_ago": 32,
+      "details": {
+        "first_name": "Aminata",
+        "family_name": "Demo",
+        "address": "Demo village"
+      },
+      "profile": {
+        "pregnancy_confirmed": "test_positive",
+        "ga_source": "lmp",
+        "gravida": 2,
+        "live_births": 1,
+        "stillbirths": 0,
+        "miscarriages": 0,
+        "last_birth_preterm": "no",
+        "past_complications": [
+          "pre_eclampsia"
+        ],
+        "past_substance_use": [
+          "none"
+        ],
+        "chronic_conditions": [
+          "none"
+        ],
+        "allergies": [
+          "none"
+        ],
+        "past_surgeries": [
+          "none"
+        ],
+        "current_medications": [
+          "iron_folic"
+        ],
+        "ttcv_doses": 3,
+        "flu_vaccine": "no",
+        "caffeine_high": "no",
+        "alcohol_substance": "no",
+        "tobacco": "none",
+        "partner_hiv": "negative",
+        "education": "secondary",
+        "occupation": [
+          "trading"
+        ]
       }
     }
   ]

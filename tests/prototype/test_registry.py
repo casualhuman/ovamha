@@ -103,7 +103,7 @@ def test_profile_saved_and_old_records_load(tmp_path):
 
 
 def test_demo_woman_seeded_valid_and_idempotent():
-    assert registry.seed_demo(TODAY) == ["MAMA2A"]
+    assert registry.seed_demo(TODAY) == ["MAMA2A", "ANC24T"]
     assert registry.seed_demo(TODAY) == []  # already there
     w, err = registry.find("mam-a2a")
     assert err == "" and w.profile["gravida"] == 3 and w.visits == 1
@@ -111,3 +111,12 @@ def test_demo_woman_seeded_valid_and_idempotent():
     clean, problems = questionnaire.validate("anc-profile", w.profile, TODAY)
     assert problems == [], problems  # the seeded history passes the same checks as a real one
     assert questionnaire.derived(w.profile, TODAY)["ga_weeks"] == 20.0
+
+
+def test_point_of_care_demo_woman():
+    registry.seed_demo(TODAY)
+    w, err = registry.find("ANC-24T")
+    from ovamha_proto import questionnaire
+    assert err == "" and questionnaire.validate("anc-profile", w.profile, TODAY)[1] == []
+    assert questionnaire.derived(w.profile, TODAY)["ga_weeks"] == 32.0
+    assert "pre_eclampsia" in w.profile["past_complications"]

@@ -17,9 +17,13 @@ RUN python -c "from transformers import VitsModel, AutoTokenizer; [(VitsModel.fr
 COPY --chown=user apps/prototype/src apps/prototype/src
 COPY --chown=user apps/prototype/web apps/prototype/web
 COPY --chown=user content content
+# Danger-sign text classifier (fine-tuned all-MiniLM-L6-v2, self-contained; see ml/textclf/README.md)
+COPY --chown=user ml/models/danger-sign-clf ml/models/danger-sign-clf
 
 ENV HF_HUB_OFFLINE=1 \
     OVAMHA_HOSTED=1 \
+    OVAMHA_DETECTOR=classifier \
+    OVAMHA_CLASSIFIER_DIR=/home/user/app/ml/models/danger-sign-clf \
     OVAMHA_DATA=/tmp/ovamha \
     OVAMHA_OUTBOX=/tmp/ovamha/outbox \
     FHIR_BASE=https://r8086-ovamha-fhir.hf.space/fhir \

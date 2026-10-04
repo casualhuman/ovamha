@@ -872,7 +872,7 @@ function advice() {
       <div class="routine">${a.routine.items.map((t) => `<div>${icon("check")}<span>${esc(t)}</span></div>`).join("")}
         ${a.routine.tests.length ? `<div class="routine-sub">First-contact tests</div>${a.routine.tests.map((t) => `<div>${icon("flask")}<span>${esc(t)}</span></div>`).join("")}` : ""}
         <div class="tiny" style="margin-top:8px">${esc(a.routine.cite)}</div></div>` : ""}
-    ${a.ask_next?.length && !a.danger ? `<div class="note-line warn">${icon("alert")}Not checked (missing): ${esc(a.ask_next.map((q) => q.label).join(", "))}</div>` : ""}
+    ${a.ask_next?.length && !a.danger ? `<div class="note-line warn">${icon("alert")}Not asked yet: ${esc(a.ask_next.slice(0, 3).map((q) => q.label).join(", "))}${a.ask_next.length > 3 ? ` and ${a.ask_next.length - 3} more` : ""}. Unknown is never treated as normal.</div>` : ""}
     ${a.next_contact?.text ? `<div class="note-line">${icon("calendar")}Next contact: ${esc(a.next_contact.text)}</div>` : ""}
     <div class="list-head">Your decision</div>
     <div class="row-list">
