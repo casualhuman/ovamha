@@ -505,8 +505,8 @@ function describe() {
     body = `<div class="card rec">
       <div class="badge green" style="margin-bottom:10px">${icon("check")}Recorded ${S.recSecs}s</div>
       <h3 style="font-size:1.2rem">Check the recording</h3>
-      <p class="muted small" style="margin:4px 0 12px">Listen to what you said, or go on to the read-back.</p>
-      <audio controls src="${S.audioUrl}" style="width:100%;margin-bottom:14px"></audio>
+      <p class="muted small" style="margin:4px 0 18px">Listen to what you said, or go on to the read-back.</p>
+      <audio id="myRecording" src="${S.audioUrl}" preload="auto" hidden></audio>
       <div class="stack">
         <button class="btn outline" id="replay">${icon("replay")}Replay guidance</button>
         <button class="btn primary" id="next">Next${icon("right")}</button>
@@ -535,7 +535,13 @@ bind.describe = () => {
   $("#mic") && ($("#mic").onclick = toggleRecord);
   $("#type") && ($("#type").onclick = () => { S.typing = true; render(); });
   $("#toVoice") && ($("#toVoice").onclick = () => { S.transcript = $("#tx").value; S.typing = false; render(); });
-  $("#replay") && ($("#replay").onclick = () => speakPrompt("guide_describe"));
+  // Replay guidance = play back the worker's own recording (the native player decodes webm/mp4 reliably).
+  $("#replay") && ($("#replay").onclick = () => {
+    const a = $("#myRecording");
+    if (!a) return;
+    a.currentTime = 0;
+    a.play().catch(() => playBlob(S.audioBlob));
+  });
   $("#guide") && ($("#guide").onclick = () => speakPrompt("guide_describe"));
   $("#again") && ($("#again").onclick = () => { S.audioBlob = null; S.audioUrl = null; render(); });
   $("#next") && ($("#next").onclick = transcribeAndRead);
