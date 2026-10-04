@@ -89,11 +89,12 @@ def build_bundle(e: Encounter) -> dict:
     rid = lambda key: _ident(f"{ID}/resource", f"{e.encounter_id}/{key}")  # noqa: E731
 
     # ---- identity, places, people, devices ----
-    pat = b.add({
-        "resourceType": "Patient",
-        "identifier": [_ident(f"{ID}/card", e.card_code)],
-        "gender": "female",
-    }, _ident(f"{ID}/device-uuid", e.woman_id))
+    patient = {"resourceType": "Patient", "identifier": [_ident(f"{ID}/card", e.card_code)], "gender": "female"}
+    if e.birth_date:
+        patient["birthDate"] = e.birth_date  # FHIR allows year-only precision for an estimate
+        if e.birth_date_estimated:
+            patient["_birthDate"] = {"extension": [{"url": f"{FHIR}/StructureDefinition/birthdate-estimated", "valueBoolean": True}]}
+    pat = b.add(patient, _ident(f"{ID}/device-uuid", e.woman_id))
     subj = {"reference": pat}
     org = b.add({"resourceType": "Organization", "name": e.facility, "active": True}, _ident(f"{ID}/facility", e.facility_id))
     hosp = b.add({"resourceType": "Organization", "name": e.referral_facility, "active": True},
@@ -180,6 +181,17 @@ def build_bundle(e: Encounter) -> dict:
             r["valueBoolean" if isinstance(v, bool) else "valueString"] = v if isinstance(v, bool) else str(v)
             u = obs(f, r, f)
             (measure_obs if f == "urine_protein" else sign_obs if f == "bleeding_amount" else measure_obs).append(u)
+
+    # Obstetric history from registration (keyed by the worker). Placeholder codes until SMART ANC mapping.
+    for f, v in e.history.items():
+        r = {"category": [{"coding": [{"system": OBS_CAT, "code": "social-history"}]}], "code": _ov_code(OBS_CS, f)}
+        if isinstance(v, int):
+            r["valueInteger"] = v
+        else:
+            r["dataAbsentReason"] = {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/data-absent-reason", "code": "asked-unknown"}]}
+        u = b.add({"resourceType": "Observation", "status": "final", "subject": subj, "encounter": enc_ref,
+                   "effectiveDateTime": e.at, "performer": [{"reference": role}], **r}, rid(f"history/{f}"))
+        by_capture["keyed"].append(u)
 
     # ---- rule results ----
     for res in e.results:

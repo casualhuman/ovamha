@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 
 from ovamha_proto import auth, server, sms
 
+REG = {"national_id": "none", "age_years": 24, "previous_pregnancies": 2, "births": 1}
 SCENARIO = "She is 28 weeks pregnant and she has heavy vaginal bleeding since this morning. She fainted yesterday but is fine now. No fever."
 
 
@@ -35,7 +36,7 @@ def test_wrong_pin_rejected(client):
 
 
 def test_full_scenario(client):
-    card = client.post("/api/woman/new").json()["woman"]["card_code"]
+    card = client.post("/api/woman/new", json=REG).json()["woman"]["card_code"]
     st = client.post("/api/extract", json={"transcript": SCENARIO, "lang": "en"}).json()
     fields = {i["field"]: i for i in st["items"]}
     assert fields["vaginal_bleeding"]["value"] is True
@@ -82,7 +83,7 @@ def test_finish_requires_woman(client):
 
 
 def test_returning_woman_by_card(client):
-    card = client.post("/api/woman/new").json()["woman"]["card_code"]
+    card = client.post("/api/woman/new", json=REG).json()["woman"]["card_code"]
     client.post("/api/encounter/new", json={"lang": "en"})
     st = client.post("/api/woman/find", json={"card_code": card.lower()}).json()
     assert st["woman"]["card_code"] == card
@@ -92,3 +93,21 @@ def test_returning_woman_by_card(client):
 def test_speak_prompt(client):
     r = client.post("/api/speak", json={"prompt": "ask_bp", "lang": "en"})
     assert r.status_code == 200 and r.headers["content-type"] == "audio/wav"
+
+
+def test_register_requires_birth_info(client):
+    r = client.post("/api/woman/new", json={"national_id": "none"})
+    assert r.status_code == 422 and "date of birth" in r.json()["detail"].lower()
+
+
+def test_registration_flows_into_bundle_and_handover(client):
+    client.post("/api/woman/new", json={"national_id": "nin", "consent": True, "age_years": 24, "previous_pregnancies": 2, "births": "unknown"})
+    client.post("/api/extract", json={"transcript": "heavy bleeding", "lang": "en"})
+    client.post("/api/confirm", json={"field": "vaginal_bleeding"})
+    r = client.post("/api/finish").json()
+    pat = next(e["resource"] for e in r["bundle"]["entry"] if e["resource"]["resourceType"] == "Patient")
+    assert len(pat["birthDate"]) == 4 and pat["_birthDate"]["extension"][0]["valueBoolean"] is True
+    types = [e["resource"]["resourceType"] for e in r["bundle"]["entry"]]
+    assert "Consent" in types
+    assert "estimated" in r["handover"] and "Previous pregnancies: 2" in r["handover"] and "Babies born alive: not known" in r["handover"]
+    assert r["valid"]["ok"]

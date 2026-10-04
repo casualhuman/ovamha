@@ -75,7 +75,8 @@ def _woman_view(w: registry.Woman | None) -> dict | None:
     if not w:
         return None
     return {"card_code": registry.display(w.card_code), "visits": w.visits, "last_visit": w.last_visit, "new": w.visits == 0,
-            "id_check": w.national_id}
+            "id_check": w.national_id, "birth_date": w.birth_date, "birth_date_estimated": w.birth_date_estimated,
+            "previous_pregnancies": w.previous_pregnancies, "births": w.births}
 
 
 def _rule_view(results) -> dict:
@@ -150,34 +151,28 @@ def new_encounter(body: LangIn, v: Visit = Depends(visit)):
 
 # ---------------- woman (card number) ----------------
 
+class RegisterIn(BaseModel):
+    national_id: str  # "nin" | "none"
+    consent: bool = False
+    birth_date: str | None = None  # exact, YYYY-MM-DD
+    age_years: int | None = None  # or her estimated age
+    previous_pregnancies: int | str | None = None  # count or "unknown"
+    births: int | str | None = None
+
+
 @app.post("/api/woman/new")
-def woman_new(v: Visit = Depends(visit)):
-    """First visit: create her woman ID and card number."""
-    v.woman = registry.register(v.worker.worker_id)
+def woman_new(body: RegisterIn, v: Visit = Depends(visit)):
+    """First visit: ID question first, then her woman ID and card number are created (always)."""
+    try:
+        v.woman = registry.register(v.worker.worker_id, body.national_id, body.consent, body.birth_date,
+                                    body.age_years, body.previous_pregnancies, body.births)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc))
     return state(v)
 
 
 class CardIn(BaseModel):
     card_code: str
-
-
-class IdCheckIn(BaseModel):
-    document: str
-    consent: bool
-
-
-@app.post("/api/woman/id-check")
-def woman_id_check(body: IdCheckIn, v: Visit = Depends(visit)):
-    """Optional, consented national ID check (ID-03). Records that a document was shown; never the number (ID-04)."""
-    if not v.woman:
-        raise HTTPException(409, "Choose First visit or Returning first.")
-    if not body.consent:
-        raise HTTPException(422, "Her consent is needed to record an ID check. Care continues without it.")
-    try:
-        v.woman = registry.record_id_check(v.woman.card_code, body.document)
-    except ValueError as exc:
-        raise HTTPException(422, str(exc))
-    return state(v)
 
 
 @app.post("/api/woman/find")
@@ -363,6 +358,8 @@ def do_finish(v: Visit = Depends(visit)):
     e.worker_role = v.worker.role
     e.episode_id = v.woman.episode_id or e.episode_id
     e.national_id = v.woman.national_id
+    e.birth_date, e.birth_date_estimated = v.woman.birth_date, v.woman.birth_date_estimated
+    e.history = {k: getattr(v.woman, k) for k in ("previous_pregnancies", "births") if getattr(v.woman, k) is not None}
     v.encounter = e
     out_sms = None
     if e.referral:

@@ -25,6 +25,8 @@ KEYPAD_FIELDS = {
     "fetal_heart_rate": "Fetal heart rate (/min)",
 }
 OTHER_LABELS = {
+    "previous_pregnancies": "Previous pregnancies",
+    "births": "Babies born alive",
     "bleeding_amount": "Bleeding amount",
     "urine_protein": "Urine protein",
     "severe_pe_symptoms": "Symptoms of severe pre-eclampsia",

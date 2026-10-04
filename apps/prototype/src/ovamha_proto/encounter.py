@@ -36,6 +36,9 @@ class Encounter:
     worker_role: str = "Community health worker"
     episode_id: str = field(default_factory=lambda: str(uuid.uuid4()))  # the pregnancy (EpisodeOfCare)
     national_id: dict | None = None  # consented ID check: {"document": ..., "method": "document-shown", "verified": False, "consent_at": ...}
+    birth_date: str | None = None  # "YYYY-MM-DD", or "YYYY" when estimated
+    birth_date_estimated: bool = False
+    history: dict = field(default_factory=dict)  # registration history: previous_pregnancies, births (int or "unknown")
     sms: dict | None = None  # {"text", "sent", "channel"} once the referral SMS is sent
     referral_status: str = "requested"  # requested -> accepted (ACK) | rejected (FULL)
 

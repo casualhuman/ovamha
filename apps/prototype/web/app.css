@@ -222,3 +222,25 @@ pre.mono { white-space: pre-wrap; font: .82rem/1.5 ui-monospace, Menlo, monospac
 .offline-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: inline-block; }
 .measure .num::placeholder { font-size: 1rem; font-weight: 600; color: var(--ink-3); }
 .screen:has(+ .sticky) { padding-bottom: 200px; }
+
+/* Option cards with read-aloud, steppers (registration) */
+.opt { display: flex; align-items: center; gap: 10px; border: 2px solid var(--line); border-radius: 18px; padding: 8px 8px 8px 10px; background: #fff; }
+.opt + .opt { margin-top: 10px; }
+.opt.on { border-color: var(--blue); background: var(--blue-50); }
+.opt-main { flex: 1; display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 4px; }
+.opt-main b { font-size: 1.08rem; }
+.screen > .opt { box-shadow: var(--shadow); padding: 12px; }
+.screen > .opt + .opt { margin-top: 14px; }
+.qhead { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.qhead h3 { flex: 1; margin: 0; font-size: 1.12rem; }
+.consent { display: flex; gap: 12px; align-items: center; margin-top: 14px; font-weight: 600; padding: 12px; border-radius: 14px; background: var(--blue-50); }
+.consent input { width: 26px; height: 26px; flex: none; }
+.consent span { flex: 1; }
+.stepper { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+.stepper .icon-btn { width: 56px; height: 56px; font-size: 1.8rem; font-weight: 700; color: var(--blue-700); }
+.stepper .icon-btn[disabled] { opacity: .35; }
+.stepper .num-big { min-width: 56px; text-align: center; font-size: 2rem; font-weight: 800; color: var(--blue-700); }
+.stepper .chip { margin-left: auto; box-shadow: none; border: 2px solid var(--line); }
+.stepper .chip.on { border-color: var(--blue); }
+.card-code { font-size: 2.6rem; font-weight: 800; letter-spacing: .12em; color: var(--blue-700); margin: 10px 0 6px; font-family: ui-monospace, Menlo, monospace; }
+.card-input { font-size: 1.6rem; text-align: center; letter-spacing: .15em; font-weight: 700; font-family: ui-monospace, Menlo, monospace; }

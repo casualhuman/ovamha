@@ -31,13 +31,13 @@ def test_adjacent_swap_caught():
 
 
 def test_register_and_find_with_dash_and_lowercase():
-    w = registry.register("nurse-test")
+    w = registry.register("nurse-test", age_years=25)
     found, err = registry.find(registry.display(w.card_code).lower())
     assert err == "" and found.woman_id == w.woman_id
 
 
 def test_find_typo_message():
-    w = registry.register("nurse-test")
+    w = registry.register("nurse-test", age_years=25)
     bad = w.card_code[:5] + ("A" if w.card_code[5] != "A" else "B")
     found, err = registry.find(bad)
     assert found is None and "typo" in err
@@ -49,13 +49,50 @@ def test_unknown_valid_code():
 
 
 def test_record_visit():
-    w = registry.register("nurse-test")
+    w = registry.register("nurse-test", age_years=25)
     registry.record_visit(w.card_code)
     assert registry.find(w.card_code)[0].visits == 1
 
 
 def test_no_personal_data_stored():
-    w = registry.register("nurse-test")
+    w = registry.register("nurse-test", age_years=25)
     rec = registry.find(w.card_code)[0]
-    assert set(vars(rec)) == {"woman_id", "card_code", "created_at", "created_by", "visits", "last_visit", "episode_id", "national_id"}
+    assert set(vars(rec)) == {"woman_id", "card_code", "created_at", "created_by", "visits", "last_visit", "episode_id",
+                              "national_id", "birth_date", "birth_date_estimated", "previous_pregnancies", "births"}
     assert rec.national_id is None
+
+
+from datetime import date  # noqa: E402
+
+TODAY = date(2026, 10, 4)
+
+
+def test_estimated_age_becomes_birth_year():
+    w = registry.register("n", age_years=24, today=TODAY)
+    assert w.birth_date == "2002" and w.birth_date_estimated
+
+
+def test_exact_birth_date():
+    w = registry.register("n", birth_date="2001-05-17", today=TODAY)
+    assert w.birth_date == "2001-05-17" and not w.birth_date_estimated
+
+
+@pytest.mark.parametrize("kw", [{}, {"age_years": 5}, {"age_years": 75}, {"birth_date": "2024-01-01"}, {"birth_date": "17/05/2001"}])
+def test_birth_date_required_and_plausible(kw):
+    with pytest.raises(ValueError):
+        registry.register("n", today=TODAY, **kw)
+
+
+def test_nin_needs_consent_and_number_never_stored():
+    with pytest.raises(ValueError):
+        registry.register("n", national_id="nin", consent=False, age_years=25)
+    w = registry.register("n", national_id="nin", consent=True, age_years=25)
+    assert w.national_id["document"] == "National ID (NIN)" and w.national_id["verified"] is False
+    assert w.card_code  # a card number is still issued: the NIN is never a search key (ID-04)
+
+
+def test_pregnancy_history_counts_and_unknown():
+    w = registry.register("n", age_years=30, previous_pregnancies=3, births="unknown")
+    assert w.previous_pregnancies == 3 and w.births == "unknown"
+    with pytest.raises(ValueError):
+        registry.register("n", age_years=30, previous_pregnancies=-1)

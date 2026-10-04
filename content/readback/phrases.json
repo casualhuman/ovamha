@@ -56,7 +56,18 @@
       "ask_protein": "Urine protein. Choose the dipstick result.",
       "ask_severe_pe": "Does she have symptoms of severe pre-eclampsia?",
       "card_new": "Write this card number on her antenatal card.",
-      "guide_describe": "Tell me about her. How many weeks pregnant is she? Is there any bleeding, pain in the belly, headache or blurred vision, fits, fever, or trouble breathing? Has she fainted?"
+      "guide_describe": "Tell me about her. How many weeks pregnant is she? Is there any bleeding, pain in the belly, headache or blurred vision, fits, fever, or trouble breathing? Has she fainted?",
+      "visit_first": "First visit. Choose this if this is her first check with Ovamha. She will get a new card number.",
+      "visit_returning": "Returning. Choose this if she already has an Ovamha card. Enter the number on her card.",
+      "id_question": "Does she have a national ID card?",
+      "id_nin": "National NIN. Choose this if she has a national identity card with a national identification number.",
+      "id_none": "No ID. Choose this if she does not have a national identity card. Her care is exactly the same.",
+      "id_consent": "Ask her: do you agree to link your Ovamha record to your national ID? Do not write down the number.",
+      "dob_question": "When was she born?",
+      "dob_exact": "Exact date. Choose this if she knows her date of birth.",
+      "dob_estimate": "Estimate her age. If she does not know her date of birth, ask about how old she is.",
+      "prev_pregnancies": "How many times has she been pregnant before this pregnancy?",
+      "births": "How many babies has she given birth to alive?"
     }
   },
   "kri": {
@@ -115,7 +126,18 @@
       "ask_protein": "",
       "ask_severe_pe": "",
       "card_new": "",
-      "guide_describe": ""
+      "guide_describe": "",
+      "visit_first": "",
+      "visit_returning": "",
+      "id_question": "",
+      "id_nin": "",
+      "id_none": "",
+      "id_consent": "",
+      "dob_question": "",
+      "dob_exact": "",
+      "dob_estimate": "",
+      "prev_pregnancies": "",
+      "births": ""
     }
   },
   "yo": {
@@ -174,7 +196,18 @@
       "ask_protein": "",
       "ask_severe_pe": "",
       "card_new": "",
-      "guide_describe": ""
+      "guide_describe": "",
+      "visit_first": "",
+      "visit_returning": "",
+      "id_question": "",
+      "id_nin": "",
+      "id_none": "",
+      "id_consent": "",
+      "dob_question": "",
+      "dob_exact": "",
+      "dob_estimate": "",
+      "prev_pregnancies": "",
+      "births": ""
     }
   }
 }

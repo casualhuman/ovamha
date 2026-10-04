@@ -285,82 +285,124 @@ async function startCheck() {
   try {
     S.st = await api("/api/encounter/new", { body: { lang: S.lang } });
     S.result = null; S.audioBlob = null; S.audioUrl = null; S.transcript = ""; S.typing = false; S.numbers = {};
-    S.cardMode = null; S.cardErr = ""; S.idDoc = null;
+    S.cardMode = null; S.cardErr = ""; S.reg = null;
     go("woman");
   } catch (e) { toast(e.message); }
 }
 
 // ---------------------------------------------------------------- 3b. who is this check for (card number)
-const ID_DOCS = [["sl-nin", "Sierra Leone NIN"], ["ng-nin", "Nigeria NIN"], ["other", "Other ID"]];
-function idCheckCard(w) {
-  if (w.id_check) {
-    return `<div class="card" style="margin-top:14px;display:flex;gap:12px;align-items:flex-start"><span class="icon-btn soft" style="flex:none">${icon("idcard")}</span>
-      <div><b>ID check recorded</b><div class="small muted">${esc(w.id_check.document)} shown, with her consent. The number is not stored. It can be verified later through the national ID service.</div></div></div>`;
-  }
-  const picked = S.idDoc;
-  return `<div class="card" style="margin-top:14px">
-    <div style="display:flex;gap:10px;align-items:center"><span class="icon-btn soft" style="width:40px;height:40px">${icon("idcard")}</span>
-      <h3 style="margin:0;flex:1">National ID <span class="tiny">optional</span></h3></div>
-    <p class="small muted" style="margin:8px 0 10px">Does she have a national ID card? Care continues the same without one.</p>
-    <div class="seg">${ID_DOCS.map(([v, l]) => `<button data-doc="${v}" class="${picked === v ? "on" : ""}">${l}</button>`).join("")}<button data-doc="none" class="${picked === "none" ? "on" : ""}">No ID</button></div>
-    ${picked && picked !== "none" ? `<label style="display:flex;gap:12px;align-items:flex-start;margin-top:14px;font-weight:600">
-        <input type="checkbox" id="idConsent" style="width:26px;height:26px;flex:none;margin-top:2px">
-        <span>She agrees to link her Ovamha record to her national ID.</span></label>
-      <p class="tiny" style="margin:8px 0 10px">Do not type the ID number. Ovamha records only that the card was shown.</p>
-      <button class="btn soft" id="saveId">${icon("check")}Record ID check</button>` : ""}
-  </div>`;
+// Option card with its own read-aloud button (for workers who do not read English well).
+function choice(attr, value, title, sub, ic, prompt, on) {
+  return `<div class="opt ${on ? "on" : ""}">
+    <button class="opt-main" ${attr}="${esc(value)}"><span class="icon-btn ${on ? "blue" : "soft"}" style="flex:none">${icon(on ? "check" : ic)}</span>
+      <span style="flex:1;text-align:left"><b>${title}</b>${sub ? `<br><span class="small muted">${sub}</span>` : ""}</span></button>
+    <button class="icon-btn soft opt-say" data-prompt="${prompt}" aria-label="Read aloud">${icon("speaker")}</button></div>`;
+}
+function qhead(text, prompt) {
+  return `<div class="qhead"><h3>${text}</h3><button class="icon-btn soft" data-prompt="${prompt}" aria-label="Read aloud">${icon("speaker")}</button></div>`;
+}
+function stepper(key, value, allowUnknown = true) {
+  const unknown = value === "unknown";
+  return `<div class="stepper">
+    <button class="icon-btn soft" data-step="${key}" data-d="-1" aria-label="One less" ${unknown ? "disabled" : ""}>−</button>
+    <span class="num-big">${unknown ? "?" : value ?? 0}</span>
+    <button class="icon-btn soft" data-step="${key}" data-d="1" aria-label="One more" ${unknown ? "disabled" : ""}>+</button>
+    ${allowUnknown ? `<button class="chip ${unknown ? "on" : ""}" data-unknown="${key}">Don't know</button>` : ""}</div>`;
+}
+function registration() {
+  const r = S.reg;
+  return `
+    <div class="card">${qhead("Does she have a national ID card?", "id_question")}
+      <p class="small muted" style="margin:0 0 10px">Asked first. Her care is the same either way.</p>
+      ${choice("data-nid", "nin", "National NIN", "She has a national ID card", "idcard", "id_nin", r.national_id === "nin")}
+      ${choice("data-nid", "none", "No ID", "She has no national ID card", "x", "id_none", r.national_id === "none")}
+      ${r.national_id === "nin" ? `<label class="consent"><input type="checkbox" id="consent" ${r.consent ? "checked" : ""}>
+        <span>She agrees to link her Ovamha record to her national ID.</span>
+        <button class="icon-btn soft" data-prompt="id_consent" aria-label="Read aloud" type="button">${icon("speaker")}</button></label>
+        <p class="tiny" style="margin:6px 0 0">Do not write down the number. Ovamha records only that the card was shown; it is linked later through the national ID service.</p>` : ""}
+    </div>
+    <div class="card">${qhead("When was she born?", "dob_question")}
+      ${choice("data-dob", "exact", "Exact date", "She knows her date of birth", "calendar", "dob_exact", r.dobMode === "exact")}
+      ${choice("data-dob", "estimate", "Estimate her age", "She does not know her date of birth", "user", "dob_estimate", r.dobMode === "estimate")}
+      ${r.dobMode === "exact" ? `<input class="input" type="date" id="dob" value="${esc(r.birth_date || "")}" style="margin-top:10px">` : ""}
+      ${r.dobMode === "estimate" ? `<div class="small muted" style="margin:12px 0 4px">About how old is she?</div>${stepper("age", r.age, false)}<div class="tiny">years, your best estimate · saved as an estimated birth year</div>` : ""}
+    </div>
+    <div class="card">${qhead("Previous pregnancies", "prev_pregnancies")}
+      <p class="small muted" style="margin:0 0 8px">Before this pregnancy</p>${stepper("prev", r.prev)}
+    </div>
+    <div class="card">${qhead("Babies born alive", "births")}${stepper("births", r.births)}</div>
+    <div class="err">${esc(S.cardErr)}</div>
+    <button class="btn primary" id="createCard" style="margin-top:6px">${icon("plus")}Create her card number</button>`;
 }
 function woman() {
   const w = S.st?.woman;
   let body;
-  if (w && w.new) {
+  if (w) {
+    const idLine = w.id_check ? `${icon("idcard")} National ID shown, with consent` : `${icon("x")} No national ID`;
+    const dob = w.birth_date ? (w.birth_date_estimated ? `Born about ${w.birth_date} (estimated)` : `Born ${w.birth_date}`) : "";
     body = `<div class="card" style="text-align:center">
-      <div class="badge green" style="margin-bottom:10px">${icon("check")}New card number created</div>
-      <div class="small muted">Write this on her antenatal card</div>
-      <div style="font-size:2.6rem;font-weight:800;letter-spacing:.12em;color:var(--blue-700);margin:10px 0 6px;font-family:ui-monospace,Menlo,monospace">${esc(w.card_code)}</div>
+      <div class="badge green" style="margin-bottom:10px">${icon("check")}${w.new ? "New card number created" : "Card found"}</div>
+      <div class="small muted">${w.new ? "Write this on her antenatal card" : "Her card number"}</div>
+      <div class="card-code">${esc(w.card_code)}</div>
       <button class="btn soft" id="sayCard">${icon("speaker")}Read aloud</button>
-      <p class="tiny" style="margin:12px 0 0">No name or phone number is stored. Ovamha keeps its own ID for her on this device.</p>
-    </div>
-    ${idCheckCard(w)}
-    <div style="margin-top:16px"><button class="btn primary" id="toDescribe">Continue${icon("right")}</button></div>`;
-  } else if (w) {
-    body = `<div class="card" style="text-align:center">
-      <div class="badge green" style="margin-bottom:10px">${icon("check")}Card found</div>
-      <div style="font-size:2.2rem;font-weight:800;letter-spacing:.12em;color:var(--blue-700);margin:6px 0;font-family:ui-monospace,Menlo,monospace">${esc(w.card_code)}</div>
-      <div class="small muted">${w.visits} previous ${w.visits === 1 ? "check" : "checks"} on this device</div>
+      <div class="small muted" style="margin-top:12px;display:flex;flex-direction:column;gap:4px;align-items:center">
+        <span style="display:inline-flex;gap:6px;align-items:center">${idLine}</span>${dob ? `<span>${esc(dob)}</span>` : ""}
+        ${w.new ? "" : `<span>${w.visits} previous ${w.visits === 1 ? "check" : "checks"} on this device</span>`}</div>
     </div>
     <div style="margin-top:16px"><button class="btn primary" id="toDescribe">Continue${icon("right")}</button></div>`;
+  } else if (S.cardMode === "new") {
+    body = registration();
   } else if (S.cardMode === "find") {
     body = `<div class="card"><h3>Her card number</h3><p class="small muted" style="margin:2px 0 12px">6 characters, as written on her antenatal card.</p>
-      <input class="input" id="card" autocapitalize="characters" autocorrect="off" spellcheck="false" maxlength="7" placeholder="K7P-3QZ"
-        style="font-size:1.6rem;text-align:center;letter-spacing:.15em;font-weight:700;font-family:ui-monospace,Menlo,monospace">
+      <input class="input card-input" id="card" autocapitalize="characters" autocorrect="off" spellcheck="false" maxlength="7" placeholder="K7P-3QZ">
       <div class="err">${esc(S.cardErr)}</div>
       <div class="row" style="margin-top:6px"><button class="btn soft" id="cardBack">Back</button><button class="btn primary" id="findCard">Find</button></div></div>`;
   } else {
-    body = `<button class="card" id="newWoman" style="width:100%;text-align:left;display:flex;gap:14px;align-items:center;border:0">
-        <span class="icon-btn blue" style="flex:none">${icon("plus")}</span>
-        <span style="flex:1"><b style="font-size:1.1rem">First visit</b><br><span class="small muted">Create a new card number for her</span></span>${icon("right")}</button>
-      <button class="card" id="oldWoman" style="width:100%;text-align:left;display:flex;gap:14px;align-items:center;border:0">
-        <span class="icon-btn soft" style="flex:none">${icon("file")}</span>
-        <span style="flex:1"><b style="font-size:1.1rem">Returning</b><br><span class="small muted">Enter the number on her card</span></span>${icon("right")}</button>`;
+    body = choice("data-mode", "new", "First visit", "Register her and create a card number", "plus", "visit_first", false)
+      + choice("data-mode", "find", "Returning", "Enter the number on her card", "file", "visit_returning", false);
   }
-  return `<div class="screen">${topbar("Who is this check for?", "home")}${body}</div>${nav("describe")}`;
+  const title = S.cardMode === "new" && !w ? "First visit" : "Who is this check for?";
+  return `<div class="screen">${topbar(title, "home")}${body}</div>${nav("describe")}`;
 }
 bind.woman = () => {
-  const set = (st) => { S.st = st; S.cardErr = ""; render(); };
-  $("#newWoman") && ($("#newWoman").onclick = () => api("/api/woman/new").then(set).catch((e) => toast(e.message)));
-  $("#oldWoman") && ($("#oldWoman").onclick = () => { S.cardMode = "find"; render(); $("#card").focus(); });
+  const set = (st) => { S.st = st; S.cardErr = ""; render(); window.scrollTo(0, 0); };
+  document.querySelectorAll("[data-prompt]").forEach((b) => b.onclick = (e) => { e.preventDefault(); speakPrompt(b.dataset.prompt); });
+  document.querySelectorAll("[data-mode]").forEach((b) => b.onclick = () => {
+    S.cardMode = b.dataset.mode; S.cardErr = "";
+    if (S.cardMode === "new") S.reg = { national_id: null, consent: false, dobMode: null, birth_date: "", age: 25, prev: 0, births: 0 };
+    render(); window.scrollTo(0, 0);
+    if (S.cardMode === "find") $("#card").focus();
+  });
+  document.querySelectorAll("[data-nid]").forEach((b) => b.onclick = () => { S.reg.national_id = b.dataset.nid; render(); });
+  document.querySelectorAll("[data-dob]").forEach((b) => b.onclick = () => { S.reg.dobMode = b.dataset.dob; render(); });
+  $("#consent") && ($("#consent").onchange = (e) => { S.reg.consent = e.target.checked; });
+  $("#dob") && ($("#dob").onchange = (e) => { S.reg.birth_date = e.target.value; });
+  const keyOf = { age: "age", prev: "prev", births: "births" };
+  document.querySelectorAll("[data-step]").forEach((b) => b.onclick = () => {
+    const k = keyOf[b.dataset.step], lo = k === "age" ? 10 : 0, hi = k === "age" ? 60 : 20;
+    S.reg[k] = Math.max(lo, Math.min(hi, (Number(S.reg[k]) || 0) + Number(b.dataset.d)));
+    render();
+  });
+  document.querySelectorAll("[data-unknown]").forEach((b) => b.onclick = () => {
+    const k = keyOf[b.dataset.unknown];
+    S.reg[k] = S.reg[k] === "unknown" ? 0 : "unknown";
+    render();
+  });
+  $("#createCard") && ($("#createCard").onclick = () => {
+    const r = S.reg;
+    if (!r.national_id) { S.cardErr = "Answer the national ID question first."; render(); return; }
+    if (r.national_id === "nin" && !r.consent) { S.cardErr = "Ask for her consent, or choose No ID."; render(); return; }
+    if (!r.dobMode) { S.cardErr = "Answer when she was born: exact date or estimate."; render(); return; }
+    const body = { national_id: r.national_id, consent: r.consent, previous_pregnancies: r.prev, births: r.births };
+    if (r.dobMode === "exact") body.birth_date = r.birth_date || null; else body.age_years = r.age;
+    api("/api/woman/new", { body }).then(set).catch((e) => { S.cardErr = e.message; render(); });
+  });
   $("#cardBack") && ($("#cardBack").onclick = () => { S.cardMode = null; S.cardErr = ""; render(); });
   const find = () => api("/api/woman/find", { body: { card_code: $("#card").value } }).then(set).catch((e) => { S.cardErr = e.message; render(); });
   $("#findCard") && ($("#findCard").onclick = find);
   $("#card") && ($("#card").onkeydown = (e) => { if (e.key === "Enter") find(); });
   $("#sayCard") && ($("#sayCard").onclick = () => speakText(`Card number: ${S.st.woman.card_code.replace("-", "").split("").join(", ")}`, "en"));
   $("#toDescribe") && ($("#toDescribe").onclick = () => go("describe"));
-  document.querySelectorAll("[data-doc]").forEach((b) => b.onclick = () => { S.idDoc = b.dataset.doc; render(); });
-  $("#saveId") && ($("#saveId").onclick = () => {
-    if (!$("#idConsent").checked) { toast("Ask for her consent first, or choose No ID"); return; }
-    api("/api/woman/id-check", { body: { document: S.idDoc, consent: true } }).then(set).catch((e) => toast(e.message));
-  });
 };
 
 // ---------------------------------------------------------------- 4. describe (record -> replay / next)

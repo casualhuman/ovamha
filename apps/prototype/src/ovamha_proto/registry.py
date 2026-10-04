@@ -2,7 +2,9 @@
 
 At first contact Ovamha creates a woman ID (UUID, the internal key) and a short
 card code the worker writes on her ANC card. On later visits the worker types the
-card code to find her. No name, phone number or national ID is stored here.
+card code to find her. Stored: her date of birth (exact or estimated), pregnancy
+history counts and, with consent, that a national ID card was shown. No name, phone
+number or national ID number is stored.
 
 Card code: 5 random characters + 1 check character (weighted mod 31 over an alphabet
 without look-alikes 0/O, 1/I/L), shown as "K7P-3QZ". A single wrong or swapped
@@ -17,7 +19,7 @@ import os
 import secrets
 import uuid
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"  # 31 characters
@@ -67,6 +69,10 @@ class Woman:
     last_visit: str | None = None
     episode_id: str = ""  # the current pregnancy (FHIR EpisodeOfCare)
     national_id: dict | None = None  # consented check only: document shown, never the number (ID-03, ID-04)
+    birth_date: str | None = None  # "YYYY-MM-DD" when known; "YYYY" when estimated from her age
+    birth_date_estimated: bool = False
+    previous_pregnancies: int | str | None = None  # count, or "unknown"
+    births: int | str | None = None  # babies born alive, or "unknown"
 
 
 def _load() -> dict[str, dict]:
@@ -82,13 +88,62 @@ def _save(data: dict) -> None:
     tmp.replace(p)
 
 
-def register(worker_id: str) -> Woman:
+def _count(v, what: str) -> int | str | None:
+    if v is None or v == "unknown":
+        return v
+    try:
+        n = int(v)
+    except (TypeError, ValueError):
+        raise ValueError(f"{what}: enter a number or choose Don't know.")
+    if not 0 <= n <= 20:
+        raise ValueError(f"{what}: {n} looks wrong. Please check.")
+    return n
+
+
+def register(worker_id: str, national_id: str = "none", consent: bool = False, birth_date: str | None = None,
+             age_years: int | None = None, previous_pregnancies=None, births=None, today: date | None = None) -> Woman:
+    """First visit: create her Ovamha woman ID and card code, always (ID-01).
+
+    national_id: "nin" (she has a national ID card) or "none". With "nin" and her consent,
+    Ovamha records only that the card was shown, never the number (ID-03, ID-04); the
+    link is made later through the national ID service, against this same woman ID.
+    Date of birth: exact (birth_date) or estimated from her age (age_years), stored as
+    a year and flagged as estimated, as is common where birth dates are not known.
+    """
+    today = today or date.today()
+    if national_id not in ("nin", "none"):
+        raise ValueError("Choose National NIN or No ID.")
+    if national_id == "nin" and not consent:
+        raise ValueError("Ask for her consent to link her national ID, or choose No ID.")
+    dob, estimated = None, False
+    if birth_date:
+        try:
+            d = date.fromisoformat(birth_date)
+        except ValueError:
+            raise ValueError("Date of birth is not a valid date.")
+        age = (today - d).days / 365.25
+        if not 10 <= age <= 60:
+            raise ValueError("Date of birth gives an age outside 10 to 60 years. Please check.")
+        dob = d.isoformat()
+    elif age_years is not None:
+        if not 10 <= int(age_years) <= 60:
+            raise ValueError("Age should be between 10 and 60 years. Please check.")
+        dob, estimated = str(today.year - int(age_years)), True
+    else:
+        raise ValueError("Enter her date of birth, or estimate her age.")
+    prev, born = _count(previous_pregnancies, "Previous pregnancies"), _count(births, "Babies born alive")
+    if isinstance(prev, int) and isinstance(born, int) and born > prev + 5:
+        raise ValueError("More babies born than pregnancies by a wide margin. Please check (twins count once as a pregnancy).")
+
     data = _load()
     code = new_code()
     while code in data:
         code = new_code()
-    w = Woman(str(uuid.uuid4()), code, datetime.now(timezone.utc).replace(microsecond=0).isoformat(), worker_id,
-              episode_id=str(uuid.uuid4()))
+    now = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    w = Woman(str(uuid.uuid4()), code, now, worker_id, episode_id=str(uuid.uuid4()),
+              birth_date=dob, birth_date_estimated=estimated, previous_pregnancies=prev, births=born)
+    if national_id == "nin":
+        w.national_id = {"document": "National ID (NIN)", "method": "document-shown", "verified": False, "consent_at": now}
     data[code] = asdict(w)
     _save(data)
     return w
@@ -104,29 +159,6 @@ def find(code: str) -> tuple[Woman | None, str]:
     if not rec:
         return None, "No woman with this card number on this device. If it is her first visit here, choose First visit."
     return Woman(**rec), ""
-
-
-DOCUMENTS = {
-    "sl-nin": "Sierra Leone national ID (NCRA NIN)",
-    "ng-nin": "Nigeria national ID (NIMC NIN)",
-    "other": "Other government ID",
-}
-
-
-def record_id_check(code: str, document: str) -> Woman:
-    """Record that, with her consent, an ID document was shown. The number is never stored.
-
-    Offline there is no verification service (vNIN in Nigeria, eSignet/MOSIP in Sierra Leone),
-    so the check stays unverified until a verifier is reachable (spec 9.3).
-    """
-    if document not in DOCUMENTS:
-        raise ValueError("Unknown document type")
-    data = _load()
-    c = normalise(code)
-    now = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
-    data[c]["national_id"] = {"document": DOCUMENTS[document], "method": "document-shown", "verified": False, "consent_at": now}
-    _save(data)
-    return Woman(**data[c])
 
 
 def record_visit(code: str) -> None:

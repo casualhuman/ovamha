@@ -29,6 +29,11 @@ def handover_text(e: Encounter) -> str:
         "REPORTED SYMPTOMS (history)",
     ]
     lines += [f"  - {label(f)}: {fmt(v)}  [{_src(e.sources.get(f, ''))}]" for f, v in reported] or ["  (none confirmed)"]
+    if e.birth_date or e.history:
+        lines += ["", "HISTORY (registration)"]
+        if e.birth_date:
+            lines.append(f"  - Date of birth: {e.birth_date}{' (estimated from her age)' if e.birth_date_estimated else ''}")
+        lines += [f"  - {label(f)}: {'not known' if v == 'unknown' else v}" for f, v in e.history.items()]
     lines += ["", "MEASURED OBSERVATIONS"]
     lines += [f"  - {label(f)}: {fmt(v)}  [{_src(e.sources.get(f, ''))}]" for f, v in measured] or ["  (none confirmed)"]
     lines += ["", "ACTIONS"]
