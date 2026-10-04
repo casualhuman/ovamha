@@ -1,0 +1,26 @@
+# Runs the full test suite (including the Yoruba tests) on every pull request and push to main,
+# so a change that breaks Yoruba, the guideline advice or the FHIR record is flagged before merge.
+name: tests
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: apps/prototype/requirements.txt
+      - name: Install (CPU-only torch keeps the install small)
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -r apps/prototype/requirements.txt
+      - name: Tests
+        env:
+          OVAMHA_DETECTOR: rules  # the classifier model is not committed; its tests skip without it
+        run: pytest -q
