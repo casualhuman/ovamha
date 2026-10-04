@@ -12,7 +12,19 @@ make test      # 140 automated tests
 make run       # open http://localhost:8000
 ```
 
-Phone on the same Wi-Fi: `make run-https` (microphones need HTTPS). Demo logins are in [apps/prototype/README.md](apps/prototype/README.md).
+Phone on the same Wi-Fi: `make run-https` (microphones need HTTPS).
+
+## For judges: demo logins
+
+Fictional demo accounts, checked offline on the device (PINs are stored only as salted hashes).
+
+| Health worker | Username | PIN |
+| --- | --- | --- |
+| Nurse Fati (Sierra Leone) | `fati` | `769131` |
+| CHW Aminata (Sierra Leone) | `aminata` | `507892` |
+| Midwife Funmi (Nigeria) | `funmi` | `186706` |
+
+Try: sign in as `fati` → **Guide me** → **First visit** → describe *"She is 28 weeks pregnant, she has seen blood since this morning, a lot of it. She fainted yesterday but she is fine now. No fever."* → confirm → **Check the guidelines** → decide → referral letter.
 
 ## What works now (all offline)
 
@@ -34,6 +46,7 @@ Phone on the same Wi-Fi: `make run-https` (microphones need HTTPS). Demo logins 
 
 ## Key documents
 
+- [docs/architecture/README.md](docs/architecture/README.md): **backend architecture specification** (tiers, FHIR resource model, identity, sync, SMS, security, AI provenance)
 - [docs/decisions/agent-handover.md](docs/decisions/agent-handover.md): project brief and design decisions
 - [docs/decisions/dak-first-contact.md](docs/decisions/dak-first-contact.md): alignment with the WHO ANC DAK
 - [docs/decisions/guideline-advice-not-fine-tuning.md](docs/decisions/guideline-advice-not-fine-tuning.md): why guideline rules, and why the worker decides
