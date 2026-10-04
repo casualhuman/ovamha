@@ -30,6 +30,10 @@ with tempfile.TemporaryDirectory() as tmp:
     if not (clf / "labels.json").exists():
         raise SystemExit("Classifier not trained: run ml/textclf/train.py first (the hosted app must match the local one).")
     shutil.copytree(clf, stage / "ml/models/danger-sign-clf")
+    yo = ROOT / "ml/models/whisper-small-yoruba-ct2"
+    if not (yo / "model.bin").exists():
+        raise SystemExit("Yoruba speech model missing: run scripts/convert_yoruba_asr.sh first (hosted Yoruba would fall back to base Whisper).")
+    shutil.copytree(yo, stage / "ml/models/whisper-small-yoruba-ct2")
     api.create_repo(f"{USER}/ovamha", repo_type="space", space_sdk="docker", exist_ok=True)
-    api.upload_folder(repo_id=f"{USER}/ovamha", repo_type="space", folder_path=str(stage), commit_message="Deploy Ovamha demo")
+    api.upload_folder(repo_id=f"{USER}/ovamha", repo_type="space", folder_path=str(stage), commit_message="Deploy MaternaSave demo")
 print(f"App:  https://{USER}-ovamha.hf.space\nFHIR: https://{USER}-ovamha-fhir.hf.space/fhir/metadata")

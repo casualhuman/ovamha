@@ -8,7 +8,7 @@ ENV HOME=/home/user PATH=/home/user/.local/bin:$PATH HF_HOME=/home/user/.cache/h
 WORKDIR /home/user/app
 
 RUN pip install --user torch --index-url https://download.pytorch.org/whl/cpu
-RUN pip install --user fastapi "uvicorn[standard]" python-multipart "faster-whisper==1.2.1" "av>=11,<16" "fhir.resources==8.3.0" numpy scipy transformers
+RUN pip install --user fastapi "uvicorn[standard]" python-multipart "faster-whisper==1.2.1" "av>=11,<16" "fhir.resources==8.3.0" "cryptography>=42" numpy scipy transformers
 
 # Speech recognition (Whisper small, CTranslate2 int8) and read-aloud voices (MMS-TTS English, Yoruba, Krio)
 RUN python -c "from faster_whisper import WhisperModel; WhisperModel('small', device='cpu', compute_type='int8')"
@@ -19,6 +19,9 @@ COPY --chown=user apps/prototype/web apps/prototype/web
 COPY --chown=user content content
 # Danger-sign text classifier (fine-tuned all-MiniLM-L6-v2, self-contained; see ml/textclf/README.md)
 COPY --chown=user ml/models/danger-sign-clf ml/models/danger-sign-clf
+# Yoruba speech recognition: LyngualLabs/whisper-small-yoruba converted to CTranslate2 int8 (Apache-2.0);
+# asr.py finds it at ml/models/whisper-small-yoruba-ct2 (scripts/convert_yoruba_asr.sh)
+COPY --chown=user ml/models/whisper-small-yoruba-ct2 ml/models/whisper-small-yoruba-ct2
 
 ENV HF_HUB_OFFLINE=1 \
     OVAMHA_HOSTED=1 \
