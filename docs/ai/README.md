@@ -12,7 +12,7 @@ Small, offline AI that helps the health worker capture what she sees, never AI t
 | Danger-sign detection (fallback) | Keyword rules + AI safety net (English, draft Krio and Yoruba) | — | Offline | Ours |
 | Read-aloud | [MMS-TTS](https://huggingface.co/facebook/mms-tts-eng) English, Krio, Yoruba voices | small per language | Offline, CPU | **CC BY-NC 4.0 (non-commercial)** |
 
-Measured speed (Kaggle notebook, 4 CPU threads): the int8 Whisper model transcribes 2 to 3 times faster than real time. Not yet measured on a Raspberry Pi or a phone. Speech fine-tuning results so far are smoke tests (200 training clips): accented English word error rate fell from 40% to 30%; see [ml/notebooks/README.md](../../ml/notebooks/README.md).
+Measured speed (Kaggle notebook, 4 CPU threads): the int8 Whisper model transcribes 2 to 3 times faster than real time. Speech fine-tuning results so far are smoke tests (200 training clips): accented English word error rate fell from 40% to 30%; see [ml/notebooks/README.md](../../ml/notebooks/README.md).
 
 ## 2. Understanding what the worker says: danger-sign detection
 
