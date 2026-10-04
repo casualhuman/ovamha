@@ -92,7 +92,7 @@
       }
       list.innerHTML = mine.map((m) => {
         const t = new Date(m.at), dir = m.direction === "out" ? "in" : "out";  // Ovamha's "out" is this phone's "in"
-        const ch = m.channel === "SIMULATED" ? `<span class="badge sim">Simulated</span>` : `<span class="badge gsm">GSM</span>`;
+        const ch = m.channel === "SIMULATED" ? `<span class="badge sim">Simulated</span>` : `<span class="badge gsm">${m.channel === "android-emulator" ? "Android emulator" : "GSM"}</span>`;
         const isNew = seen && !seen.has(m.at + m.text);
         return `<div class="msg ${dir} ${isNew ? "new" : ""}">${dir === "in" ? "<b>OVAMHA</b><br>" : ""}${esc(m.text)}
           <span class="meta">${t.toLocaleDateString([], { day: "numeric", month: "short" })} ${t.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}${ch}</span></div>`;
