@@ -50,7 +50,7 @@ def reminder_text(e: Encounter) -> str | None:
         return None
     from datetime import date as _d
     when = _d.fromisoformat(date).strftime("%d %b %Y")
-    return (f"MaternalSave reminder: your next antenatal visit is on {when} at {e.facility}. "
+    return (f"MaternaSave reminder: your next antenatal visit is on {when} at {e.facility}. "
             "If you bleed, have a bad headache or blurred vision, fever, or the baby moves less, come to the clinic at once.")
 
 

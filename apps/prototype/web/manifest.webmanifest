@@ -1,6 +1,6 @@
 {
-  "name": "MaternalSave: offline voice guidance for safer maternal care",
-  "short_name": "MaternalSave",
+  "name": "MaternaSave: offline voice guidance for safer maternal care",
+  "short_name": "MaternaSave",
   "description": "Offline voice assistant for antenatal care: danger signs, guideline advice and referral.",
   "start_url": "/",
   "scope": "/",

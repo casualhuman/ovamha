@@ -1,4 +1,4 @@
-# MaternalSave — Backend Architecture
+# MaternaSave — Backend Architecture
 
 Architecture specification, version 0.1 (draft)
 
@@ -10,13 +10,13 @@ Architecture specification, version 0.1 (draft)
 
 ### 1.1 Purpose
 
-This document specifies the backend architecture of MaternalSave: the components that store, process and exchange clinical data, the standards they implement, and the data model they share. It is the reference for engineering, integration partners and reviewers assessing interoperability.
+This document specifies the backend architecture of MaternaSave: the components that store, process and exchange clinical data, the standards they implement, and the data model they share. It is the reference for engineering, integration partners and reviewers assessing interoperability.
 
 ### 1.2 Scope
 
 In scope: on-device data storage and decision support, the facility hub, integration with national health information systems, the clinical data model, identity, synchronisation, SMS messaging, security, audit and AI provenance.
 
-Out of scope: speech recognition model design, user interface design, and clinical content authoring. These are specified in the MaternalSave PRD.
+Out of scope: speech recognition model design, user interface design, and clinical content authoring. These are specified in the MaternaSave PRD.
 
 ### 1.3 Requirement keywords
 
@@ -37,8 +37,8 @@ The keywords MUST, SHOULD and MAY indicate mandatory, recommended and optional r
 | IPS | HL7 International Patient Summary: a standard FHIR document summarising a patient's health information. |
 | OpenHIE | An open reference architecture for national health information exchanges. |
 | Hub | Facility hub. The server installed at each health facility (Raspberry Pi with SIM), described in section 6.2. Each facility has its own hub; community health workers synchronise with the hub of the facility that supervises them. |
-| Mediator | The hub component that translates and routes messages between MaternalSave and external systems. |
-| District server | An MaternalSave FHIR server shared by all facility hubs in a district. It holds the shared pregnancy record where no national shared health record exists (section 6.4). |
+| Mediator | The hub component that translates and routes messages between MaternaSave and external systems. |
+| District server | An MaternaSave FHIR server shared by all facility hubs in a district. It holds the shared pregnancy record where no national shared health record exists (section 6.4). |
 | Woman-held record | The ANC card carried by the woman, with a readable summary and a signed QR code (section 10.4). |
 | Deployment mode | The configuration matching the health information infrastructure available in a country or district: A, B or C (section 3.3). |
 
@@ -48,7 +48,7 @@ The keywords MUST, SHOULD and MAY indicate mandatory, recommended and optional r
 | --- | --- | --- |
 | AP-01 | All clinical data MUST be stored as FHIR R4 resources from the point of confirmation. No proprietary intermediate schema is used. | SMART ANC IG; DAK Annex 2 |
 | AP-02 | Every coded element MUST carry its DAK code and SHOULD carry mapped standard codes. | DAK scenario 4 |
-| AP-03 | WHO SMART ANC profiles and code systems MUST be reused where they exist. MaternalSave profiles extend them and MUST NOT redefine them. | WHO SMART Guidelines L2 to L4 model |
+| AP-03 | WHO SMART ANC profiles and code systems MUST be reused where they exist. MaternaSave profiles extend them and MUST NOT redefine them. | WHO SMART Guidelines L2 to L4 model |
 | AP-04 | All encounter functions MUST operate without network connectivity. | ANC.NFXNREQ.036, 040 |
 | AP-05 | Devices MUST NOT connect to national systems directly. All external exchange passes through the hub mediator. | ANC.NFXNREQ.063, 068; OpenHIE |
 | AP-06 | Care MUST NOT depend on a national identifier. Identifiers are linked when available. | DAK workflow ANC.A; IHE PIXm, PDQm, PMIR |
@@ -68,12 +68,12 @@ The system has three tiers. Data moves only between adjacent tiers.
 | Device | Captures, confirms, evaluates and stores encounter data | None required |
 | Facility hub | Stores facility records, serves device sync, sends SMS, mediates external exchange | Local Wi-Fi to devices; SIM data and SMS outward |
 | National | Registries, shared health record, HMIS and programme registers | Reached by the hub when SIM data is available |
-| District (modes B and C) | MaternalSave district server: shared pregnancy record and patient index across facility hubs when no national shared record exists | Reached by facility hubs over SIM data |
+| District (modes B and C) | MaternaSave district server: shared pregnancy record and patient index across facility hubs when no national shared record exists | Reached by facility hubs over SIM data |
 
 ```mermaid
 flowchart LR
   subgraph DEV["Device (offline)"]
-    APP["MaternalSave app<br/>voice, confirm, rules"] --> ENG["FHIR Engine<br/>local store + outbox"]
+    APP["MaternaSave app<br/>voice, confirm, rules"] --> ENG["FHIR Engine<br/>local store + outbox"]
   end
   subgraph HUB["Facility hub"]
     FHIR["FHIR server<br/>(facility source of truth)"]
@@ -119,13 +119,13 @@ The device processes an encounter in a fixed sequence. Each step completes befor
 
 ### 3.3 Deployment modes
 
-MaternalSave MUST operate in three deployment modes. The mode is set per country or district by mediator configuration; devices and facility hubs behave identically in all three.
+MaternaSave MUST operate in three deployment modes. The mode is set per country or district by mediator configuration; devices and facility hubs behave identically in all three.
 
 | Mode | Infrastructure available | Source of a woman's history at a new facility | Upstream exchange |
 | --- | --- | --- | --- |
 | A. National HIE | Interoperability layer with client registry and shared health record | National shared health record | Through the national interoperability layer (Figure 1) |
-| B. National systems without HIE | Some national systems, such as an HMIS or a programme register, but no shared health record | MaternalSave district server; woman-held record | District server for clinical records; point-to-point mediator adapters for each national system |
-| C. No national systems | None, or paper registers only | MaternalSave district server; woman-held record | District server; indicators exported as reports |
+| B. National systems without HIE | Some national systems, such as an HMIS or a programme register, but no shared health record | MaternaSave district server; woman-held record | District server for clinical records; point-to-point mediator adapters for each national system |
+| C. No national systems | None, or paper registers only | MaternaSave district server; woman-held record | District server; indicators exported as reports |
 
 In modes B and C the district server takes the place of the national shared health record. In every mode, the facility hub and the woman-held record keep care possible when no upstream connection is available.
 
@@ -176,32 +176,32 @@ The [SMART ANC IG](http://build.fhir.org/ig/WorldHealthOrganization/smart-anc/ar
 - Measures ANC.IND.01 to 13;
 - code systems and value sets, including danger signs and referral reasons, with mappings to SNOMED CT, LOINC and ICD.
 
-MaternalSave MUST pin one SMART ANC version and record it in every content pack. Upgrades are tested against section 14 before release.
+MaternaSave MUST pin one SMART ANC version and record it in every content pack. Upgrades are tested against section 14 before release.
 
 ### 5.3 Content not covered by WHO artefacts
 
 | Area | Source |
 | --- | --- |
-| Labour observations and alerts | WHO Labour Care Guide; MaternalSave labour profiles |
-| CHW-specific data | National CHW protocol; MaternalSave profiles |
-| AI provenance | MaternalSave profile (section 12) |
-| SMS messaging | MaternalSave profiles on Communication and Task (section 10.3) |
+| Labour observations and alerts | WHO Labour Care Guide; MaternaSave labour profiles |
+| CHW-specific data | National CHW protocol; MaternaSave profiles |
+| AI provenance | MaternaSave profile (section 12) |
+| SMS messaging | MaternaSave profiles on Communication and Task (section 10.3) |
 
 ## 6. Component specification
 
 ### 6.1 Device application
 
-The device application is an Android application built on the [Android FHIR SDK](https://developers.google.com/open-health-stack/android-fhir) (Open Health Stack, FHIR R4). The SDK provides storage, forms, decision support and content management; MaternalSave provides the voice and confirmation layers.
+The device application is an Android application built on the [Android FHIR SDK](https://developers.google.com/open-health-stack/android-fhir) (Open Health Stack, FHIR R4). The SDK provides storage, forms, decision support and content management; MaternaSave provides the voice and confirmation layers.
 
 | Component | Responsibility | Implementation |
 | --- | --- | --- |
-| Voice capture | Speech recognition, field extraction, AI safety-net flags | MaternalSave; on-device models |
-| Confirmation | Read-back, voice or keypad correction, discard of unconfirmed proposals | MaternalSave |
+| Voice capture | Speech recognition, field extraction, AI safety-net flags | MaternaSave; on-device models |
+| Confirmation | Read-back, voice or keypad correction, discard of unconfirmed proposals | MaternaSave |
 | Forms | Render DAK Questionnaires; extract resources from answers | SDK Structured Data Capture library |
 | Rules | Evaluate SMART ANC PlanDefinitions and CQL on confirmed data | SDK Workflow library |
 | Content manager | Install and version the SMART ANC content pack and national adaptations | SDK Knowledge Manager library |
 | Local store and sync | Store resources in an on-device database; queue and upload changes; download updates | SDK FHIR Engine library |
-| SMS sender | Send the referral SMS directly when the hub is unreachable | MaternalSave; Android SMS API |
+| SMS sender | Send the referral SMS directly when the hub is unreachable | MaternaSave; Android SMS API |
 
 The device application has the following requirements.
 
@@ -229,7 +229,7 @@ The hub is a Raspberry Pi 5 (8 GB) with a 4G/2G modem and SIM, on backup power.
 The FHIR server MUST be selected by load test on the target hardware. Candidates in order of preference:
 
 1. [HAPI FHIR](https://hapifhir.io/) JPA server with PostgreSQL. HAPI publishes no minimum hardware requirement; suitability depends on load, data volume and Java memory settings.
-2. A minimal server storing FHIR JSON in PostgreSQL or SQLite, implementing only the operations MaternalSave uses, validated against the same profiles.
+2. A minimal server storing FHIR JSON in PostgreSQL or SQLite, implementing only the operations MaternaSave uses, validated against the same profiles.
 
 The test load is one year of simulated records for a busy facility, with the mediator and SMS gateway running. Because the hub exposes a standard FHIR API, the server implementation can change without affecting devices or national systems.
 
@@ -268,7 +268,7 @@ The district server provides a shared pregnancy record across the facilities of 
 
 ### 7.1 Resource model
 
-MaternalSave profiles are published in an MaternalSave implementation guide under the canonical base `https://fhir.ovamha.org` (placeholder).
+MaternaSave profiles are published in an MaternaSave implementation guide under the canonical base `https://fhir.ovamha.org` (placeholder).
 
 | Concept | Resource | Profile | Key elements |
 | --- | --- | --- | --- |
@@ -276,18 +276,18 @@ MaternalSave profiles are published in an MaternalSave implementation guide unde
 | Pregnancy | EpisodeOfCare | SMART ANC EpisodeOfCare | patient, period, status |
 | Contact or assessment | Encounter | SMART ANC Encounter | episodeOfCare, period, location, participant |
 | Vitals, LMP, gestational age, danger signs | Observation | SMART ANC Observation | code (DAK code plus standard codes), value\[x\], effective\[x\], performer, encounter |
-| Labour observations | Observation | MaternalSave labour profiles | code, value\[x\], effectiveDateTime |
+| Labour observations | Observation | MaternaSave labour profiles | code, value\[x\], effectiveDateTime |
 | Item not done or unavailable | Observation | SMART ANC Observation Not Done | code, reason |
 | Diagnosis | Condition | SMART ANC Condition | code, evidence, verificationStatus |
-| Rule result | GuidanceResponse | MaternalSave | moduleCanonical (PlanDefinition and version), status, outputParameters |
+| Rule result | GuidanceResponse | MaternaSave | moduleCanonical (PlanDefinition and version), status, outputParameters |
 | Referral | ServiceRequest | SMART ANC Service Request | priority, code, reasonReference, supportingInfo, performer |
-| Referral status | Task | MaternalSave | focus, status (requested, accepted, rejected, completed), owner |
-| Referral SMS | Communication | MaternalSave | basedOn, recipient, payload, sent, received |
+| Referral status | Task | MaternaSave | focus, status (requested, accepted, rejected, completed), owner |
+| Referral SMS | Communication | MaternaSave | basedOn, recipient, payload, sent, received |
 | Handover summary | Bundle (document) with Composition | IPS, with a referral section | sections for problems, results, plan of care |
 | Care plan, next contact | CarePlan, Appointment | SMART ANC | contact schedule from ANC.S.01 |
 | Facility, worker | Organization, Location, Practitioner, PractitionerRole | SMART ANC | sourced through mCSD |
-| Consent | Consent | MaternalSave | scope, category, provision |
-| Capture and confirmation | Provenance | MaternalSave AI provenance | see section 12 |
+| Consent | Consent | MaternaSave | scope, category, provision |
+| Capture and confirmation | Provenance | MaternaSave AI provenance | see section 12 |
 | Access log | AuditEvent | IHE BALP | type, agent, entity, outcome |
 | Indicators | MeasureReport | SMART ANC Measures | measure, period, group |
 
@@ -332,13 +332,13 @@ All clinical resources also reference the Patient as subject; these references a
 | LOINC | Vital signs and measurements, e.g. BP panel 85354-9, systolic 8480-6, diastolic 8462-4, LMP 8665-2 |
 | ICD-11, and ICD-10 where a national HMIS requires it | Diagnoses and reporting |
 | SNOMED CT | Clinical findings and procedures, where SMART ANC provides mappings |
-| MaternalSave code system | Capture methods, AI roles, SMS statuses, labour items not covered by WHO |
+| MaternaSave code system | Capture methods, AI roles, SMS statuses, labour items not covered by WHO |
 
 Mappings are held as FHIR ConceptMaps in the content pack and on the hub. Yoruba, Krio and English display text is held as CodeSystem designations; codes are language-independent.
 
 ### 7.5 Women with no prior record
 
-A woman with no retrievable history is the expected case at first contact and the normal case in mode C. MaternalSave builds her longitudinal record from that first contact onward.
+A woman with no retrievable history is the expected case at first contact and the normal case in mode C. MaternaSave builds her longitudinal record from that first contact onward.
 
 - PH-01. Where no history is retrievable, the application MUST create a new Patient and EpisodeOfCare and record history as reported by the woman, such as previous pregnancies, complications and last menstrual period.
 - PH-02. Reported history MUST be distinguishable from measured observations. Reported items carry the Patient as performer and a Provenance activity of `reported-by-woman`. The handover lists them separately, matching the concept note's distinction between reported symptoms, measured observations and previous findings.
@@ -368,7 +368,7 @@ Operational data that is not clinical (devices, users, queues, SMS) is stored in
 
 ### 8.3 Device FHIR store
 
-The FHIR Engine manages its own schema. MaternalSave does not alter it.
+The FHIR Engine manages its own schema. MaternaSave does not alter it.
 
 | Table (Room entity) | Purpose |
 | --- | --- |
@@ -451,7 +451,7 @@ The operational schema follows these rules.
 
 Identity design follows the World Bank [Principles on Identification for Sustainable Development](https://id4d.worldbank.org/principles), in particular universal coverage, robust identity, interoperability and privacy protection by design, and the ID4D analysis of [digital identification for healthcare](https://documents1.worldbank.org/curated/en/595741519657604541/The-Role-of-Digital-Identification-for-Healthcare-The-Emerging-Use-Cases.pdf). That analysis recommends leveraging foundational ID systems rather than building health-specific ones, and warns that "requiring a foundational system to enroll in or access health services may unintentionally exclude the most marginalized groups".
 
-MaternalSave therefore issues its own functional identifier for every woman, so that care never depends on a national ID, and links that identifier to the national foundational ID when one is available and the woman consents.
+MaternaSave therefore issues its own functional identifier for every woman, so that care never depends on a national ID, and links that identifier to the national foundational ID when one is available and the woman consents.
 
 ### 9.2 Identifier scheme
 
@@ -459,8 +459,8 @@ Each pregnant woman is a FHIR Patient. Health workers are app\_user records (sec
 
 | Identifier | Issued by | Form | Stored in | Required |
 | --- | --- | --- | --- | --- |
-| MaternalSave woman ID | Device, at first contact | UUID | Patient.id | Yes |
-| MaternalSave card code | Device, at first contact | Short code with check digit, printed or written on the woman-held card | Patient.identifier, system `https://fhir.ovamha.org/id/card` | Yes |
+| MaternaSave woman ID | Device, at first contact | UUID | Patient.id | Yes |
+| MaternaSave card code | Device, at first contact | Short code with check digit, printed or written on the woman-held card | Patient.identifier, system `https://fhir.ovamha.org/id/card` | Yes |
 | Facility ANC register number | Facility | Local format | Patient.identifier, facility-specific system | Where used |
 | Client registry ID | National client registry, or the district server in modes B and C | Registry format | Patient.identifier, added through PIXm | When available |
 | National ID link | National ID authority | Sector token or verification reference; not the raw ID number where a token is available | Patient.identifier of type token, plus an identity\_verification record | Optional, with consent |
@@ -468,19 +468,19 @@ Each pregnant woman is a FHIR Patient. Health workers are app\_user records (sec
 
 ### 9.3 Linking to national ID systems
 
-ID4D guidance on [tokenization](https://id4d.worldbank.org/guide/tokenization) recommends that sectoral systems hold tokens rather than the foundational ID number, so that "the same person is represented by different tokens in different databases" and a breach of one database cannot be linked to others. MaternalSave applies this per country.
+ID4D guidance on [tokenization](https://id4d.worldbank.org/guide/tokenization) recommends that sectoral systems hold tokens rather than the foundational ID number, so that "the same person is represented by different tokens in different databases" and a breach of one database cannot be linked to others. MaternaSave applies this per country.
 
-| Situation | MaternalSave behaviour |
+| Situation | MaternaSave behaviour |
 | --- | --- |
-| Nigeria | NIMC replaced raw NIN verification with the [Virtual NIN](https://youverify.co/blog/nimc-launches-virtual-nin-vnin) (vNIN): a 16-character token, valid for 72 hours and usable once, generated by the holder for a specific verifier. MaternalSave uses a vNIN only to verify identity at registration, through an authorised verifier, and records the result. Persistent linkage relies on the national client registry or a health-sector token where one is issued. |
-| Sierra Leone | NCRA issues the NIN, and Sierra Leone signed to pilot a MOSIP-based digital ID. Where an authentication service using OpenID Connect (such as MOSIP eSignet) is available to the health sector, MaternalSave stores the subject identifier returned to it as the link token. |
-| No verification service reachable | MaternalSave records only that an ID document was shown. The raw number is stored only where national policy requires it, encrypted, and is never used as a key. |
-| No ID | Care proceeds with the MaternalSave identifiers alone. |
+| Nigeria | NIMC replaced raw NIN verification with the [Virtual NIN](https://youverify.co/blog/nimc-launches-virtual-nin-vnin) (vNIN): a 16-character token, valid for 72 hours and usable once, generated by the holder for a specific verifier. MaternaSave uses a vNIN only to verify identity at registration, through an authorised verifier, and records the result. Persistent linkage relies on the national client registry or a health-sector token where one is issued. |
+| Sierra Leone | NCRA issues the NIN, and Sierra Leone signed to pilot a MOSIP-based digital ID. Where an authentication service using OpenID Connect (such as MOSIP eSignet) is available to the health sector, MaternaSave stores the subject identifier returned to it as the link token. |
+| No verification service reachable | MaternaSave records only that an ID document was shown. The raw number is stored only where national policy requires it, encrypted, and is never used as a key. |
+| No ID | Care proceeds with the MaternaSave identifiers alone. |
 
-- ID-01. A Patient MUST be created with an MaternalSave woman ID and card code at first contact. No other identifier is required for care.
+- ID-01. A Patient MUST be created with an MaternaSave woman ID and card code at first contact. No other identifier is required for care.
 - ID-02. Every identifier MUST carry a distinct system URI and, where known, its assigning authority.
 - ID-03. National ID verification MUST be optional, consented, and recorded in identity\_verification (section 8.5).
-- ID-04. MaternalSave MUST NOT use a foundational ID number as a primary key, search key or SMS content.
+- ID-04. MaternaSave MUST NOT use a foundational ID number as a primary key, search key or SMS content.
 
 ### 9.4 Matching and deduplication
 
@@ -523,11 +523,11 @@ SMS is used when no data connection is available. All messages are generated fro
 
 ### 10.4 Woman-held record
 
-WHO recommends, for all settings, that "each pregnant woman carries her own case notes during pregnancy to improve continuity, quality of care, and pregnancy experience" (ANC recommendation E.1, [WHO 2016](https://www.who.int/docs/default-source/reproductive-health/maternal-health/anc.pdf?sfvrsn=5e2c740e_2)). MaternalSave uses the woman-held ANC card as a data channel that needs no network at all.
+WHO recommends, for all settings, that "each pregnant woman carries her own case notes during pregnancy to improve continuity, quality of care, and pregnancy experience" (ANC recommendation E.1, [WHO 2016](https://www.who.int/docs/default-source/reproductive-health/maternal-health/anc.pdf?sfvrsn=5e2c740e_2)). MaternaSave uses the woman-held ANC card as a data channel that needs no network at all.
 
 - WH-01. The card MUST carry the encounter code and a readable summary (gestational age, EDD, danger signs and risks found, last vitals, referral status), so it is useful without a device.
 - WH-02. The card SHOULD carry a QR code encoding the same summary as a compressed FHIR Bundle, signed with the issuing facility hub's key so that alteration is detectable. WHO's [SMART Verifiable IPS](https://smart.who.int/ips-pilgrimage/) guide is the reference pattern for verifiable patient summaries.
-- WH-03. Scanning the QR code on any MaternalSave device MUST import the summary as proposed resources with Provenance activity `imported-from-card`, which the worker confirms before they are stored.
+- WH-03. Scanning the QR code on any MaternaSave device MUST import the summary as proposed resources with Provenance activity `imported-from-card`, which the worker confirms before they are stored.
 - WH-04. The card MUST be updated at each contact, by reprinting or by a printed label. Facilities without a printer record the encounter code and key values by hand.
 - WH-05. Sensitive items MUST be excluded from the card unless national policy requires them.
 
@@ -556,7 +556,7 @@ Every confirmed clinical resource MUST be accompanied by a Provenance resource r
 | recorded | Time of confirmation |
 | agent, type verifier | PractitionerRole of the confirming worker |
 | agent, type assembler | Device resource identifying the model, its version and language |
-| activity | MaternalSave capture code: `keyed`, `spoken-ai-extracted-confirmed`, `ai-flag-confirmed`, `rule-prompt-confirmed` |
+| activity | MaternaSave capture code: `keyed`, `spoken-ai-extracted-confirmed`, `ai-flag-confirmed`, `rule-prompt-confirmed` |
 | entity | Content-pack version; for rule-prompted entries, the GuidanceResponse that triggered the question |
 
 - AIP-01. Unconfirmed AI output MUST NOT be persisted and therefore never appears in Provenance.
@@ -671,13 +671,13 @@ The following checks MUST pass on every release.
 
 | ID | Check | Method | Pass condition |
 | --- | --- | --- | --- |
-| CV-01 | Profile conformance | HL7 FHIR Validator against SMART ANC and MaternalSave profiles | No errors on any resource the application writes |
+| CV-01 | Profile conformance | HL7 FHIR Validator against SMART ANC and MaternaSave profiles | No errors on any resource the application writes |
 | CV-02 | Decision logic | Test cases generated from each extracted DAK decision-table row, run on device and hub | Expected GuidanceResponse for every positive, negative and boundary case |
 | CV-03 | Sync robustness | Interrupted uploads, duplicate resends, concurrent edits on two devices | No duplicates, no lost writes, conflicts flagged |
 | CV-04 | External exchange | Round trip against a reference stack: HAPI FHIR, a client registry and an mCSD registry in containers, a test DHIS2 instance | Identifiers cross-referenced; referral and IPS accepted; indicators accepted |
 | CV-05 | Security and audit | Access attempts across roles; network inspection | TLS on all links; an AuditEvent for every access |
 
-MaternalSave publishes its profiles, code systems, extensions and CapabilityStatements as an implementation guide built with the HL7 IG Publisher, so that integration partners can verify conformance independently.
+MaternaSave publishes its profiles, code systems, extensions and CapabilityStatements as an implementation guide built with the HL7 IG Publisher, so that integration partners can verify conformance independently.
 
 ## 15. Open items and references
 
@@ -688,7 +688,7 @@ MaternalSave publishes its profiles, code systems, extensions and CapabilityStat
 - [ ] Confirm the FHIR Engine database encryption configuration for the pinned SDK version
 - [ ] Define the labour observation profiles, or adopt the FHIR export of the open-source Labour Care Guide app
 - [ ] Inventory the OpenHIE components and APIs available in each target country
-- [ ] Register the canonical domain for MaternalSave profiles
+- [ ] Register the canonical domain for MaternaSave profiles
 - [ ] Determine the deployment mode for each target district, and the hosting for district servers in modes B and C
 - [ ] Choose the QR payload format and signing scheme for the woman-held record, and test card printing at facility level
 
