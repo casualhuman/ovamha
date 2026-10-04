@@ -105,6 +105,7 @@ PARAPHRASES = [
     ("Her head is pounding and she sees stars", {"headache", "visual_disturbance"}),
     ("The baby is not kicking like before", {"reduced_fetal_movement"}),
     ("Water is running down her legs", {"waters_broken"}),
+    ("Her feet are swollen and her face is puffy", {"swelling"}),
     ("Her blood pressure is normal and her vision is fine", set()),
     ("We did a blood test today. No bleeding.", set()),
     ("Routine visit. She feels well. No bleeding, no headache, no fever. The baby is moving.", set()),

@@ -66,7 +66,7 @@ SAFETY_NET_ONLY: dict[str, dict[str, list[str]]] = {
     "waters_broken": {"en": ["water broke", "waters broke", "leaking water", "water is running", "water running", "water coming out",
                               "water is coming", "fluid leaking", "leaking fluid", "draining liquor"], "kri": ["wata dɔn brok"], "yo": ["omi ti ja"]},
     "foul_discharge": {"en": ["foul smelling discharge", "smelly discharge", "bad smell discharge", "discharge smells"], "kri": ["discharge de smel"], "yo": ["isun olorun"]},
-    "swelling": {"en": ["swelling", "swollen face", "swollen hands"], "kri": ["swɛl"], "yo": ["wiwu", "ese wu"]},
+    "swelling": {"en": ["swelling", "swollen", "swollen face", "swollen hands", "swollen feet", "swollen legs", "puffy", "body is swelling", "face is puffy"], "kri": ["swɛl"], "yo": ["wiwu", "ese wu"]},
 }
 
 HEAVY_TERMS = {

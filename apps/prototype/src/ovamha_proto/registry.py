@@ -20,7 +20,7 @@ import os
 import secrets
 import uuid
 from dataclasses import asdict, dataclass, field
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"  # 31 characters
@@ -162,6 +162,36 @@ def save_profile(code: str, profile: dict) -> Woman:
     data[c]["profile_at"] = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     _save(data)
     return _woman(data[c])
+
+
+DEMO_WOMEN = Path(__file__).resolve().parents[4] / "content" / "demo-women.json"
+
+
+def seed_demo(today: date | None = None) -> list[str]:
+    """Add the fictional demo women (content/demo-women.json) if they are missing, so a returning
+    check can be tried on any fresh start. IDs are deterministic, so FHIR uploads match on retry."""
+    if not DEMO_WOMEN.exists():
+        return []
+    today = today or date.today()
+    data, added = _load(), []
+    for d in json.loads(DEMO_WOMEN.read_text())["women"]:
+        code = d["card_code"]
+        if code in data or not is_valid(code):
+            continue
+        profile = dict(d["profile"])
+        if d.get("lmp_weeks_ago") is not None:
+            profile["lmp"] = (today - timedelta(weeks=d["lmp_weeks_ago"])).isoformat()
+        w = Woman(str(uuid.uuid5(uuid.NAMESPACE_URL, f"ovamha-demo-woman/{code}")), code,
+                  datetime.now(timezone.utc).replace(microsecond=0).isoformat(), "demo-seed", visits=1,
+                  episode_id=str(uuid.uuid5(uuid.NAMESPACE_URL, f"ovamha-demo-episode/{code}")),
+                  birth_date=str(today.year - d["age_years"]), birth_date_estimated=True,
+                  details=d.get("details", {}), profile=profile,
+                  profile_at=datetime.now(timezone.utc).replace(microsecond=0).isoformat())
+        data[code] = asdict(w)
+        added.append(code)
+    if added:
+        _save(data)
+    return added
 
 
 def record_visit(code: str) -> None:

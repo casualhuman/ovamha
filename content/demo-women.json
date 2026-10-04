@@ -1,0 +1,20 @@
+{
+  "_note": "Fictional returning woman, added on every fresh start (local and hosted) so a returning check can be tested. Card MAM-A2A. lmp_weeks_ago keeps her about 20 weeks pregnant whenever the server starts.",
+  "women": [
+    {
+      "card_code": "MAMA2A",
+      "age_years": 27,
+      "lmp_weeks_ago": 20,
+      "details": {"first_name": "Mariama", "family_name": "Demo", "address": "Demo community"},
+      "profile": {
+        "pregnancy_confirmed": "test_positive", "ga_source": "lmp",
+        "gravida": 3, "live_births": 2, "stillbirths": 0, "miscarriages": 0, "last_birth_preterm": "no",
+        "past_complications": ["pre_eclampsia", "caesarean"], "past_substance_use": ["none"],
+        "chronic_conditions": ["none"], "allergies": ["none"], "past_surgeries": ["caesarean"],
+        "current_medications": ["iron_folic"], "ttcv_doses": 2, "flu_vaccine": "no",
+        "caffeine_high": "no", "alcohol_substance": "no", "tobacco": "none", "partner_hiv": "unknown",
+        "education": "primary", "occupation": ["trading"]
+      }
+    }
+  ]
+}

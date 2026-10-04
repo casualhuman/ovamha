@@ -28,7 +28,12 @@ Fictional demo accounts, checked offline on the device (PINs are stored only as 
 | CHW Aminata (Sierra Leone) | `aminata` | `507892` |
 | Midwife Funmi (Nigeria) | `funmi` | `186706` |
 
-Try: sign in as `fati` → **Guide me** → **First visit** → describe *"She is 28 weeks pregnant, she has seen blood since this morning, a lot of it. She fainted yesterday but she is fine now. No fever."* → confirm → **Check the guidelines** → decide → referral letter.
+**Demo woman for a returning check:** card number **`MAM-A2A`** (fictional "Mariama Demo", about 20 weeks pregnant, history already recorded: 3 pregnancies, previous pre-eclampsia and caesarean section). She is available on every fresh start, online and offline.
+
+Two things to try:
+
+1. **First visit:** sign in as `fati` → **Guide me** → **First visit** → register her → describe *"She is 28 weeks pregnant, she has seen blood since this morning, a lot of it. She fainted yesterday but she is fine now. No fever."* → confirm → **Check the guidelines** → decide → referral letter.
+2. **Returning woman:** **Guide me** → **Returning** → card `MAM-A2A` → describe *"Her head is pounding and she sees stars. Her feet are swollen."* → the history step is skipped (already recorded) → enter BP, e.g. *150 over 100*, and urine protein **++** → **Check the guidelines**: the national guideline flags her previous pre-eclampsia and caesarean section (Table 3.4).
 
 ## Standards and guidelines followed
 

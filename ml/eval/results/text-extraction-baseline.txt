@@ -1,0 +1,39 @@
+500 rows from ml/eval/text/maternal_health_afrispeech_mixed_500.csv
+
+== ALL: 500 rows
+  extraction    precision  63.0%  recall  22.5%  (tp 80, fp 47, fn 276); 'none' rows with no alarm: 164/199
+  + safety net  precision  68.9%  recall  37.4%  (tp 133, fp 60, fn 223); 'none' rows with no alarm: 156/199
+
+== synthetic (E001-E400): 400 rows
+  extraction    precision  76.0%  recall  22.3%  (tp 79, fp 25, fn 276); 'none' rows with no alarm: 84/100
+  + safety net  precision  81.0%  recall  37.2%  (tp 132, fp 31, fn 223); 'none' rows with no alarm: 82/100
+
+== AfriSpeech originals (E401-E500): 100 rows
+  extraction    precision   4.3%  recall 100.0%  (tp 1, fp 22, fn 0); 'none' rows with no alarm: 80/99
+  + safety net  precision   3.3%  recall 100.0%  (tp 1, fp 29, fn 0); 'none' rows with no alarm: 74/99
+
+== per sign, all rows        extraction (P / R)    + safety net (P / R)
+  abdominal_pain            50.0 /  11.5         57.1 /  15.4
+  breathing_difficulty      75.0 /  13.0         83.3 /  21.7
+  convulsions               66.7 /  47.6         73.7 /  66.7
+  dizziness                 72.7 /  34.8         78.6 /  47.8
+  fainting                  78.6 /  52.4         78.9 /  71.4
+  fever                     61.9 /  50.0         66.7 /  61.5
+  foul_discharge             -   /   0.0         60.0 /  13.6
+  headache                  70.0 /  28.0         76.9 /  40.0
+  reduced_fetal_movement     -   /   0.0        100.0 /   8.3
+  swelling                   -   /   0.0         25.0 /   7.4
+  unconscious                -   /   0.0         86.7 /  59.1
+  vaginal_bleeding          50.0 /  79.2         53.7 /  91.7
+  visual_disturbance        75.0 /  26.1         77.8 /  30.4
+  vomiting                   -   /   0.0         77.8 /  26.9
+  waters_broken              -   /   0.0        100.0 /   8.7
+
+== recall by category (+ safety net), rows with at least one label
+  distractor  recall   -  %  false alarms on unlabelled rows: 35/116
+  euphemism   recall  16.7%  false alarms on unlabelled rows: 0/0
+  indirect    recall  40.4%  false alarms on unlabelled rows: 0/0
+  mixed       recall  32.5%  false alarms on unlabelled rows: 0/0
+  negation    recall   -  %  false alarms on unlabelled rows: 8/61
+  none        recall   -  %  false alarms on unlabelled rows: 0/22
+  past        recall  46.8%  false alarms on unlabelled rows: 0/0

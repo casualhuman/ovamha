@@ -156,8 +156,7 @@ function render() {
   app.classList.toggle("enter", !!S.enter);  // fade in only when arriving on a new screen, not on every tap
   S.enter = false;
   const view = { welcome, login, home, woman, describe, confirm, history, measure, advice, referral, result, profile }[S.screen] || home;
-  app.innerHTML = (S.hosted && ["welcome", "login", "home", "profile"].includes(S.screen)
-    ? `<div class="hosted-note">${icon("wifioff")}Hosted demo for judges. In the field, Ovamha runs fully offline on a local hub.</div>` : "") + view();
+  app.innerHTML = view();
   bind[S.screen]?.();
 }
 function nav(active) {
@@ -175,7 +174,7 @@ function steps(n) { return `<div class="steps">${[1, 2, 3, 4, 5].map((i) => `<i 
 function topbar(title, back) {
   const card = S.screen !== "woman" && S.st?.woman ? `<span class="badge" title="Her card number">${icon("file")}${esc(S.st.woman.card_code)}</span>` : "";
   return `<div class="top">${back ? `<button class="icon-btn" data-back="${back}" aria-label="Back">${icon("left")}</button>` : ""}<h1>${esc(title)}</h1>
-    ${card || `<span class="badge green" title="Everything runs on this device">${icon("wifioff")}Offline</span>`}</div>`;
+    ${card}</div>`;
 }
 document.addEventListener("click", (e) => { const b = e.target.closest("[data-back]"); if (b) go(b.dataset.back); });
 
@@ -259,7 +258,7 @@ function home() {
   return `<div class="screen">
     <div class="hello"><span class="avatar">${esc(initials(w.display_name))}</span>
       <div class="who"><small>Hello,</small><b>${esc(w.display_name)}</b></div>
-      <span class="badge green"><span class="offline-dot"></span>Works offline</span></div>
+      </div>
     <div class="hero">
       <svg class="plus" width="150" height="150" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16" stroke="#fff" stroke-width="5" stroke-linecap="round"/></svg>
       <h2>New pregnancy check</h2>
@@ -1096,8 +1095,28 @@ function profile() {
 bind.profile = () => { $("#signout").onclick = () => signOut(false); };
 
 // ---------------------------------------------------------------- boot
+// Hosted copies only: a one-time pop-up explaining that the field deployment is offline.
+function showHostedNotice() {
+  if (store.get("hostedNoticeSeen")) return;
+  const m = document.createElement("div");
+  m.className = "modal-back";
+  m.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="hn-title">
+    <button class="modal-x" aria-label="Close">${icon("x")}</button>
+    <span class="row-ico" style="margin-bottom:12px">${icon("wifioff")}</span>
+    <h3 id="hn-title">Hosted demo</h3>
+    <p>This online copy is for judges to try Ovamha. In the field, Ovamha runs <b>fully offline</b> on a phone and a local hub at the health post, with no internet.</p>
+    <p class="small muted">Fictional data only. Sign in with <b>fati</b> / <b>769131</b>; returning woman card <b>MAM-A2A</b>.</p>
+    <button class="btn primary modal-ok">Got it</button></div>`;
+  const close = () => { store.set("hostedNoticeSeen", true); m.remove(); };
+  m.querySelector(".modal-x").onclick = close;
+  m.querySelector(".modal-ok").onclick = close;
+  m.onclick = (e) => { if (e.target === m) close(); };
+  document.body.appendChild(m);
+}
+
 (async function boot() {
   try { S.hosted = (await (await fetch("/api/config")).json()).hosted; } catch { S.hosted = false; }
+  if (S.hosted) showHostedNotice();
   const saved = store.get("ovamha");
   if (saved?.token) {
     S.token = saved.token; S.worker = saved.worker; S.lang = saved.lang || "en";

@@ -552,6 +552,7 @@ app.mount("/", StaticFiles(directory=WEB), name="web")
 
 @app.on_event("startup")
 def _start_sync() -> None:
+    registry.seed_demo()  # fictional returning woman MAM-A2A, for testing a returning check
     sync.start_worker()
 
 

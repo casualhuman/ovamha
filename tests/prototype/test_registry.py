@@ -100,3 +100,14 @@ def test_profile_saved_and_old_records_load(tmp_path):
     data[w.card_code]["previous_pregnancies"] = 2
     registry._save(data)
     assert registry.find(w.card_code)[0].woman_id == w.woman_id
+
+
+def test_demo_woman_seeded_valid_and_idempotent():
+    assert registry.seed_demo(TODAY) == ["MAMA2A"]
+    assert registry.seed_demo(TODAY) == []  # already there
+    w, err = registry.find("mam-a2a")
+    assert err == "" and w.profile["gravida"] == 3 and w.visits == 1
+    from ovamha_proto import questionnaire
+    clean, problems = questionnaire.validate("anc-profile", w.profile, TODAY)
+    assert problems == [], problems  # the seeded history passes the same checks as a real one
+    assert questionnaire.derived(w.profile, TODAY)["ga_weeks"] == 20.0
