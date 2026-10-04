@@ -11,7 +11,7 @@
   --ink-3: #8397A9;
   --line: #E3ECF4;
   --card: #FFFFFF;
-  --bg: #F3F8FC;
+  --bg: #FFFFFF;
   --green: #12805C;
   --green-50: #E7F6F0;
   --amber: #B45F06;
@@ -27,7 +27,7 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
 body {
-  background: linear-gradient(160deg, #E4F1FB 0%, #F5FAFE 45%, #E9F3FB 100%);
+  background: #FFFFFF;
   color: var(--ink);
   font: 17px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -73,7 +73,7 @@ svg.i { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-widt
 .stack > * + * { margin-top: 12px; }
 
 /* Cards */
-.card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; }
+.card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; border: 1px solid var(--line); }
 .card + .card { margin-top: 14px; }
 .card h3 { margin: 0 0 4px; font-size: 1.05rem; }
 .muted { color: var(--ink-2); }
@@ -172,7 +172,7 @@ textarea.input { min-height: 120px; resize: vertical; }
 .item .t b { display: block; font-size: 1.05rem; }
 .item .val { font-size: 1.25rem; font-weight: 750; color: var(--blue-700); }
 .item.ok .val { color: var(--green); }
-.item .quote { margin: 10px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--bg); color: var(--ink-2); font-size: .92rem; font-style: italic; }
+.item .quote { margin: 10px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--blue-50); color: var(--ink-2); font-size: .92rem; font-style: italic; }
 .item .acts { display: flex; gap: 10px; margin-top: 12px; }
 .item .acts .btn { min-height: 50px; font-size: 1rem; padding: 0 12px; }
 
@@ -185,7 +185,7 @@ textarea.input { min-height: 120px; resize: vertical; }
 .mic-sm { width: 56px; height: 56px; border-radius: 16px; background: var(--blue-50); color: var(--blue); display: grid; place-items: center; flex: none; }
 .mic-sm.live { background: var(--red); color: #fff; animation: pulse 1.4s infinite; }
 .seg { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-.seg button { flex: 1 0 auto; min-height: 50px; padding: 0 14px; border-radius: 14px; background: var(--bg); font-weight: 650; border: 2px solid transparent; }
+.seg button { flex: 1 0 auto; min-height: 50px; padding: 0 14px; border-radius: 14px; background: #F2F6FA; font-weight: 650; border: 2px solid transparent; }
 .seg button.on { background: var(--blue-50); border-color: var(--blue); color: var(--blue-700); }
 .done-line { display: flex; align-items: center; gap: 8px; color: var(--green); font-weight: 650; margin-top: 10px; }
 
@@ -204,14 +204,14 @@ textarea.input { min-height: 120px; resize: vertical; }
 .alert h2 { margin: 8px 0 6px; font-size: 1.5rem; }
 .alert ul { margin: 10px 0 0; padding-left: 20px; }
 .alert li { margin: 4px 0; font-weight: 600; }
-.sms { background: var(--bg); border-radius: 18px 18px 18px 6px; padding: 14px 16px; font-family: ui-monospace, Menlo, monospace; font-size: .9rem; margin-top: 10px; word-break: break-word; }
+.sms { background: var(--blue-50); border-radius: 18px 18px 18px 6px; padding: 14px 16px; font-family: ui-monospace, Menlo, monospace; font-size: .9rem; margin-top: 10px; word-break: break-word; }
 .status-pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; font-weight: 700; }
 .status-pill.wait { background: var(--amber-50); color: var(--amber); }
 .status-pill.ok { background: var(--green-50); color: var(--green); }
 .status-pill.no { background: var(--red-50); color: var(--red); }
 details.card summary { list-style: none; display: flex; align-items: center; justify-content: space-between; font-weight: 700; cursor: pointer; min-height: 32px; }
 details.card summary::-webkit-details-marker { display: none; }
-pre.mono { white-space: pre-wrap; font: .82rem/1.5 ui-monospace, Menlo, monospace; background: var(--bg); border-radius: 14px; padding: 14px; overflow: auto; max-height: 420px; margin: 12px 0 0; }
+pre.mono { white-space: pre-wrap; font: .82rem/1.5 ui-monospace, Menlo, monospace; background: #F2F6FA; border-radius: 14px; padding: 14px; overflow: auto; max-height: 420px; margin: 12px 0 0; }
 
 /* Toast + loading */
 .toast { position: fixed; left: 50%; bottom: 110px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 14px; font-weight: 600; z-index: 50; max-width: 90%; box-shadow: var(--shadow); animation: in .2s; }

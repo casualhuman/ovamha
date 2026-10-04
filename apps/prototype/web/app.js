@@ -178,7 +178,7 @@ document.addEventListener("click", (e) => { const b = e.target.closest("[data-ba
 
 // ---------------------------------------------------------------- 1. welcome (onboarding)
 const SLIDES = [
-  { t: "Safer pregnancies,<br>even offline", p: "Ovamha helps nurses, midwives and community health workers spot danger signs early and refer fast, with no internet." },
+  { t: "Offline voice guidance<br>for safer maternal care", p: "Ovamha helps nurses, midwives and community health workers spot danger signs early and refer fast, with no internet." },
   { t: "Speak in Krio,<br>Yoruba or English", p: "Describe the woman's situation in your own words. Ovamha writes it down and reads the key facts back to you." },
   { t: "You confirm.<br>Then refer.", p: "Nothing counts until you confirm it. WHO danger-sign checks run on the confirmed facts and the referral SMS is ready in seconds." },
 ];
@@ -208,8 +208,7 @@ function login() {
   const keys = [1, 2, 3, 4, 5, 6, 7, 8, 9].map((k) => `<button data-k="${k}">${k}</button>`).join("");
   return `<div class="screen" style="padding-bottom:28px">
     <div style="text-align:center;margin:8px 0 22px">${LOGO}
-      <div style="font-weight:800;color:var(--blue);font-size:1.5rem;margin-top:10px">Ovamha</div>
-      <div style="font-size:1.15rem;font-weight:650;margin-top:2px">Offline voice guidance<br>for safer maternal care</div></div>
+      <div style="font-weight:800;color:var(--blue);font-size:1.5rem;margin-top:10px">Ovamha</div></div>
     <h1 style="margin:0 0 4px;font-size:1.35rem">Sign in</h1>
     <p class="muted small" style="margin:0 0 14px">Checked on this device: no internet needed.</p>
     <label class="small muted" for="user" style="font-weight:650">Username</label>
