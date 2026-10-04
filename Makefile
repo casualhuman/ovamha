@@ -10,10 +10,10 @@ test:             ## rule boundary tests + confirmation gate + FHIR/SMS
 	.venv/bin/pytest -q
 
 run:              ## start the UI on http://<this-machine>:8000
-	cd $(SRC) && ../../../$(PY) -m ovamha_proto.server
+	cd $(SRC) && HF_HUB_OFFLINE=1 ../../../$(PY) -m ovamha_proto.server
 
 run-https:        ## same, with self-signed HTTPS so phone microphones work
-	cd $(SRC) && ../../../$(PY) -m ovamha_proto.server --https
+	cd $(SRC) && HF_HUB_OFFLINE=1 ../../../$(PY) -m ovamha_proto.server --https
 
 bundle:           ## regenerate fhir/examples/referral-bundle.json
 	$(PY) scripts/make_example_bundle.py
