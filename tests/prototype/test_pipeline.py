@@ -93,3 +93,26 @@ def test_abdominal_pain_without_severity_is_unknown_not_normal():
 
     r = anc_dt01_danger_signs({"abdominal_pain": True})
     assert "severe_abdominal_pain" in r.missing
+
+
+import pytest  # noqa: E402
+
+PARAPHRASES = [
+    ("Blood is coming from down there", {"vaginal_bleeding"}),
+    ("Her clothes are soaked with blood", {"vaginal_bleeding"}),
+    ("She says her wrapper is red and wet", {"vaginal_bleeding"}),
+    ("She has seen her period even though she is pregnant", {"vaginal_bleeding"}),
+    ("Her head is pounding and she sees stars", {"headache", "visual_disturbance"}),
+    ("The baby is not kicking like before", {"reduced_fetal_movement"}),
+    ("Water is running down her legs", {"waters_broken"}),
+    ("Her blood pressure is normal and her vision is fine", set()),
+    ("We did a blood test today. No bleeding.", set()),
+    ("Routine visit. She feels well. No bleeding, no headache, no fever. The baby is moving.", set()),
+]
+
+
+@pytest.mark.parametrize("text,expected", PARAPHRASES)
+def test_everyday_phrasings_and_no_false_alarms(text, expected):
+    ex = extract(text, "en")
+    got = {f for f, v in ex.fields.items() if v.value is True} | {f.field for f in scan(ex)}
+    assert got == expected

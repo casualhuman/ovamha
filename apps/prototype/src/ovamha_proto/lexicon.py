@@ -8,7 +8,8 @@ with tone marks stripped, because ASR output often omits them.
 # field -> {lang: [terms]}; a term is matched as a whole phrase in the normalised text.
 FIELD_TERMS: dict[str, dict[str, list[str]]] = {
     "vaginal_bleeding": {
-        "en": ["bleeding", "bleed", "bled", "blood coming", "losing blood", "vaginal bleeding"],
+        "en": ["bleeding", "bleed", "bled", "blood coming", "losing blood", "vaginal bleeding", "blood", "bloody", "spotting",
+               "seen her period", "saw her period", "seeing her period", "her period came", "red and wet"],
         "kri": ["blɔd", "blod", "bleed", "di blod de kam", "bleeding"],
         "yo": ["eje", "eje n jade", "bleeding"],
     },
@@ -23,12 +24,14 @@ FIELD_TERMS: dict[str, dict[str, list[str]]] = {
         "yo": ["daku", "o daku", "fainted"],
     },
     "headache": {
-        "en": ["headache", "head ache", "head pain", "head is paining"],
+        "en": ["headache", "head ache", "head pain", "head is paining", "head is pounding", "head pounding", "pounding head",
+               "head hurts", "head is hurting", "head is aching"],
         "kri": ["ed de at", "ed at", "headache"],
         "yo": ["ori fifo", "ori n fo", "efori", "headache"],
     },
     "visual_disturbance": {
-        "en": ["blurred vision", "blurry", "cannot see well", "can't see well", "seeing spots", "vision"],
+        "en": ["blurred vision", "blurry", "blurred", "cannot see well", "can't see well", "seeing spots", "sees stars", "seeing stars",
+               "flashes of light", "flashing lights", "eyes are dark", "vision is blurred", "vision is blurry"],
         "kri": ["in yay nɔ de si fayn", "yay de blur", "blurred"],
         "yo": ["oju n se baibai", "ko riran daadaa", "blurred"],
     },
@@ -58,8 +61,10 @@ FIELD_TERMS: dict[str, dict[str, list[str]]] = {
 SAFETY_NET_ONLY: dict[str, dict[str, list[str]]] = {
     "unconscious": {"en": ["unconscious", "not responding", "unresponsive"], "kri": ["nɔ de wek"], "yo": ["ko mo nnkan"]},
     "vomiting": {"en": ["vomiting", "vomit", "throwing up"], "kri": ["de vɔmit", "vomit"], "yo": ["eebi", "o n bi"]},
-    "reduced_fetal_movement": {"en": ["baby not moving", "not feeling the baby", "baby stopped moving"], "kri": ["pikin nɔ de muv"], "yo": ["omo ko mi"]},
-    "waters_broken": {"en": ["water broke", "waters broke", "leaking water"], "kri": ["wata dɔn brok"], "yo": ["omi ti ja"]},
+    "reduced_fetal_movement": {"en": ["baby not moving", "not feeling the baby", "baby stopped moving", "baby is not moving", "not kicking",
+                                       "no kicks", "stopped kicking", "not moving like before", "not felt the baby", "not feeling kicks"], "kri": ["pikin nɔ de muv"], "yo": ["omo ko mi"]},
+    "waters_broken": {"en": ["water broke", "waters broke", "leaking water", "water is running", "water running", "water coming out",
+                              "water is coming", "fluid leaking", "leaking fluid", "draining liquor"], "kri": ["wata dɔn brok"], "yo": ["omi ti ja"]},
     "foul_discharge": {"en": ["foul smelling discharge", "smelly discharge", "bad smell discharge", "discharge smells"], "kri": ["discharge de smel"], "yo": ["isun olorun"]},
     "swelling": {"en": ["swelling", "swollen face", "swollen hands"], "kri": ["swɛl"], "yo": ["wiwu", "ese wu"]},
 }

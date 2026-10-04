@@ -25,7 +25,8 @@ from .lexicon import (
 
 NOT_CAPTURED = "not captured"
 FIELDS = list(FIELD_TERMS)  # symptom fields, in read-back order
-BLOOD_PRESSURE_WORDS = {"pressure", "presha", "preshɔ", "prɛshɔ"}
+# "blood pressure", "blood test" etc. are not bleeding.
+BLOOD_PRESSURE_WORDS = {"pressure", "presha", "preshɔ", "prɛshɔ", "test", "tests", "group", "sugar", "donor", "transfusion", "count"}
 
 
 def normalise(text: str) -> str:
