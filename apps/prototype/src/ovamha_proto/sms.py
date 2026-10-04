@@ -29,6 +29,7 @@ class Sms:
     text: str
     at: str
     channel: str  # "gsm-modem" | "SIMULATED"
+    kind: str = "referral"  # "referral" | "reminder" | "reply"
 
 
 def referral_text(e: Encounter) -> str:
@@ -36,6 +37,27 @@ def referral_text(e: Encounter) -> str:
     rules = ",".join(r.rule_id.replace("ANC.", "") for r in e.fired)
     parts = [f"OVAMHA REFERRAL {e.code}", "URGENT", f"{ga}wk" if isinstance(ga, (int, float)) else None, f"rule {rules}", f"from {e.facility}"]
     return " | ".join(p for p in parts if p) + f". Reply ACK {e.code} or FULL {e.code}"
+
+
+def reminder_text(e: Encounter) -> str | None:
+    """Appointment reminder to the woman (ARCH: date, facility and a danger-sign line only; no name, no diagnosis)."""
+    date = e.next_contact.get("date") if e.next_contact else None
+    if not date:
+        return None
+    from datetime import date as _d
+    when = _d.fromisoformat(date).strftime("%d %b %Y")
+    return (f"Ovamha reminder: your next antenatal visit is on {when} at {e.facility}. "
+            "If you bleed, have a bad headache or blurred vision, fever, or the baby moves less, come to the clinic at once.")
+
+
+def wants_reminder(e: Encounter) -> bool:
+    return bool(e.details.get("phone")) and e.details.get("wants_reminders") == "yes"
+
+
+def log(limit: int = 30) -> list[dict]:
+    """Recent messages, newest last (for the demo phone)."""
+    path = OUTBOX / "sms.jsonl"
+    return secure_store.read_jsonl(path)[-limit:] if path.exists() else []
 
 
 def _gammu_available() -> bool:
@@ -46,13 +68,13 @@ def _log(sms: Sms) -> None:
     secure_store.append_jsonl(OUTBOX / "sms.jsonl", asdict(sms))  # phone numbers and text encrypted at rest (DB-02)
 
 
-def send(text: str, number: str = REFERRAL_NUMBER) -> Sms:
+def send(text: str, number: str = REFERRAL_NUMBER, kind: str = "referral") -> Sms:
     now = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     if _gammu_available():
         subprocess.run(["gammu", "sendsms", "TEXT", number, "-text", text], check=True, timeout=60)
-        sms = Sms("out", number, text, now, "gsm-modem")
+        sms = Sms("out", number, text, now, "gsm-modem", kind)
     else:
-        sms = Sms("out", number, text, now, "SIMULATED")
+        sms = Sms("out", number, text, now, "SIMULATED", kind)
     _log(sms)
     return sms
 
@@ -64,7 +86,7 @@ TASK_STATUS = {"ACK": "accepted", "FULL": "rejected"}
 def handle_reply(text: str, e: Encounter, number: str = REFERRAL_NUMBER) -> str | None:
     """Apply an ACK/FULL reply to the encounter. Returns the new Task status, or None if not for this encounter."""
     now = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
-    _log(Sms("in", number, text, now, "gsm-modem" if _gammu_available() else "SIMULATED"))
+    _log(Sms("in", number, text, now, "gsm-modem" if _gammu_available() else "SIMULATED", "reply"))
     m = REPLY.match(text)
     if not m or m.group(2).upper() != e.code:
         return None

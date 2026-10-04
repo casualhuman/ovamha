@@ -177,7 +177,14 @@ def seed_demo(today: date | None = None) -> list[str]:
     data, added = _load(), []
     for d in json.loads(DEMO_WOMEN.read_text())["women"]:
         code = d["card_code"]
-        if code in data or not is_valid(code):
+        if code in data:
+            # A demo woman seeded earlier picks up demo details added since (e.g. her demo phone).
+            old = data[code]
+            if old.get("created_by") == "demo-seed" and any(k not in old["details"] for k in d.get("details", {})):
+                old["details"] = {**d["details"], **old["details"]}
+                added.append(code)
+            continue
+        if not is_valid(code):
             continue
         profile = dict(d["profile"])
         if d.get("lmp_weeks_ago") is not None:

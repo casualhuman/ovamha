@@ -1165,9 +1165,13 @@ function result() {
     ${r.sms ? `<div class="section-title">Referral SMS <span class="badge ${r.sms.channel === "SIMULATED" ? "amber" : "green"}">${r.sms.channel === "SIMULATED" ? "Simulated" : "Sent by GSM"}</span></div>
       <div class="card"><div class="small muted">To the referral hospital · ${esc(new Date(r.sms.at).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }))}</div><div class="sms">${esc(r.sms.text)}</div>
         <div style="margin-top:14px"><span class="status-pill ${pillCls}">${icon(pillCls === "ok" ? "check" : pillCls === "no" ? "x" : "sms")}${pillTxt}</span></div>
+        <div class="small muted" style="margin-top:12px"><a href="/phone.html" target="_blank" rel="noopener">Open the demo phone</a> to see it arrive.</div>
         ${r.status === "requested" ? `<div class="small muted" style="margin:14px 0 8px">Demo: simulate the hospital's reply</div>
         <div class="row"><button class="btn soft" data-reply="ACK ${esc(r.code)}">ACK ${esc(r.code)}</button><button class="btn soft" data-reply="FULL ${esc(r.code)}">FULL ${esc(r.code)}</button></div>` : ""}
       </div>` : ""}
+    ${r.reminder ? `<div class="section-title">Reminder SMS <span class="badge ${r.reminder.channel === "SIMULATED" ? "amber" : "green"}">${r.reminder.channel === "SIMULATED" ? "Simulated" : "Sent by GSM"}</span></div>
+      <div class="card"><div class="small muted">To her phone ${esc(r.reminder.to)} · ${esc(new Date(r.reminder.at).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }))}</div><div class="sms">${esc(r.reminder.text)}</div>
+        <div class="small muted" style="margin-top:12px">She agreed to SMS reminders at registration. No name or diagnosis is sent. <a href="/phone.html" target="_blank" rel="noopener">Open the demo phone</a></div></div>` : ""}
     <div class="section-title">${r.referral ? "Referral form (iSBAR)" : "Contact record"}</div>
     <details class="card" open><summary>For the receiving team <button class="icon-btn soft" id="sayHandover" aria-label="Read aloud">${icon("speaker")}</button></summary><pre class="mono">${esc(r.handover)}</pre></details>
     <div class="section-title">Record</div>
