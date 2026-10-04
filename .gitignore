@@ -15,3 +15,4 @@ ml/models/*
 *.safetensors
 outbox/
 demo/audio_local/
+data/eval/

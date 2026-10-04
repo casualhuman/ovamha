@@ -1,0 +1,21 @@
+id,situation (read this, then describe it in your own words; do not read it aloud),expected_danger_signs,also_expected,tests
+S01,A woman 30 weeks pregnant has been bleeding from the vagina since this morning. It is a lot of blood.,vaginal_bleeding,bleeding_amount=heavy,plain wording
+S02,She noticed blood on her cloth/wrapper this morning. Not much. No pain.,vaginal_bleeding,bleeding_amount=light,indirect wording
+S03,She says she has 'seen her period' even though she is pregnant.,vaginal_bleeding,,euphemism
+S04,She fainted at the market yesterday. Today she feels fine.,,flag:fainting (past),past event
+S05,She feels dizzy when she stands up. No bleeding.,dizziness,vaginal_bleeding=no,negation
+S06,She has a very bad headache that does not go away and things look blurry.,headache;visual_disturbance,headache=severe,severe headache + vision
+S07,She has had a headache since yesterday but it is mild. Her eyes are fine.,headache,headache=mild;visual_disturbance=no,mild + negation
+S08,She had a fit (convulsion) this morning; her family held her down.,convulsions,,convulsions
+S09,Her body is very hot and she is shivering. She has had fever for two days.,fever,,fever (ongoing)
+S10,She has strong pain in her belly that comes and does not stop.,abdominal_pain,abdominal_pain=severe,severe abdominal pain
+S11,She cannot catch her breath even when resting.,breathing_difficulty,breathing_difficulty=severe,breathing
+S12,She says the baby is not moving like before; she has not felt kicks since yesterday.,reduced_fetal_movement,,fetal movement
+S13,Water is running down her legs; she is 34 weeks.,waters_broken,,waters broken
+S14,Her face and hands are swollen and her whole body looks puffy.,swelling,,swelling
+S15,She has a discharge from the vagina that smells very bad.,foul_discharge,,foul discharge
+S16,She is vomiting everything she eats since this morning.,vomiting,,vomiting
+S17,Routine visit. She feels well. No bleeding, no headache, no fever. Baby is moving.,,vaginal_bleeding=no;headache=no;fever=no,negative case
+S18,She is 28 weeks. Heavy bleeding started this morning. She fainted yesterday but is fine now. No fever.,vaginal_bleeding,fainting (flag);fever=no;bleeding_amount=heavy,demo scenario
+S19,Her blood pressure was high at the last visit. Today she has a headache and sees flashes of light.,headache;visual_disturbance,,pre-eclampsia symptoms
+S20,She is tired and has a little back pain. Nothing else.,,,negative case (common complaint)
