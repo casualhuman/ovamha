@@ -847,7 +847,7 @@ async function finish() {
   const done = busy("Checking the guidelines…");
   try {
     S.assess = await api("/api/finish");
-    S.decision = { choice: null, reason: "" }; S.advEnglish = false;
+    S.decision = { choice: null, reason: "" }; S.advLang = null;
     S.counts.checks++;
     done(); go("advice");
   } catch (e) { done(); toast(e.message); }
@@ -882,11 +882,16 @@ const ADV_UI = {
 const ADV_EN = { say: "What the guidelines say", tapRow: "Tap a row for details", canDo: "What you can do now", national: "From the national guideline",
   steps: "steps · tap to open or close", suggests: "Guideline suggests:", sl: "Sierra Leone guideline", who: "WHO antenatal care",
   nothing: "Nothing to suggest on the confirmed information.", youDecide: "You decide." };
-// The language the advice is shown in: the visit's language when a translation exists, unless switched to English.
-function advLang() { return S.assess?.translated && S.advEnglish !== true ? S.assess.lang : "en"; }
+// The language the advice is shown in: chosen with the switch, else the visit's language when a translation exists.
+function advLang() {
+  const tr = S.assess?.translations || {};
+  if (S.advLang && (S.advLang === "en" || tr[S.advLang])) return S.advLang;
+  return tr[S.assess?.lang] ? S.assess.lang : "en";
+}
+function advTr() { return advLang() !== "en" ? S.assess.translations[advLang()] : null; }
 function advT(key) { const l = advLang(); return (l !== "en" && ADV_UI[l]?.[key]) || ADV_EN[key]; }
 function advManagement() {
-  const a = S.assess, tr = advLang() !== "en" ? a.translated : null;
+  const a = S.assess, tr = advTr();
   return (a.management || []).map((m, i) => (tr ? { ...m, ...tr.management[i] } : m));
 }
 // Advice as clean list rows: the reasons are the title; tap to see the full suggestion and its source.
@@ -905,7 +910,7 @@ function adviceRow(x, idx) {
   </details>`;
 }
 function adviceItems() {
-  const a = S.assess, items = [], tr = advLang() !== "en" ? a.translated : null;
+  const a = S.assess, items = [], tr = advTr();
   a.rules.forEach((r, i) => {
     if (r.status !== "fired") return;
     const t = tr ? tr.rules[i] : r;
@@ -931,10 +936,9 @@ function advice() {
   const recording = S.reasonRec;
   return `<div class="screen">${topbar("Guideline advice", "measure")}${steps(5)}
     <div class="status-line ${sug === "none" ? "ok" : "warn"}" style="margin:0">${icon(sug === "none" ? "check" : "alert")}${esc((advLang() !== "en" && ADV_UI[advLang()]?.suggest[sug]) || SUGGEST_TEXT[sug])} ${advT("youDecide")}</div>
-    ${a.translated ? `<div class="lang-switch" role="group" aria-label="Language of the advice">
-        <button class="chip ${advLang() !== "en" ? "on" : ""}" data-adv-lang="tr">${esc(Object.fromEntries(LANGS)[a.lang] || a.lang)}</button>
-        <button class="chip ${advLang() === "en" ? "on" : ""}" data-adv-lang="en">English</button></div>
-      ${advLang() !== "en" ? `<div class="tiny" style="margin-top:-4px">${esc(ADV_UI[a.lang]?.draft || "")}</div>` : ""}` : ""}
+    ${Object.keys(a.translations || {}).length ? `<div class="lang-switch" role="group" aria-label="Language of the advice">
+        ${[...Object.keys(a.translations), "en"].map((l) => `<button class="chip ${advLang() === l ? "on" : ""}" data-adv-lang="${l}">${esc(Object.fromEntries(LANGS)[l] || l)}</button>`).join("")}</div>
+      ${advLang() !== "en" ? `<div class="tiny" style="margin-top:-4px">${esc(ADV_UI[advLang()]?.draft || "")}</div>` : ""}` : ""}
     <div class="list-head">${advT("say")}<span>${advT("tapRow")}</span></div>
     <div class="row-list">${items.length ? items.map(adviceRow).join("") : `<div class="row-sub" style="padding:8px 2px">${advT("nothing")}</div>`}</div>
     ${(a.management || []).length ? `<div class="list-head">${advT("canDo")}<span>${advT("national")}</span></div>
@@ -977,7 +981,7 @@ bind.advice = () => {
     const m = advManagement()[Number(b.dataset.sayMgmt)];
     speakText(`${m.title}. ${m.steps.join(" ")}`, advLang());
   });
-  document.querySelectorAll("[data-adv-lang]").forEach((b) => b.onclick = () => { S.advEnglish = b.dataset.advLang === "en"; keepScroll(render); });
+  document.querySelectorAll("[data-adv-lang]").forEach((b) => b.onclick = () => { S.advLang = b.dataset.advLang; keepScroll(render); });
   document.querySelectorAll("[data-choice-dec]").forEach((b) => b.onclick = () => { S.decision.choice = b.dataset.choiceDec; S.decErr = ""; keepScroll(render); });
   $("#decReason") && ($("#decReason").oninput = (e) => { S.decision.reason = e.target.value; });
   $("#reasonMic") && ($("#reasonMic").onclick = async () => {

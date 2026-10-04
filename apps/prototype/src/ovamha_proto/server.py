@@ -474,7 +474,8 @@ def do_finish(v: Visit = Depends(visit)):
     e.routine = guideline.routine_care(ga, first_contact=v.woman.visits == 0)
     view = {**_rule_view(results), **_advice_view(e), "management": e.management, "routine": e.routine,
             "code": e.code, "card_code": registry.display(e.card_code)}
-    view["translated"] = guideline.localise(view, v.lang)  # e.g. Yoruba, shown with the English one tap away
+    # Translated copies (e.g. Yoruba), shown with the English one tap away; the English stays the record.
+    view["translations"] = {l: t for l in ("yo", "kri") if (t := guideline.localise(view, l))}
     view["lang"] = v.lang
     return view
 
