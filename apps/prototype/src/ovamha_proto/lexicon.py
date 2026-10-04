@@ -60,6 +60,7 @@ SAFETY_NET_ONLY: dict[str, dict[str, list[str]]] = {
     "vomiting": {"en": ["vomiting", "vomit", "throwing up"], "kri": ["de vɔmit", "vomit"], "yo": ["eebi", "o n bi"]},
     "reduced_fetal_movement": {"en": ["baby not moving", "not feeling the baby", "baby stopped moving"], "kri": ["pikin nɔ de muv"], "yo": ["omo ko mi"]},
     "waters_broken": {"en": ["water broke", "waters broke", "leaking water"], "kri": ["wata dɔn brok"], "yo": ["omi ti ja"]},
+    "foul_discharge": {"en": ["foul smelling discharge", "smelly discharge", "bad smell discharge", "discharge smells"], "kri": ["discharge de smel"], "yo": ["isun olorun"]},
     "swelling": {"en": ["swelling", "swollen face", "swollen hands"], "kri": ["swɛl"], "yo": ["wiwu", "ese wu"]},
 }
 

@@ -19,14 +19,14 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import fhir_client, questionnaire, registry, sms, sync
+from . import fhir_client, guideline, questionnaire, registry, sms, sync
 from .asr import model_name, transcribe
 from .auth import Worker, login
 from .confirm import KEYPAD_FIELDS, Session, fmt, label
 from .encounter import Encounter
 from .extract import extract
 from .fhir_bundle import build_bundle, validate
-from .handover import handover_text
+from .handover import handover_text, isbar
 from .numbers import parse_bp, parse_number
 from .rules import evaluate, questions_to_ask
 from .safety_net import scan
@@ -38,7 +38,7 @@ PLAUSIBLE = {"gestational_age_weeks": (4, 45), "systolic": (50, 300), "diastolic
              "temperature": (30, 45), "fetal_heart_rate": (50, 250)}
 CHOICE_FIELDS = {"urine_protein": ["negative", "trace", "+", "++", "+++", "unknown"],
                  "severe_pe_symptoms": [True, False, "unknown"]}
-SEVERITY_FIELDS = {"abdominal_pain", "breathing_difficulty", "vomiting"}
+SEVERITY_FIELDS = {"abdominal_pain", "breathing_difficulty", "vomiting", "headache"}
 
 app = FastAPI(title="Ovamha prototype", docs_url=None, redoc_url=None)
 
@@ -382,26 +382,101 @@ def do_speak(body: SpeakIn, v: Visit = Depends(visit)):
 
 # ---------------- finish, SMS, FHIR ----------------
 
+def _advice_view(e: Encounter) -> dict:
+    return {
+        "advice": [{"id": a.id, "kind": a.kind, "title": a.title, "kind_title": guideline.KIND_TITLE[a.kind], "reasons": a.reasons,
+                    "recommendation": a.recommendation, "cite": a.cite, "source": a.source, "assumptions": a.assumptions}
+                   for a in e.advice],
+        "suggestion": e.suggestion, "next_contact": e.next_contact,
+        "pathway": guideline.guide()["referral_pathway"],
+    }
+
+
 @app.post("/api/finish")
 def do_finish(v: Visit = Depends(visit)):
+    """Assess: discard unconfirmed items, apply WHO DAK rules and national guideline advice.
+
+    Nothing is referred here. The health worker reads the advice and decides (/api/decision).
+    """
     if not v.woman:
         raise HTTPException(409, "Choose First visit or enter her card number first.")
     s = v.session
     confirmed = s.finalise()  # unconfirmed items are discarded here
     results = evaluate(confirmed)
     e = Encounter(confirmed, dict(s.sources), results, v.lang, s.worker_id, v.asr_model or model_name(v.lang))
-    e.facility = v.worker.facility
+    e.facility, e.facility_level, e.worker_role = v.worker.facility, v.worker.facility_level, v.worker.role
+    e.worker_name = v.worker.display_name
     e.woman_id, e.card_code = v.woman.woman_id, v.woman.card_code
-    registry.record_visit(v.woman.card_code)
-    e.worker_role = v.worker.role
     e.episode_id = v.woman.episode_id or e.episode_id
     e.national_id = v.woman.national_id
     e.birth_date, e.birth_date_estimated = v.woman.birth_date, v.woman.birth_date_estimated
     e.details, e.profile = dict(v.woman.details), dict(v.woman.profile)
     e.profile_derived = questionnaire.derived(v.woman.profile) if v.woman.profile else {}
-    v.encounter = e
+    e.advice = guideline.advise(confirmed, results, e.profile, e.birth_date, e.facility_level)
+    e.suggestion = guideline.top_suggestion(e.advice, results)
+    ga = confirmed.get("gestational_age_weeks") or e.profile_derived.get("ga_weeks")
+    e.next_contact = guideline.next_contact(ga)
+    v.encounter, v.bundle = e, None
+    return {**_rule_view(results), **_advice_view(e), "code": e.code, "card_code": registry.display(e.card_code)}
+
+
+class DecisionIn(BaseModel):
+    choice: str  # "urgent" | "planned" | "none"
+    reason: str | None = None
+
+
+@app.post("/api/decision")
+def do_decision(body: DecisionIn, v: Visit = Depends(visit)):
+    """The health worker's decision. Ovamha suggested; the worker decides and is recorded as deciding."""
+    e = v.encounter
+    if not e:
+        raise HTTPException(409, "Assess the woman first.")
+    if body.choice not in ("urgent", "planned", "none"):
+        raise HTTPException(422, "Choose urgent referral, planned referral or no referral.")
+    reason = (body.reason or "").strip()
+    if e.suggestion != "none" and body.choice == "none" and not reason:
+        raise HTTPException(422, "The guideline suggests referral. Record your reason for not referring now.")
+    if e.suggestion == "urgent_referral" and body.choice == "planned" and not reason:
+        raise HTTPException(422, "The guideline suggests urgent referral. Record your reason for a planned referral instead.")
+    e.decision = {"choice": body.choice, "reason": reason or None, "at": _now(), "by": v.worker.worker_id, "suggested": e.suggestion}
+    if body.choice == "urgent":
+        return {"next": "referral", "isbar": isbar(e), **_advice_view(e)}
+    return {"next": "done", **_complete(v)}
+
+
+class ReferralIn(BaseModel):
+    consent: bool
+    checklist: list[int] = []
+    call_time: str | None = None
+    ambulance_time: str | None = None
+
+
+@app.post("/api/referral/complete")
+def referral_complete(body: ReferralIn, v: Visit = Depends(visit)):
+    """Urgent referral pathway (national guideline): consent, pre-referral checklist, iSBAR call, then notify."""
+    e = v.encounter
+    if not e or not e.decision or e.decision["choice"] != "urgent":
+        raise HTTPException(409, "Decide on urgent referral first.")
+    items = guideline.guide()["referral_pathway"]["emergency_checklist"]
+    e.referral_steps = {"consent": body.consent, "checklist": [items[i] for i in body.checklist if 0 <= i < len(items)],
+                        "call_time": body.call_time, "ambulance_time": body.ambulance_time}
+    if not body.consent:
+        e.decision["reason"] = (e.decision.get("reason") or "") + " The woman did not consent to referral."
+    return _complete(v)
+
+
+def _now() -> str:
+    from datetime import datetime, timezone
+
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def _complete(v: Visit) -> dict:
+    """Record the encounter: notify the receiving facility for an urgent referral, build the FHIR record, queue sync."""
+    e = v.encounter
+    registry.record_visit(e.card_code)
     out_sms = None
-    if e.referral:
+    if e.urgent and not e.sms:
         m = sms.send(sms.referral_text(e))
         out_sms = {"text": m.text, "channel": m.channel, "at": m.at}
         e.sms = {"text": m.text, "sent": m.at, "channel": m.channel}
@@ -412,8 +487,10 @@ def do_finish(v: Visit = Depends(visit)):
         sync.enqueue_bundle(e.code, v.bundle)  # SY-01: saved on the device; uploads itself when the hub is reachable
     except Exception as exc:  # show, never hide, a validation failure; an invalid Bundle is never queued
         valid = {"ok": False, "message": str(exc)}
-    return {**_rule_view(results), "code": e.code, "card_code": registry.display(e.card_code), "sync": sync.status(e.code), "handover": handover_text(e), "sms": out_sms,
-            "status": e.referral_status, "bundle": v.bundle, "valid": valid}
+    return {"decision": e.decision, "referral": e.referral, "urgent": e.urgent, "code": e.code,
+            "card_code": registry.display(e.card_code), "sync": sync.status(e.code), "handover": handover_text(e),
+            "isbar": isbar(e), "sms": out_sms, "status": e.referral_status, "bundle": v.bundle, "valid": valid,
+            "next_contact": e.next_contact}
 
 
 class ReplyIn(BaseModel):

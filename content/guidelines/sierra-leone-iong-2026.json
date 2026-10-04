@@ -1,0 +1,130 @@
+{
+  "_note": "Computable extract of the Sierra Leone Integrated Obstetric and Newborn Care Guideline (MoHS, copy-edited version 19 Jan 2026). Only content Ovamha can evaluate from confirmed data is encoded. Every item cites its table or section. Thresholds the guideline does not state are marked 'assumption' and need MoHS confirmation. This file advises the health worker; the worker decides on referral.",
+  "source": {
+    "title": "Sierra Leone Integrated Obstetric and Newborn Care Guideline",
+    "publisher": "Ministry of Health, Sierra Leone",
+    "version": "Copy-edited version, 19 January 2026",
+    "status": "Draft provided by the team; confirm final published version"
+  },
+  "facility_levels": {
+    "lower": ["MCHP", "CHP", "CHC", "BEmONC"],
+    "higher": ["CEmONC"],
+    "_cite": "Table 3.4 Referral pathway for high-risk pregnancy"
+  },
+  "danger_signs_pregnancy": {
+    "_cite": "Table 3.3 Danger signs in pregnancy, childbirth, and postnatal periods (during pregnancy)",
+    "advice": "Danger sign in pregnancy: assess and stabilise, then consider urgent referral to a CEmONC facility.",
+    "signs": [
+      {"label": "Vaginal bleeding", "fields": {"vaginal_bleeding": true}},
+      {"label": "Drainage of liquor", "fields": {"waters_broken": true}},
+      {"label": "Foul-smelling vaginal discharge", "fields": {"foul_discharge": true}},
+      {"label": "Severe abdominal pains", "fields": {"abdominal_pain": "severe"}},
+      {"label": "Severe headache", "fields": {"headache": "severe"}},
+      {"label": "Blurred vision/dizziness", "fields": {"visual_disturbance": true, "dizziness": true}},
+      {"label": "High fever", "fields": {"fever": true}},
+      {"label": "Generalized body swelling", "fields": {"swelling": true}},
+      {"label": "Reduced foetal movements", "fields": {"reduced_fetal_movement": true}},
+      {"label": "Difficulty in breathing", "fields": {"breathing_difficulty": "severe"}},
+      {"label": "Convulsions", "fields": {"convulsions": true}}
+    ]
+  },
+  "high_risk": {
+    "_cite": "Antenatal care chapter: Identification and management of high-risk pregnant women; Table 3.4 Referral pathway for high-risk pregnancy",
+    "groups": [
+      {
+        "id": "current_urgent",
+        "category": "Current pregnancy complications",
+        "kind": "refer_cemonc",
+        "recommendation": "If at a lower facility (BEmONC, CHC, CHP, MCHP): refer to a CEmONC facility for assessment and delivery or follow-up.",
+        "conditions": [
+          {"label": "Severe pre-eclampsia / eclampsia", "match": {"rule": "ANC.PE.severe"}},
+          {"label": "Abnormal fetal heart rate", "match": {"fetal_heart_rate_outside": [110, 160]}, "assumption": "Normal range 110-160/min is not stated in Table 3.4; confirm with MoHS."}
+        ]
+      },
+      {
+        "id": "current_assessment",
+        "category": "Current pregnancy complications",
+        "kind": "refer_assessment",
+        "recommendation": "If at a lower facility: refer to CEmONC for assessment. She can be followed up at the lower-level facility; counsel her about referral to CEmONC for delivery.",
+        "conditions": [
+          {"label": "Mild pre-eclampsia", "match": {"rule": "ANC.PE"}},
+          {"label": "Age: adolescent", "match": {"age_below": 20}, "assumption": "Adolescent taken as under 20 years (WHO: 10-19)."},
+          {"label": "Age: 35 years and above", "match": {"age_at_least": 35}}
+        ]
+      },
+      {
+        "id": "previous",
+        "category": "Previous pregnancy complications",
+        "kind": "plan_cemonc_delivery",
+        "recommendation": "If at a lower facility: refer to CEmONC for further assessment. She can have ANC follow-up at the lower-level facility; counsel and prepare her for referral for delivery at a CEmONC facility, and follow her for complications.",
+        "conditions": [
+          {"label": "Previous pre-eclampsia or eclampsia", "match": {"past_complications": ["pre_eclampsia", "eclampsia"]}},
+          {"label": "Previous PPH or retained placenta / previous antepartum haemorrhage", "match": {"past_complications": ["heavy_bleeding"]}},
+          {"label": "Previous caesarean section", "match": {"past_complications": ["caesarean"], "past_surgeries": ["caesarean"]}},
+          {"label": "Previous difficult delivery", "match": {"past_complications": ["prolonged_labour"]}},
+          {"label": "Extensive perineal, vaginal or cervical tear", "match": {"past_complications": ["perineal_tear"]}},
+          {"label": "Unexplained stillbirth / neonatal death", "match": {"past_complications": ["baby_died_early"], "stillbirths_at_least": 1}},
+          {"label": "Previous baby more than 4.5 kg", "match": {"past_complications": ["large_baby"]}},
+          {"label": "High parity", "match": {"live_births_at_least": 5}, "assumption": "High parity taken as 5 or more births (grand multiparity); not defined in the guideline."}
+        ]
+      },
+      {
+        "id": "medical_advanced",
+        "category": "Pre-existing medical conditions",
+        "kind": "refer_cemonc",
+        "recommendation": "If at a lower facility: referral to a CEmONC facility for advanced care.",
+        "conditions": [
+          {"label": "Cardiac disease", "match": {"chronic_conditions": ["heart_disease"]}},
+          {"label": "Existing diabetes mellitus", "match": {"chronic_conditions": ["diabetes"]}},
+          {"label": "Gestational diabetes (previous)", "match": {"past_complications": ["gestational_diabetes"]}},
+          {"label": "Sickle-cell disease", "match": {"chronic_conditions": ["sickle_cell"]}},
+          {"label": "Renal disease", "match": {"chronic_conditions": ["kidney_disease"]}}
+        ]
+      },
+      {
+        "id": "medical_assessment",
+        "category": "Pre-existing medical conditions",
+        "kind": "plan_cemonc_delivery",
+        "recommendation": "If at a lower facility: refer to CEmONC for assessment. She can have ANC follow-up at the lower-level facility; counsel and prepare her for referral for delivery at CEmONC as necessary.",
+        "conditions": [
+          {"label": "HIV disease", "match": {"chronic_conditions": ["hiv"]}},
+          {"label": "Chronic hypertensive disorder", "match": {"chronic_conditions": ["hypertension"]}},
+          {"label": "Asthma", "match": {"chronic_conditions": ["asthma"]}},
+          {"label": "Epilepsy", "match": {"chronic_conditions": ["epilepsy"]}},
+          {"label": "Under psychiatric care", "match": {"chronic_conditions": ["mental_health"]}}
+        ]
+      },
+      {
+        "id": "gynaecological",
+        "category": "Gynaecological complications",
+        "kind": "refer_assessment",
+        "recommendation": "Refer to the CEmONC facility for assessment as soon as she starts ANC. If stable, she can attend ANC at the lower-level facility until 36 weeks, then be referred to CEmONC for delivery.",
+        "conditions": [
+          {"label": "Previous uterine surgery", "match": {"past_surgeries": ["uterine_surgery"]}}
+        ]
+      }
+    ]
+  },
+  "contact_schedule": {
+    "_cite": "Table 3.2 Schedule of contacts and care provided (minimum eight contacts)",
+    "contacts": [{"n": 1, "week": 12}, {"n": 2, "week": 20}, {"n": 3, "week": 26}, {"n": 4, "week": 30}, {"n": 5, "week": 34},
+                 {"n": 6, "week": 36}, {"n": 7, "week": 38}, {"n": 8, "week": 40}],
+    "after_last": "Refer to CEmONC for induction of labour at 41 weeks."
+  },
+  "referral_pathway": {
+    "_cite": "Cross-cutting issues: Referral (minimum requirements; roles of the referring health worker); Antenatal care chapter: referral pathway for high-risk clients",
+    "consent": "Explain to the woman (and her family) the need for referral, the reason for the choice of facility, the expected cost and the possible outcome. Obtain informed consent.",
+    "emergency_checklist": [
+      "Assess and stabilise her; maintain vital functions",
+      "Establish an IV infusion line",
+      "Give pre-referral treatment for the specific condition",
+      "Catheterise if necessary",
+      "Be ready for an emergency delivery",
+      "A relative who can donate blood goes with her",
+      "If she is very ill, a health worker goes with her",
+      "Continue care and medication during referral"
+    ],
+    "call": "Inform the call centre / referral coordinator using iSBAR (Identification, Situation, Background, Assessment, Recommendation) and alert the receiving facility.",
+    "document": "Complete the standard referral form; record the time of the call for the ambulance and the time it arrived."
+  }
+}

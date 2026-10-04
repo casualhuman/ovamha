@@ -30,6 +30,7 @@ class Worker:
     role: str
     facility: str
     languages: list[str]
+    facility_level: str = "CHP"
 
 
 def hash_pin(pin: str, salt: str | None = None) -> tuple[str, str]:
@@ -68,4 +69,5 @@ def login(username: str, pin: str) -> tuple[Worker | None, str]:
         left = MAX_ATTEMPTS - len(_failures[key])
         return None, f"Username or PIN is wrong. {left} tries left." if left else "Too many wrong tries. Locked for 5 minutes."
     _failures.pop(key, None)
-    return Worker(user["worker_id"], user["display_name"], user["role"], user["facility"], user.get("languages", ["en"])), ""
+    return Worker(user["worker_id"], user["display_name"], user["role"], user["facility"], user.get("languages", ["en"]),
+                  user.get("facility_level", "CHP")), ""

@@ -256,3 +256,13 @@ pre.mono { white-space: pre-wrap; font: .82rem/1.5 ui-monospace, Menlo, monospac
 .q .opt { padding: 4px 6px 4px 8px; }
 .q .opt-main { min-height: 50px; }
 .q .opt + .opt { margin-top: 8px; }
+
+/* Guideline advice, decision, referral pathway */
+.advice { border-left: 6px solid var(--amber); }
+.advice.red { border-left-color: var(--red); }
+.advice.red .tiny:first-child { color: var(--red); }
+.advice.amber .tiny:first-child { color: var(--amber); }
+.check-row { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--line); font-weight: 600; }
+.check-row input { width: 24px; height: 24px; flex: none; margin-top: 2px; }
+.isbar > div { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.isbar-k { width: 32px; height: 32px; border-radius: 10px; background: var(--blue); color: #fff; display: grid; place-items: center; font-weight: 800; flex: none; }

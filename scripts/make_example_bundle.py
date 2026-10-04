@@ -32,6 +32,9 @@ for f, v in (("gestational_age_weeks", 28), ("systolic", 90), ("diastolic", 60))
     s.confirm(f)
 confirmed = s.finalise()
 e = Encounter(confirmed, dict(s.sources), evaluate(confirmed), "en", s.worker_id, model_name("en"))
+# Ovamha only suggests; the health worker decides on urgent referral and the woman consents.
+e.decision = {"choice": "urgent", "reason": None, "at": e.at, "by": s.worker_id, "suggested": "urgent_referral"}
+e.referral_steps = {"consent": True, "checklist": ["Assess and stabilise her; maintain vital functions"], "call_time": None, "ambulance_time": None}
 bundle = build_bundle(e)
 validate(bundle)
 out = ROOT / "fhir/examples/referral-bundle.json"

@@ -51,7 +51,7 @@ CONTENT_PACK = "Ovamha demo content pack v0.1 (rules from the WHO ANC DAK PDF, p
 DANGER_FIELDS = {
     "vaginal_bleeding", "dizziness", "fainting", "headache", "visual_disturbance", "convulsions", "fever",
     "abdominal_pain", "breathing_difficulty", "unconscious", "vomiting", "reduced_fetal_movement",
-    "waters_broken", "swelling", "looks_very_ill", "central_cyanosis", "severe_pain", "imminent_delivery", "labour",
+    "waters_broken", "swelling", "foul_discharge", "looks_very_ill", "central_cyanosis", "severe_pain", "imminent_delivery", "labour",
 }
 NUMERIC_UNITS = {
     "gestational_age_weeks": ("wk", "weeks"),
@@ -251,24 +251,53 @@ def build_bundle(e: Encounter) -> dict:
             gr["moduleUri"] = f"{FHIR}/rules/{res.rule_id}"
         b.add(gr, rid(f"guidance/{res.rule_id}"))
 
-    # ---- referral: ServiceRequest, Task, Communication (SMS) ----
+    for adv in e.advice:
+        b.add({
+            "resourceType": "GuidanceResponse", "status": "success", "subject": subj, "encounter": enc_ref,
+            "occurrenceDateTime": e.at, "moduleUri": f"{FHIR}/guidelines/sierra-leone-iong-2026#{adv.id}",
+            "reasonCode": [{"text": f"{adv.title}: {', '.join(adv.reasons)}"}],
+            "note": [{"text": f"Suggestion to the health worker: {adv.recommendation} Source: {adv.source}, {adv.cite}."}],
+        }, rid(f"advice/{adv.id}"))
+
+    # ---- the health worker's decision (the app suggests; the worker decides) ----
+    if e.decision:
+        dec = {"resourceType": "Observation", "status": "final", "subject": subj, "encounter": enc_ref,
+               "effectiveDateTime": e.decision["at"], "performer": [{"reference": role}],
+               "code": {"coding": [{"system": OBS_CS, "code": "referral-decision", "display": "Referral decision by health worker"}]},
+               "valueCodeableConcept": {"coding": [{"system": f"{FHIR}/CodeSystem/referral-decision", "code": e.decision["choice"]}],
+                                        "text": {"urgent": "Urgent referral", "planned": "Planned referral", "none": "No referral"}[e.decision["choice"]]},
+               "note": [{"text": f"Guideline suggestion: {e.decision.get('suggested', 'none')}."
+                                 + (f" Reason: {e.decision['reason']}" if e.decision.get("reason") else "")}]}
+        by_capture["keyed"].append(b.add(dec, rid("decision")))
+    if e.referral_steps:
+        b.add({
+            "resourceType": "Consent", "status": "active" if e.referral_steps.get("consent") else "rejected",
+            "scope": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/consentscope", "code": "treatment"}]},
+            "category": [{"text": "Consent to referral"}], "patient": subj, "dateTime": e.decision["at"],
+            "performer": [subj], "organization": [{"reference": org}],
+            "policy": [{"uri": f"{FHIR}/policy/referral-consent"}],
+            "provision": {"type": "permit" if e.referral_steps.get("consent") else "deny"},
+        }, rid("referral-consent"))
+
+    # ---- referral (only when the health worker decided to refer): ServiceRequest, Task, Communication (SMS) ----
     if e.referral:
-        reasons = sorted({x for r in e.fired for x in r.reasons})
+        reasons = sorted({x for r in e.fired for x in r.reasons} | {x for a in e.advice for x in a.reasons})
         sr = b.add({
-            "resourceType": "ServiceRequest", "status": "active", "intent": "order", "priority": "urgent",
-            "code": {"text": "Urgent referral to hospital"},
+            "resourceType": "ServiceRequest", "status": "active", "intent": "order", "priority": "urgent" if e.urgent else "routine",
+            "code": {"text": "Urgent referral to a CEmONC facility" if e.urgent else "Planned referral to a CEmONC facility"},
             "subject": subj, "encounter": enc_ref, "authoredOn": e.at,
             "requester": {"reference": role}, "performer": [{"reference": hosp}],
             "reasonCode": [{"text": t} for t in reasons],
             "reasonReference": [{"reference": u} for u in sign_obs],
             "supportingInfo": [{"reference": u} for u in measure_obs],
         }, _ident(f"{ID}/referral", e.code))
-        b.add({
-            "resourceType": "Task", "status": e.referral_status, "intent": "order", "priority": "urgent",
-            "focus": {"reference": sr}, "for": subj, "encounter": enc_ref, "authoredOn": e.at,
-            "requester": {"reference": role}, "owner": {"reference": hosp},
-            "description": f"Referral {e.code}: awaiting ACK/FULL by SMS",
-        }, _ident(f"{ID}/referral-task", e.code))
+        if e.urgent:
+            b.add({
+                "resourceType": "Task", "status": e.referral_status, "intent": "order", "priority": "urgent",
+                "focus": {"reference": sr}, "for": subj, "encounter": enc_ref, "authoredOn": e.at,
+                "requester": {"reference": role}, "owner": {"reference": hosp},
+                "description": f"Referral {e.code}: awaiting ACK/FULL by SMS",
+            }, _ident(f"{ID}/referral-task", e.code))
         if e.sms:
             comm = {
                 "resourceType": "Communication", "status": "completed",

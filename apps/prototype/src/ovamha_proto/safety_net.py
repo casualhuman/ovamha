@@ -27,6 +27,7 @@ LABELS = {
     "reduced_fetal_movement": "Reduced fetal movement",
     "waters_broken": "Waters broken",
     "swelling": "Swelling",
+    "foul_discharge": "Foul-smelling vaginal discharge",
 }
 
 

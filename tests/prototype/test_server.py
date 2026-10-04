@@ -51,15 +51,56 @@ def test_full_scenario(client):
         assert client.post("/api/measure", json={"field": f, "value": v}).status_code == 200
         client.post("/api/confirm", json={"field": f})
 
-    r = client.post("/api/finish").json()
-    assert r["referral"] and r["valid"]["ok"]
-    assert r["card_code"] == card and card in r["handover"]
-    assert card.replace("-", "") not in r["sms"]["text"]  # SMS carries the encounter code only
-    assert "Fever" not in r["handover"]  # proposed, never confirmed -> discarded
+    a = client.post("/api/finish").json()
+    assert a["suggestion"] == "urgent_referral" and "sms" not in a  # the app suggests; nothing is sent yet
+    assert any("Table 3.3" in x["cite"] for x in a["advice"])
+    d = client.post("/api/decision", json={"choice": "urgent"}).json()
+    assert d["next"] == "referral" and set(d["isbar"]) == {"I", "S", "B", "A", "R"}
+    r = client.post("/api/referral/complete", json={"consent": True, "checklist": [0, 1], "call_time": "10:42"}).json()
+    assert r["referral"] and r["urgent"] and r["valid"]["ok"]
+    assert r["card_code"] == card and card in r["handover"] and "I  Identification" in r["handover"]
+    assert "Fever" not in r["handover"].split("GUIDELINE ADVICE")[0]  # proposed, never confirmed -> discarded
     assert r["sms"]["channel"] == "SIMULATED" and r["code"] in r["sms"]["text"]
+    assert card.replace("-", "") not in r["sms"]["text"]  # SMS carries the encounter code only
 
     out = client.post("/api/sms/reply", json={"text": f"ACK {r['code']}"}).json()
     assert out["status"] == "accepted"
+
+
+def _assess_bleeding(client):
+    client.post("/api/woman/new", json=REG)
+    client.post("/api/extract", json={"transcript": "heavy bleeding", "lang": "en"})
+    client.post("/api/confirm", json={"field": "vaginal_bleeding"})
+    return client.post("/api/finish").json()
+
+
+def test_declining_a_suggested_referral_needs_a_reason(client):
+    _assess_bleeding(client)
+    assert client.post("/api/decision", json={"choice": "none"}).status_code == 422
+    r = client.post("/api/decision", json={"choice": "none", "reason": "Bleeding stopped; reviewed by midwife on site"}).json()
+    assert r["next"] == "done" and not r["referral"] and r["sms"] is None
+    assert "Reason: Bleeding stopped" in r["handover"]
+    types = [e["resource"]["resourceType"] for e in r["bundle"]["entry"]]
+    assert "ServiceRequest" not in types and "GuidanceResponse" in types
+
+
+def test_woman_refuses_referral(client):
+    _assess_bleeding(client)
+    client.post("/api/decision", json={"choice": "urgent"})
+    r = client.post("/api/referral/complete", json={"consent": False}).json()
+    assert not r["referral"] and r["sms"] is None and "NOT given" in r["handover"]
+
+
+def test_planned_referral_is_routine_and_sends_no_sms(client):
+    client.post("/api/woman/new", json=REG)
+    client.post("/api/profile", json={"answers": dict(PROFILE, lmp=None, ga_source="unknown")})
+    client.post("/api/extract", json={"transcript": "no bleeding", "lang": "en"})
+    client.post("/api/confirm", json={"field": "vaginal_bleeding"})
+    a = client.post("/api/finish").json()
+    assert a["suggestion"] == "plan_cemonc_delivery"  # previous pre-eclampsia in PROFILE (Table 3.4)
+    r = client.post("/api/decision", json={"choice": "planned"}).json()
+    sr = next(e["resource"] for e in r["bundle"]["entry"] if e["resource"]["resourceType"] == "ServiceRequest")
+    assert sr["priority"] == "routine" and r["sms"] is None
 
 
 def test_implausible_measurement_rejected(client):
@@ -78,7 +119,7 @@ def test_static_app_served(client):
     assert r.status_code == 200 and "app.js" in r.text
 
 
-def test_finish_requires_woman(client):
+def test_finish_requires_woman(client):  # noqa: D103
     assert client.post("/api/finish").status_code == 409
 
 
@@ -120,7 +161,9 @@ def test_registration_and_profile_flow_into_bundle_and_handover(client):
     assert st["needs_profile"] is False and st["woman"]["profile_derived"]["ga_weeks"] == 20.0
     client.post("/api/extract", json={"transcript": "heavy bleeding", "lang": "en"})
     client.post("/api/confirm", json={"field": "vaginal_bleeding"})
-    r = client.post("/api/finish").json()
+    client.post("/api/finish")
+    client.post("/api/decision", json={"choice": "urgent"})
+    r = client.post("/api/referral/complete", json={"consent": True}).json()
     assert r["valid"]["ok"], r["valid"]
     entries = [e["resource"] for e in r["bundle"]["entry"]]
     pat = next(x for x in entries if x["resourceType"] == "Patient")
@@ -132,6 +175,7 @@ def test_registration_and_profile_flow_into_bundle_and_handover(client):
     assert hiv["meta"]["security"][0]["code"] == "R" and hiv["dataAbsentReason"]
     assert "Mariama" not in r["sms"]["text"]  # SMS never carries her name
     assert "Gestational age: 20.0 weeks" in r["handover"] and "Pre-eclampsia" in r["handover"]
+    assert "Contact 3 at 26 weeks" in r["handover"]  # next contact from the national schedule (Table 3.2)
 
 
 def test_profile_rejects_missing_answers(client):

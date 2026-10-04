@@ -28,7 +28,11 @@ def enc(tmp_path, monkeypatch):
         s.propose_keypad(f, v)
         s.confirm(f)
     confirmed = s.finalise()
-    return Encounter(confirmed, dict(s.sources), evaluate(confirmed), "en", s.worker_id, "faster-whisper small int8")
+    e = Encounter(confirmed, dict(s.sources), evaluate(confirmed), "en", s.worker_id, "faster-whisper small int8")
+    # The health worker decides on urgent referral and the woman consents (the app only suggests).
+    e.decision = {"choice": "urgent", "reason": None, "at": e.at, "by": s.worker_id, "suggested": "urgent_referral"}
+    e.referral_steps = {"consent": True, "checklist": [], "call_time": None, "ambulance_time": None}
+    return e
 
 
 def test_bundle_validates_and_has_required_resources(enc):
@@ -105,5 +109,22 @@ def test_national_id_number_never_in_bundle(enc):
     enc.national_id = {"document": "Sierra Leone NIN card", "method": "document-shown", "verified": False, "consent_at": enc.at}
     b = build_bundle(enc)
     validate(b)
-    consent = [e["resource"] for e in b["entry"] if e["resource"]["resourceType"] == "Consent"]
+    consent = [e["resource"] for e in b["entry"] if e["resource"]["resourceType"] == "Consent"
+               and e["resource"]["category"][0]["text"] == "Link Ovamha record to national ID"]
     assert len(consent) == 1 and consent[0]["status"] == "active"
+
+
+def test_no_referral_resources_without_the_workers_decision(enc):
+    enc.decision, enc.referral_steps = None, {}
+    types = [e["resource"]["resourceType"] for e in build_bundle(enc)["entry"]]
+    assert "ServiceRequest" not in types and "Task" not in types  # a fired rule alone never creates a referral
+
+
+def test_no_consent_means_no_referral(enc):
+    enc.referral_steps = {"consent": False}
+    b = build_bundle(enc)
+    validate(b)
+    types = [e["resource"]["resourceType"] for e in b["entry"]]
+    assert "ServiceRequest" not in types
+    consent = next(e["resource"] for e in b["entry"] if e["resource"]["resourceType"] == "Consent" and e["resource"]["category"][0]["text"] == "Consent to referral")
+    assert consent["status"] == "rejected"

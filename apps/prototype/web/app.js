@@ -153,7 +153,7 @@ const extFor = (blob) => (blob.type.includes("mp4") ? "m4a" : blob.type.includes
 function go(screen) { S.screen = screen; render(); window.scrollTo(0, 0); }
 function render() {
   const app = $("#app");
-  const view = { welcome, login, home, woman, describe, confirm, history, measure, result, profile }[S.screen] || home;
+  const view = { welcome, login, home, woman, describe, confirm, history, measure, advice, referral, result, profile }[S.screen] || home;
   app.innerHTML = view();
   bind[S.screen]?.();
 }
@@ -718,7 +718,7 @@ function measure() {
     ${choiceCard("urine_protein", "Urine protein", [["negative", "Negative"], ["trace", "Trace"], ["+", "+"], ["++", "++"], ["+++", "+++"], ["unknown", "Not done"]], "flask", "ask_protein")}
     ${choiceCard("severe_pe_symptoms", "Severe pre-eclampsia symptoms", [["yes", "Yes"], ["no", "No"], ["unknown", "Don't know"]], "alert", "ask_severe_pe")}
   </div>
-  <div class="sticky">${statusBanner()}<button class="btn primary" id="finish">${icon("send")}Finish and see result</button></div>`;
+  <div class="sticky">${statusBanner()}<button class="btn primary" id="finish">${icon("shield")}Check the guidelines</button></div>`;
 }
 bind.measure = () => {
   const refresh = (st) => { S.st = st; render(); };
@@ -783,16 +783,135 @@ async function recordNumber(m) {
   } catch (e) { toast("Microphone not available: " + e.message, 4000); }
 }
 async function finish() {
-  const done = busy("Checking danger signs…");
+  const done = busy("Checking the guidelines…");
   try {
-    S.result = await api("/api/finish");
+    S.assess = await api("/api/finish");
+    S.decision = { choice: null, reason: "" };
     S.counts.checks++;
-    if (S.result.referral) S.counts.referrals++;
-    done(); go("result");
+    done(); go("advice");
   } catch (e) { done(); toast(e.message); }
 }
 
-// ---------------------------------------------------------------- 7. result
+// ---------------------------------------------------------------- 7. guideline advice -> the worker's decision
+const KIND_STYLE = { urgent_referral: "red", refer_cemonc: "red", refer_assessment: "amber", plan_cemonc_delivery: "amber", check_now: "amber" };
+const SUGGEST_TEXT = {
+  urgent_referral: "The guidelines suggest urgent referral.",
+  refer_cemonc: "The guidelines suggest referral to a CEmONC facility.",
+  refer_assessment: "The guidelines suggest referral to CEmONC for assessment.",
+  plan_cemonc_delivery: "High-risk pregnancy: the guidelines suggest planning delivery at a CEmONC facility.",
+  none: "No referral suggested on the confirmed information.",
+};
+function adviceCard(title, kind, reasons, rec, cite, assumptions, idx) {
+  const style = KIND_STYLE[kind] || "amber";
+  return `<div class="card advice ${style}">
+    <div class="qhead"><div style="flex:1"><div class="tiny" style="font-weight:800;letter-spacing:.06em;text-transform:uppercase">${esc(title)}</div>
+      <b style="font-size:1.08rem">${esc(reasons.join(", "))}</b></div>
+      <button class="icon-btn soft" data-say-adv="${idx}" aria-label="Read aloud">${icon("speaker")}</button></div>
+    <div style="margin-top:6px">${esc(rec)}</div>
+    ${(assumptions || []).map((a) => `<div class="tiny" style="margin-top:6px">Assumption: ${esc(a)}</div>`).join("")}
+    <div class="tiny" style="margin-top:8px">${esc(cite)}</div></div>`;
+}
+function adviceItems() {
+  const a = S.assess, items = [];
+  a.rules.filter((r) => r.status === "fired").forEach((r) => items.push({ title: `WHO ANC · ${r.id} ${r.name}`, kind: "urgent_referral", reasons: r.reasons,
+    rec: r.actions.join(". ") + ".", cite: `${r.source}. ${r.label}.`, assumptions: [] }));
+  a.advice.forEach((x) => items.push({ title: `Sierra Leone guideline · ${x.kind_title}`, kind: x.kind, reasons: x.reasons,
+    rec: x.recommendation, cite: `${x.source}: ${x.cite}`, assumptions: x.assumptions }));
+  return items;
+}
+function advice() {
+  const a = S.assess, items = adviceItems(), sug = a.suggestion, d = S.decision;
+  const needsReason = (sug !== "none" && d.choice === "none") || (sug === "urgent_referral" && d.choice === "planned");
+  const opt = (v, title, sub, ic) => `<div class="opt ${d.choice === v ? "on" : ""}"><button class="opt-main" data-choice-dec="${v}">
+      <span class="icon-btn ${d.choice === v ? "blue" : "soft"}" style="flex:none">${icon(d.choice === v ? "check" : ic)}</span>
+      <span style="flex:1;text-align:left"><b>${title}</b><br><span class="small muted">${sub}</span></span></button></div>`;
+  return `<div class="screen">${topbar("Guideline advice", "measure")}${steps(5)}
+    <div class="banner ${sug === "none" ? "green" : KIND_STYLE[sug]}">${icon(sug === "none" ? "check" : "alert")}${esc(SUGGEST_TEXT[sug])} You decide.</div>
+    ${items.map((x, i) => adviceCard(x.title, x.kind, x.reasons, x.rec, x.cite, x.assumptions, i)).join("")}
+    ${a.ask_next?.length && !a.danger ? `<div class="banner amber">${icon("alert")}Not checked (missing): ${esc(a.ask_next.map((q) => q.label).join(", "))}</div>` : ""}
+    ${a.next_contact?.text ? `<div class="card" style="display:flex;gap:12px;align-items:center"><span class="icon-btn soft" style="flex:none">${icon("calendar")}</span>
+      <div><b>Next contact</b><div class="small muted">${esc(a.next_contact.text)}</div><div class="tiny">${esc(a.next_contact.cite)}</div></div></div>` : ""}
+    <div class="section-title">Your decision</div>
+    <div class="card">
+      ${opt("urgent", "Refer urgently", "Emergency: consent, stabilise, call the ambulance", "alert")}
+      ${opt("planned", "Plan a referral", "Not an emergency: assessment or delivery at CEmONC", "calendar")}
+      ${opt("none", "No referral now", "Continue care here", "check")}
+      ${needsReason ? `<div class="small" style="margin:12px 0 6px;font-weight:650">Your reason (required, because it differs from the guideline suggestion)</div>
+        <textarea class="input" id="decReason" style="min-height:90px" placeholder="e.g. Reviewed by the midwife on site; bleeding has stopped">${esc(d.reason)}</textarea>` : ""}
+      <div class="err">${esc(S.decErr || "")}</div>
+    </div>
+  </div>
+  <div class="sticky"><button class="btn primary" id="confirmDecision" ${d.choice ? "" : "disabled"}>${icon("check")}Confirm my decision</button></div>`;
+}
+bind.advice = () => {
+  const items = adviceItems();
+  document.querySelectorAll("[data-say-adv]").forEach((b) => b.onclick = () => {
+    const x = items[Number(b.dataset.sayAdv)];
+    speakText(`${x.reasons.join(", ")}. ${x.rec}`, "en");
+  });
+  document.querySelectorAll("[data-choice-dec]").forEach((b) => b.onclick = () => { S.decision.choice = b.dataset.choiceDec; S.decErr = ""; keepScroll(render); });
+  $("#decReason") && ($("#decReason").oninput = (e) => { S.decision.reason = e.target.value; });
+  $("#confirmDecision").onclick = async () => {
+    try {
+      const r = await api("/api/decision", { body: { choice: S.decision.choice, reason: S.decision.reason || null } });
+      if (r.next === "referral") { S.isbar = r.isbar; S.ref = { consent: null, checklist: [], call_time: "", ambulance_time: "" }; go("referral"); }
+      else { S.result = r; if (r.referral) S.counts.referrals++; go("result"); }
+    } catch (e) { S.decErr = e.message; keepScroll(render); }
+  };
+};
+
+// ---------------------------------------------------------------- 7b. urgent referral pathway (national guideline)
+const nowHM = () => new Date().toTimeString().slice(0, 5);
+function referral() {
+  const p = S.assess.pathway, r = S.ref, sb = S.isbar;
+  const yes = r.consent === true, no = r.consent === false;
+  return `<div class="screen">${topbar("Urgent referral", "advice")}
+    <div class="banner red">${icon("alert")}You decided on urgent referral. Follow the national referral pathway.</div>
+    <div class="card"><div class="qhead"><h3>1 · Explain and ask for consent</h3><button class="icon-btn soft" data-say-text="consent" aria-label="Read aloud">${icon("speaker")}</button></div>
+      <p class="small muted" style="margin:0 0 10px">${esc(p.consent)}</p>
+      <div class="row"><button class="btn ${yes ? "primary" : "soft"}" data-consent="yes">${icon("check")}She agrees</button>
+        <button class="btn ${no ? "danger" : "soft"}" data-consent="no">${icon("x")}She refuses</button></div>
+      ${no ? `<div class="banner amber" style="margin-top:10px">${icon("alert")}Record her refusal. Keep caring for her and counsel on danger signs.</div>` : ""}</div>
+    ${no ? "" : `<div class="card"><div class="qhead"><h3>2 · Before she leaves</h3></div>
+      ${p.emergency_checklist.map((t, i) => `<label class="check-row"><input type="checkbox" data-check="${i}" ${r.checklist.includes(i) ? "checked" : ""}><span>${esc(t)}</span></label>`).join("")}
+      <div class="tiny" style="margin-top:6px">Do what your level of care allows.</div></div>
+    <div class="card"><div class="qhead"><h3>3 · Call the call centre (iSBAR)</h3><button class="icon-btn soft" data-say-text="isbar" aria-label="Read iSBAR aloud">${icon("speaker")}</button></div>
+      <p class="small muted" style="margin:0 0 10px">${esc(p.call)}</p>
+      <div class="isbar">${[["I", "Identification"], ["S", "Situation"], ["B", "Background"], ["A", "Assessment"], ["R", "Recommendation"]]
+        .map(([k, n]) => `<div><span class="isbar-k">${k}</span><div><div class="tiny" style="font-weight:700">${n}</div>${esc(sb[k])}</div></div>`).join("")}</div>
+      <div class="row" style="margin-top:12px">
+        <div><div class="small" style="font-weight:650">Called at</div><input class="input" type="time" id="callTime" value="${esc(r.call_time)}"></div>
+        <div><div class="small" style="font-weight:650">Ambulance arrived</div><input class="input" type="time" id="ambTime" value="${esc(r.ambulance_time)}"></div></div>
+      <button class="link small" id="calledNow">Called now</button>
+      <div class="tiny">${esc(p.document)}</div></div>`}
+    <div class="err">${esc(S.refErr || "")}</div>
+  </div>
+  <div class="sticky"><button class="btn ${no ? "soft" : "danger"}" id="completeRef" ${r.consent === null ? "disabled" : ""}>${icon(no ? "file" : "send")}${no ? "Record refusal" : "Complete referral and notify the hospital"}</button></div>`;
+}
+bind.referral = () => {
+  const r = S.ref;
+  document.querySelectorAll("[data-consent]").forEach((b) => b.onclick = () => { r.consent = b.dataset.consent === "yes"; keepScroll(render); });
+  document.querySelectorAll("[data-check]").forEach((el) => el.onchange = () => {
+    const i = Number(el.dataset.check);
+    r.checklist = el.checked ? [...new Set([...r.checklist, i])] : r.checklist.filter((x) => x !== i);
+  });
+  $("#callTime") && ($("#callTime").onchange = (e) => { r.call_time = e.target.value; });
+  $("#ambTime") && ($("#ambTime").onchange = (e) => { r.ambulance_time = e.target.value; });
+  $("#calledNow") && ($("#calledNow").onclick = () => { r.call_time = nowHM(); keepScroll(render); });
+  document.querySelectorAll("[data-say-text]").forEach((b) => b.onclick = () => {
+    if (b.dataset.sayText === "consent") speakText(S.assess.pathway.consent, "en");
+    else speakText(["I", "S", "B", "A", "R"].map((k) => S.isbar[k]).join(" "), "en");
+  });
+  $("#completeRef").onclick = async () => {
+    try {
+      S.result = await api("/api/referral/complete", { body: { consent: r.consent, checklist: r.checklist, call_time: r.call_time || null, ambulance_time: r.ambulance_time || null } });
+      if (S.result.referral) S.counts.referrals++;
+      go("result");
+    } catch (e) { S.refErr = e.message; keepScroll(render); }
+  };
+};
+
+// ---------------------------------------------------------------- 8. result (after the worker's decision)
 function syncLine(st, valid) {
   if (valid && !valid.ok) return `<div class="banner red" style="margin:0">${icon("alert")}Record failed validation and was not queued. Tell your supervisor.</div>`;
   if (!st) return "";
@@ -804,26 +923,25 @@ function syncLine(st, valid) {
 }
 let syncTimer = null;
 function result() {
-  const r = S.result;
-  const fired = r.rules.filter((x) => x.status === "fired");
+  const r = S.result, choice = r.decision?.choice;
   const pillCls = { requested: "wait", accepted: "ok", rejected: "no" }[r.status] || "wait";
   const pillTxt = { requested: "Waiting for the hospital to reply", accepted: "Hospital accepted the referral", rejected: "Hospital is full: refer elsewhere" }[r.status];
-  const notes = r.rules.flatMap((x) => x.notes);
+  const head = r.urgent ? `<div class="alert">${icon("send")}<h2>Urgent referral sent</h2><div>Your decision, recorded with the guideline advice.</div></div>`
+    : choice === "urgent" ? `<div class="alert" style="background:linear-gradient(135deg,#B45F06,#E08A2B)">${icon("alert")}<h2>Referral refused</h2><div>She did not consent. Her refusal is recorded. Keep caring for her.</div></div>`
+    : choice === "planned" ? `<div class="alert" style="background:linear-gradient(135deg,#B45F06,#E08A2B)">${icon("calendar")}<h2>Planned referral</h2><div>Recorded. Counsel her and prepare her for assessment or delivery at CEmONC.</div></div>`
+    : `<div class="alert ok">${icon("check")}<h2>No referral now</h2><div>${r.decision?.reason ? "Your reason is recorded." : "Continue routine care."}</div></div>`;
   return `<div class="screen">${topbar("Result", null)}${steps(5)}
-    ${r.referral ? `<div class="alert">${icon("alert")}<h2>Urgent referral</h2>
-        <div>${esc(fired.map((f) => f.reasons.join(", ")).join("; "))}</div>
-        <ul>${[...new Set(fired.flatMap((f) => f.actions))].map((a) => `<li>${esc(a)}</li>`).join("")}</ul></div>`
-      : `<div class="alert ok">${icon("check")}<h2>No danger sign found</h2><div>On the confirmed information. Continue routine care and follow national guidelines.</div></div>`}
-    ${notes.map((n) => `<div class="banner amber" style="margin-top:12px">${icon("alert")}${esc(n)}</div>`).join("")}
-    ${r.ask_next.length && !r.danger ? `<div class="banner amber" style="margin-top:12px">${icon("alert")}Not checked (missing): ${esc(r.ask_next.map((a) => a.label).join(", "))}</div>` : ""}
+    ${head}
+    ${r.next_contact?.text ? `<div class="card" style="display:flex;gap:12px;align-items:center;margin-top:14px"><span class="icon-btn soft" style="flex:none">${icon("calendar")}</span>
+      <div><b>Next contact</b><div class="small muted">${esc(r.next_contact.text)}</div></div></div>` : ""}
     ${r.sms ? `<div class="section-title">Referral SMS <span class="badge ${r.sms.channel === "SIMULATED" ? "amber" : "green"}">${r.sms.channel === "SIMULATED" ? "Simulated" : "Sent by GSM"}</span></div>
       <div class="card"><div class="small muted">To the referral hospital · ${esc(new Date(r.sms.at).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }))}</div><div class="sms">${esc(r.sms.text)}</div>
         <div style="margin-top:14px"><span class="status-pill ${pillCls}">${icon(pillCls === "ok" ? "check" : pillCls === "no" ? "x" : "sms")}${pillTxt}</span></div>
         ${r.status === "requested" ? `<div class="small muted" style="margin:14px 0 8px">Demo: simulate the hospital's reply</div>
         <div class="row"><button class="btn soft" data-reply="ACK ${esc(r.code)}">ACK ${esc(r.code)}</button><button class="btn soft" data-reply="FULL ${esc(r.code)}">FULL ${esc(r.code)}</button></div>` : ""}
       </div>` : ""}
-    <div class="section-title">Handover</div>
-    <details class="card" open><summary>For the receiving nurse <button class="icon-btn soft" id="sayHandover" aria-label="Read aloud">${icon("speaker")}</button></summary><pre class="mono">${esc(r.handover)}</pre></details>
+    <div class="section-title">${r.referral ? "Referral form (iSBAR)" : "Contact record"}</div>
+    <details class="card" open><summary>For the receiving team <button class="icon-btn soft" id="sayHandover" aria-label="Read aloud">${icon("speaker")}</button></summary><pre class="mono">${esc(r.handover)}</pre></details>
     <div class="section-title">Record</div>
     <div class="card" id="syncCard">${syncLine(r.sync, r.valid)}</div>
     <details class="card"><summary>Technical record (FHIR, for supervisors) ${r.valid.ok ? `<span class="badge green">${icon("check")}Valid</span>` : `<span class="badge red">Error</span>`}</summary>
@@ -837,11 +955,11 @@ bind.result = () => {
     try {
       const out = await api("/api/sms/reply", { body: { text: b.dataset.reply } });
       S.result.status = out.status;
-      render();
       if (out.sync) S.result.sync = out.sync;
+      render();
     } catch (e) { toast(e.message); }
   });
-  $("#sayHandover").onclick = (e) => { e.preventDefault(); speakText(S.result.handover.replace(/\[.*?\]/g, ""), "en"); };
+  $("#sayHandover").onclick = (e) => { e.preventDefault(); speakText(["I", "S", "B", "A", "R"].map((k) => S.result.isbar[k]).join(" "), "en"); };
   const refreshSync = (st) => { S.result.sync = st; const c = $("#syncCard"); if (c) { c.innerHTML = syncLine(st, S.result.valid); bindSyncNow(); } };
   const bindSyncNow = () => { const b = $("#syncNow"); if (b) b.onclick = () => api("/api/sync/now").then(refreshSync).catch((e) => toast(e.message)); };
   bindSyncNow();

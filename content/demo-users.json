@@ -12,7 +12,8 @@
         "en"
       ],
       "pin_salt": "44d2927e5de366aa2a2548f268b5e28f",
-      "pin_hash": "ddfd53b6e56f5f96975c38f357ba971c04d88d3f9bf2269aa39d3e0ea4db2636"
+      "pin_hash": "ddfd53b6e56f5f96975c38f357ba971c04d88d3f9bf2269aa39d3e0ea4db2636",
+      "facility_level": "CHP"
     },
     {
       "username": "aminata",
@@ -25,7 +26,8 @@
         "en"
       ],
       "pin_salt": "ab779c5d0d2ce8167a20b7b497578007",
-      "pin_hash": "d5c9ad0bdd11cf2117d833b60681d69b436bcc1a6d4a150dd89f892d2fb39102"
+      "pin_hash": "d5c9ad0bdd11cf2117d833b60681d69b436bcc1a6d4a150dd89f892d2fb39102",
+      "facility_level": "CHP"
     },
     {
       "username": "funmi",
@@ -38,7 +40,8 @@
         "en"
       ],
       "pin_salt": "1f4ce27e0ab1772665cb7c0a7129e4a2",
-      "pin_hash": "8b43ea61a011694f252becfffc26b531a44daa16088520f09f826f2f53eda6c3"
+      "pin_hash": "8b43ea61a011694f252becfffc26b531a44daa16088520f09f826f2f53eda6c3",
+      "facility_level": "CHP"
     }
   ]
 }

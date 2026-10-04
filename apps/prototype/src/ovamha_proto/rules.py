@@ -78,6 +78,7 @@ def derived_signs(c: dict) -> dict:
         v = c[f]
         d[sign] = True if v == "severe" else False if v in (False, "mild") else UNKNOWN
     h, v = c.get("headache"), c.get("visual_disturbance")
+    h = True if h in ("severe", "mild") else h  # headache may carry a confirmed severity
     if h is True and v is True:
         d["headache_with_visual_disturbance"] = True
     elif h is False or v is False:
