@@ -150,9 +150,11 @@ async function startRecorder(onStop) {
 const extFor = (blob) => (blob.type.includes("mp4") ? "m4a" : blob.type.includes("ogg") ? "ogg" : "webm");
 
 // ---------------------------------------------------------------- navigation
-function go(screen) { S.screen = screen; render(); window.scrollTo(0, 0); }
+function go(screen) { S.enter = screen !== S.screen; S.screen = screen; render(); window.scrollTo(0, 0); }
 function render() {
   const app = $("#app");
+  app.classList.toggle("enter", !!S.enter);  // fade in only when arriving on a new screen, not on every tap
+  S.enter = false;
   const view = { welcome, login, home, woman, describe, confirm, history, measure, advice, referral, result, profile }[S.screen] || home;
   app.innerHTML = view();
   bind[S.screen]?.();
@@ -584,53 +586,50 @@ async function readBack(text) {
 }
 
 // ---------------------------------------------------------------- 5. confirm (read-back)
+// Compact list rows: tinted icon, title + one-line subtitle, quiet actions.
 function itemCard(it) {
-  const warn = it.source === "ai-safety-net";
-  const ok = it.confirmed;
-  const tag = warn ? `<span class="badge amber">${icon("alert")}AI warning: please check</span>`
-    : `<span class="badge">${icon("mic")}Heard</span>`;
-  let acts;
+  const warn = it.source === "ai-safety-net", ok = it.confirmed;
+  const value = ok ? it.confirmed_value : it.display;
+  const sub = warn ? "AI noticed this. Please check." : `Heard: “${it.evidence || ""}”`;
+  let acts = "";
   if (ok) {
-    acts = `<div class="done-line">${icon("check")}Confirmed <button class="link small" data-undo="${it.field}">Change</button></div>`;
+    acts = `<button class="row-link" data-undo="${it.field}">Change</button>`;
   } else if (it.kind === "severity" && it.value === true) {
-    acts = `<div class="small muted" style="margin-top:12px">How bad is it?</div><div class="acts">
-      <button class="btn danger" data-set="${it.field}" data-v="severe">Severe</button>
-      <button class="btn soft" data-set="${it.field}" data-v="mild">Mild</button>
-      <button class="btn soft" data-no="${it.field}">${icon("x")}Not true</button></div>`;
+    acts = `<div class="row-acts"><span class="row-q">How bad?</span>
+      <button class="pill" data-set="${it.field}" data-v="severe">Severe</button>
+      <button class="pill" data-set="${it.field}" data-v="mild">Mild</button>
+      <button class="pill ghost" data-no="${it.field}">Not true</button></div>`;
   } else {
-    acts = `<div class="acts"><button class="btn primary" data-ok="${it.field}">${icon("check")}Correct</button>
-      <button class="btn soft" data-no="${it.field}">${icon("x")}Not true</button></div>`;
+    acts = `<div class="row-acts"><button class="pill primary" data-ok="${it.field}">${icon("check")}Correct</button>
+      <button class="pill ghost" data-no="${it.field}">Not true</button></div>`;
   }
-  return `<div class="item ${ok ? "ok" : warn ? "warn" : ""}">
-    <div class="head"><span class="ico">${icon(ok ? "check" : FIELD_ICON[it.field] || "file")}</span>
-      <div class="t"><b>${esc(it.label)}</b><span class="val">${esc(ok ? it.confirmed_value : it.display)}</span></div>
-      <button class="icon-btn soft" data-say="${it.field}" aria-label="Read aloud">${icon("speaker")}</button></div>
-    <div style="margin-top:8px">${tag}</div>
-    ${it.evidence ? `<div class="quote">“${esc(it.evidence)}”</div>` : ""}
-    ${acts}</div>`;
+  return `<div class="row-item ${ok ? "on" : ""} ${warn && !ok ? "warn" : ""}">
+    <div class="row-main">
+      <span class="row-ico">${icon(ok ? "check" : FIELD_ICON[it.field] || "file")}</span>
+      <div class="row-text"><div class="row-title">${esc(it.label)} <span class="row-val">· ${esc(value)}</span></div>
+        <div class="row-sub">${esc(sub)}</div></div>
+      <button class="row-say" data-say="${it.field}" aria-label="Read aloud">${icon("speaker")}</button>
+    </div>${acts}</div>`;
 }
 function confirm() {
   const items = (S.st?.items || []).filter((i) => !["gestational_age_weeks", "systolic", "diastolic", "systolic_repeat", "diastolic_repeat", "pulse", "temperature", "fetal_heart_rate", "urine_protein", "severe_pe_symptoms"].includes(i.field));
   const pending = items.filter((i) => !i.confirmed).length;
   return `<div class="screen">${topbar("Check what was heard", "describe")}${steps(2)}
-    <div class="card" style="display:flex;gap:12px;align-items:flex-start">
-      <div style="flex:1"><div class="small muted">What was said</div><div style="margin-top:4px">${esc(S.st?.transcript || "")}</div></div>
-      <button class="icon-btn soft" id="sayAll" aria-label="Read all aloud">${icon("speaker")}</button>
-    </div>
-    ${(S.st?.notes || []).map((n) => `<div class="banner blue" style="margin-top:12px">${icon("calendar")}${esc(n)}</div>`).join("")}
-    <div class="section-title">${pending ? `${pending} to confirm` : "All checked"}<span class="tiny">Only confirmed items count</span></div>
-    ${items.length ? items.map(itemCard).join("") : `<div class="card muted">No symptoms were picked up. You can go on to measurements, or go back and describe again.</div>`}
-    <div style="height:12px"></div>
+    <div class="said"><div style="flex:1"><div class="row-sub" style="margin:0 0 2px">What was said</div>${esc(S.st?.transcript || "")}</div>
+      <button class="row-say" id="sayAll" aria-label="Read aloud">${icon("speaker")}</button></div>
+    ${(S.st?.notes || []).map((n) => `<div class="note-line">${icon("calendar")}${esc(n)}</div>`).join("")}
+    <div class="list-head">${pending ? `${pending} to confirm` : "All checked"}<span>Only confirmed items count</span></div>
+    <div class="row-list">${items.length ? items.map(itemCard).join("") : `<div class="row-sub" style="padding:14px">Nothing was picked up. Go on to measurements, or describe again.</div>`}</div>
   </div>
   <div class="sticky">${statusBanner()}<button class="btn primary" id="toMeasure">Next: measurements${icon("right")}</button></div>`;
 }
+// Information only: the guideline advice and the worker's decision come at the end.
 function statusBanner() {
   const p = S.st?.preview;
-  if (!p) return `<div class="banner blue">${icon("shield")}Confirm items to run the danger-sign check</div>`;
-  if (p.danger) return `<div class="banner red">${icon("alert")}Danger sign confirmed: refer now</div>`;
-  if (p.referral) return `<div class="banner red">${icon("alert")}Referral needed</div>`;
-  if (p.ask_next.length) return `<div class="banner amber">${icon("alert")}Still needed: ${esc(p.ask_next.slice(0, 3).map((a) => a.label).join(", "))}${p.ask_next.length > 3 ? "…" : ""}</div>`;
-  return `<div class="banner green">${icon("check")}No danger sign on confirmed items</div>`;
+  if (!p) return `<div class="status-line">${icon("shield")}Confirm what is correct. Advice comes at the end.</div>`;
+  if (p.danger || p.referral) return `<div class="status-line warn">${icon("alert")}Danger sign confirmed. You will see the guideline advice and decide at the end.</div>`;
+  if (p.ask_next.length) return `<div class="status-line">${icon("alert")}Still needed: ${esc(p.ask_next.slice(0, 3).map((a) => a.label).join(", "))}${p.ask_next.length > 3 ? "…" : ""}</div>`;
+  return `<div class="status-line ok">${icon("check")}No danger sign on confirmed items</div>`;
 }
 bind.confirm = () => {
   const act = (path, body) => api(path, { body }).then((st) => { S.st = st; render(); }).catch((e) => toast(e.message));
@@ -712,8 +711,8 @@ function choiceCard(field, title, opts, ic, prompt) {
 function measure() {
   const danger = S.st?.preview?.danger;
   return `<div class="screen">${topbar("Measurements", "confirm")}${steps(4)}
-    ${danger && S.st?.needs_profile ? `<div class="banner amber">${icon("file")}Her history (ANC.B6) is skipped today because of the danger sign. Complete it at her next contact.</div>` : ""}
-    ${danger ? `<div class="banner red">${icon("alert")}Danger sign confirmed. Refer now: measurements are optional.</div>` : `<p class="muted small" style="margin-top:0">Type the numbers, or tap the microphone and say them. Each one is read back for you to confirm.</p>`}
+    ${danger && S.st?.needs_profile ? `<div class="note-line">${icon("file")}Her full history can wait because of the danger sign. Complete it at her next contact.</div>` : ""}
+    ${danger ? `<div class="note-line warn">${icon("alert")}Danger sign confirmed. Measurements are optional; you decide at the end.</div>` : `<p class="muted small" style="margin-top:0">Type the numbers, or tap the microphone and say them. Each one is read back for you to confirm.</p>`}
     ${MEASURES.map(measureCard).join("")}
     ${choiceCard("urine_protein", "Urine protein", [["negative", "Negative"], ["trace", "Trace"], ["+", "+"], ["++", "++"], ["+++", "+++"], ["unknown", "Not done"]], "flask", "ask_protein")}
     ${choiceCard("severe_pe_symptoms", "Severe pre-eclampsia symptoms", [["yes", "Yes"], ["no", "No"], ["unknown", "Don't know"]], "alert", "ask_severe_pe")}
@@ -807,7 +806,7 @@ function adviceCard(title, kind, reasons, rec, cite, assumptions, idx) {
     <div class="qhead"><div style="flex:1"><div class="tiny" style="font-weight:800;letter-spacing:.06em;text-transform:uppercase">${esc(title)}</div>
       <b style="font-size:1.08rem">${esc(reasons.join(", "))}</b></div>
       <button class="icon-btn soft" data-say-adv="${idx}" aria-label="Read aloud">${icon("speaker")}</button></div>
-    <div style="margin-top:6px">${esc(rec)}</div>
+    <div style="margin-top:6px"><span class="muted">Guideline suggests:</span> ${esc(rec)}</div>
     ${(assumptions || []).map((a) => `<div class="tiny" style="margin-top:6px">Assumption: ${esc(a)}</div>`).join("")}
     <div class="tiny" style="margin-top:8px">${esc(cite)}</div></div>`;
 }
