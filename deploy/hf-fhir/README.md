@@ -6,7 +6,7 @@ colorTo: indigo
 sdk: docker
 app_port: 8080
 pinned: false
-short_description: HAPI FHIR R4 server receiving MaternaSave referral records (demo)
+short_description: HAPI FHIR R4 hub for MaternaSave referrals (demo)
 ---
 
 # MaternaSave demo hub: HAPI FHIR R4
