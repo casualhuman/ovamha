@@ -30,6 +30,13 @@ class Encounter:
     code: str = field(default_factory=short_code)  # encounter code carried by SMS
     at: str = field(default_factory=lambda: datetime.now(timezone.utc).replace(microsecond=0).isoformat())
     facility: str = "Demo Community Health Post"
+    facility_id: str = "demo-chp"
+    referral_facility: str = "Demo District Hospital"
+    referral_facility_id: str = "demo-district-hospital"
+    worker_role: str = "Community health worker"
+    episode_id: str = field(default_factory=lambda: str(uuid.uuid4()))  # the pregnancy (EpisodeOfCare)
+    national_id: dict | None = None  # consented ID check: {"document": ..., "method": "document-shown", "verified": False, "consent_at": ...}
+    sms: dict | None = None  # {"text", "sent", "channel"} once the referral SMS is sent
     referral_status: str = "requested"  # requested -> accepted (ACK) | rejected (FULL)
 
     @property

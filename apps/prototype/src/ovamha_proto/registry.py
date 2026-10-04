@@ -65,6 +65,8 @@ class Woman:
     created_by: str
     visits: int = 0
     last_visit: str | None = None
+    episode_id: str = ""  # the current pregnancy (FHIR EpisodeOfCare)
+    national_id: dict | None = None  # consented check only: document shown, never the number (ID-03, ID-04)
 
 
 def _load() -> dict[str, dict]:
@@ -85,7 +87,8 @@ def register(worker_id: str) -> Woman:
     code = new_code()
     while code in data:
         code = new_code()
-    w = Woman(str(uuid.uuid4()), code, datetime.now(timezone.utc).replace(microsecond=0).isoformat(), worker_id)
+    w = Woman(str(uuid.uuid4()), code, datetime.now(timezone.utc).replace(microsecond=0).isoformat(), worker_id,
+              episode_id=str(uuid.uuid4()))
     data[code] = asdict(w)
     _save(data)
     return w
@@ -101,6 +104,29 @@ def find(code: str) -> tuple[Woman | None, str]:
     if not rec:
         return None, "No woman with this card number on this device. If it is her first visit here, choose First visit."
     return Woman(**rec), ""
+
+
+DOCUMENTS = {
+    "sl-nin": "Sierra Leone national ID (NCRA NIN)",
+    "ng-nin": "Nigeria national ID (NIMC NIN)",
+    "other": "Other government ID",
+}
+
+
+def record_id_check(code: str, document: str) -> Woman:
+    """Record that, with her consent, an ID document was shown. The number is never stored.
+
+    Offline there is no verification service (vNIN in Nigeria, eSignet/MOSIP in Sierra Leone),
+    so the check stays unverified until a verifier is reachable (spec 9.3).
+    """
+    if document not in DOCUMENTS:
+        raise ValueError("Unknown document type")
+    data = _load()
+    c = normalise(code)
+    now = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    data[c]["national_id"] = {"document": DOCUMENTS[document], "method": "document-shown", "verified": False, "consent_at": now}
+    _save(data)
+    return Woman(**data[c])
 
 
 def record_visit(code: str) -> None:

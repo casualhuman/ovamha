@@ -31,6 +31,9 @@ const P = {
   sms: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h8"/>',
   keyboard: '<rect x="3" y="6" width="18" height="12" rx="2.5"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/>',
   back: '<path d="M7 4L3 8l4 4"/><path d="M3 8h11a5 5 0 0 1 0 10h-3"/>',
+  idcard: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16a3.4 3.4 0 0 1 6.4 0M14 10h4M14 13.5h3"/>',
+  cloud: '<path d="M7 18h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.1 11 3.5 3.5 0 0 0 7 18z"/>',
+  device: '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
 };
 const icon = (n, cls = "i") => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${P[n] || ""}</svg>`;
 const FIELD_ICON = {
@@ -212,13 +215,18 @@ bind.welcome = () => {
 };
 
 // ---------------------------------------------------------------- 2. login (offline PIN)
+const LOGO = `<svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#0072C6"/>
+  <circle cx="27" cy="20" r="6.5" fill="#fff"/><path d="M15 50c0-11 5.5-19 12-19 4.6 0 8 3 9.8 7.5" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <circle cx="40.5" cy="44" r="7.5" fill="#fff"/><path d="M45 17v12M39 23h12" stroke="#7CC0EE" stroke-width="4.5" stroke-linecap="round"/></svg>`;
 const initials = (n) => n.replace(/^(Nurse|CHW|Midwife)\s+/i, "").slice(0, 2).toUpperCase();
 function login() {
   const keys = [1, 2, 3, 4, 5, 6, 7, 8, 9].map((k) => `<button data-k="${k}">${k}</button>`).join("");
   return `<div class="screen" style="padding-bottom:28px">
-    <div class="brand" style="justify-content:flex-start;margin-bottom:18px">${icon("plus")}Ovamha</div>
-    <h1 style="margin:0 0 4px;font-size:1.6rem">Sign in</h1>
-    <p class="muted" style="margin:0 0 18px">Sign-in is checked on this device: no internet needed.</p>
+    <div style="text-align:center;margin:8px 0 22px">${LOGO}
+      <div style="font-weight:800;color:var(--blue);font-size:1.5rem;margin-top:10px">Ovamha</div>
+      <div style="font-size:1.15rem;font-weight:650;margin-top:2px">Offline voice guidance<br>for safer maternal care</div></div>
+    <h1 style="margin:0 0 4px;font-size:1.35rem">Sign in</h1>
+    <p class="muted small" style="margin:0 0 14px">Checked on this device: no internet needed.</p>
     <label class="small muted" for="user" style="font-weight:650">Username</label>
     <input class="input" id="user" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false"
       placeholder="e.g. fati" value="${esc(S.username || "")}" style="margin:6px 0 4px">
@@ -293,12 +301,31 @@ async function startCheck() {
   try {
     S.st = await api("/api/encounter/new", { body: { lang: S.lang } });
     S.result = null; S.audioBlob = null; S.audioUrl = null; S.transcript = ""; S.typing = false; S.numbers = {};
-    S.cardMode = null; S.cardErr = "";
+    S.cardMode = null; S.cardErr = ""; S.idDoc = null;
     go("woman");
   } catch (e) { toast(e.message); }
 }
 
 // ---------------------------------------------------------------- 3b. who is this check for (card number)
+const ID_DOCS = [["sl-nin", "Sierra Leone NIN"], ["ng-nin", "Nigeria NIN"], ["other", "Other ID"]];
+function idCheckCard(w) {
+  if (w.id_check) {
+    return `<div class="card" style="margin-top:14px;display:flex;gap:12px;align-items:flex-start"><span class="icon-btn soft" style="flex:none">${icon("idcard")}</span>
+      <div><b>ID check recorded</b><div class="small muted">${esc(w.id_check.document)} shown, with her consent. The number is not stored. It can be verified later through the national ID service.</div></div></div>`;
+  }
+  const picked = S.idDoc;
+  return `<div class="card" style="margin-top:14px">
+    <div style="display:flex;gap:10px;align-items:center"><span class="icon-btn soft" style="width:40px;height:40px">${icon("idcard")}</span>
+      <h3 style="margin:0;flex:1">National ID <span class="tiny">optional</span></h3></div>
+    <p class="small muted" style="margin:8px 0 10px">Does she have a national ID card? Care continues the same without one.</p>
+    <div class="seg">${ID_DOCS.map(([v, l]) => `<button data-doc="${v}" class="${picked === v ? "on" : ""}">${l}</button>`).join("")}<button data-doc="none" class="${picked === "none" ? "on" : ""}">No ID</button></div>
+    ${picked && picked !== "none" ? `<label style="display:flex;gap:12px;align-items:flex-start;margin-top:14px;font-weight:600">
+        <input type="checkbox" id="idConsent" style="width:26px;height:26px;flex:none;margin-top:2px">
+        <span>She agrees to link her Ovamha record to her national ID.</span></label>
+      <p class="tiny" style="margin:8px 0 10px">Do not type the ID number. Ovamha records only that the card was shown.</p>
+      <button class="btn soft" id="saveId">${icon("check")}Record ID check</button>` : ""}
+  </div>`;
+}
 function woman() {
   const w = S.st?.woman;
   let body;
@@ -310,6 +337,7 @@ function woman() {
       <button class="btn soft" id="sayCard">${icon("speaker")}Read aloud</button>
       <p class="tiny" style="margin:12px 0 0">No name or phone number is stored. Ovamha keeps its own ID for her on this device.</p>
     </div>
+    ${idCheckCard(w)}
     <div style="margin-top:16px"><button class="btn primary" id="toDescribe">Continue${icon("right")}</button></div>`;
   } else if (w) {
     body = `<div class="card" style="text-align:center">
@@ -344,6 +372,11 @@ bind.woman = () => {
   $("#card") && ($("#card").onkeydown = (e) => { if (e.key === "Enter") find(); });
   $("#sayCard") && ($("#sayCard").onclick = () => speakText(`Card number: ${S.st.woman.card_code.replace("-", "").split("").join(", ")}`, "en"));
   $("#toDescribe") && ($("#toDescribe").onclick = () => go("describe"));
+  document.querySelectorAll("[data-doc]").forEach((b) => b.onclick = () => { S.idDoc = b.dataset.doc; render(); });
+  $("#saveId") && ($("#saveId").onclick = () => {
+    if (!$("#idConsent").checked) { toast("Ask for her consent first, or choose No ID"); return; }
+    api("/api/woman/id-check", { body: { document: S.idDoc, consent: true } }).then(set).catch((e) => toast(e.message));
+  });
 };
 
 // ---------------------------------------------------------------- 4. describe (record -> replay / next)
@@ -360,7 +393,8 @@ function describe() {
     body = `<div class="card rec">
       <div class="badge green" style="margin-bottom:10px">${icon("check")}Recorded ${S.recSecs}s</div>
       <h3 style="font-size:1.2rem">Check the recording</h3>
-      <p class="muted small" style="margin:4px 0 18px">Listen to it again, or go on to the read-back.</p>
+      <p class="muted small" style="margin:4px 0 12px">Listen to what you said, or go on to the read-back.</p>
+      <audio controls src="${S.audioUrl}" style="width:100%;margin-bottom:14px"></audio>
       <div class="stack">
         <button class="btn outline" id="replay">${icon("replay")}Replay guidance</button>
         <button class="btn primary" id="next">Next${icon("right")}</button>
@@ -373,7 +407,8 @@ function describe() {
       <button class="mic ${live ? "live" : ""}" id="mic" aria-label="${live ? "Stop recording" : "Start recording"}">${icon(live ? "stop" : "mic")}</button>
       <div class="wave ${live ? "live-wave" : ""}">${"<i></i>".repeat(9)}</div>
       <div class="timer" id="timer">${live ? fmtSecs(S.recSecs) : ""}</div>
-      ${live ? "" : `<button class="link" id="type">${icon("keyboard")} Type instead</button>`}
+      ${live ? "" : `<div class="row" style="margin-top:4px"><button class="btn soft" id="guide">${icon("speaker")}Hear guidance</button></div>
+        <button class="link" id="type">${icon("keyboard")} Type instead</button>`}
     </div>`;
   }
   return `<div class="screen">${topbar("Describe", "woman")}${steps(1)}
@@ -388,7 +423,8 @@ bind.describe = () => {
   $("#mic") && ($("#mic").onclick = toggleRecord);
   $("#type") && ($("#type").onclick = () => { S.typing = true; render(); });
   $("#toVoice") && ($("#toVoice").onclick = () => { S.transcript = $("#tx").value; S.typing = false; render(); });
-  $("#replay") && ($("#replay").onclick = () => playBlob(S.audioBlob));
+  $("#replay") && ($("#replay").onclick = () => speakPrompt("guide_describe"));
+  $("#guide") && ($("#guide").onclick = () => speakPrompt("guide_describe"));
   $("#again") && ($("#again").onclick = () => { S.audioBlob = null; S.audioUrl = null; render(); });
   $("#next") && ($("#next").onclick = transcribeAndRead);
   $("#nextTyped") && ($("#nextTyped").onclick = () => readBack($("#tx").value));
@@ -399,6 +435,7 @@ async function toggleRecord() {
     S.recSecs = 0;
     S.rec = await startRecorder((blob) => {
       clearInterval(recTimer); S.rec = null;
+      if (S.audioUrl) URL.revokeObjectURL(S.audioUrl);
       S.audioBlob = blob; S.audioUrl = URL.createObjectURL(blob);
       render();
     });
@@ -603,6 +640,16 @@ async function finish() {
 }
 
 // ---------------------------------------------------------------- 7. result
+function syncLine(st, valid) {
+  if (valid && !valid.ok) return `<div class="banner red" style="margin:0">${icon("alert")}Record failed validation and was not queued. Tell your supervisor.</div>`;
+  if (!st) return "";
+  if (st.synced) return `<div style="display:flex;gap:12px;align-items:center"><span class="icon-btn soft" style="flex:none;color:var(--green);background:var(--green-50)">${icon("cloud")}</span>
+    <div><b>Synced to the facility hub</b><div class="small muted">Saved on this device and on the hub. Nothing for you to do.</div></div></div>`;
+  return `<div style="display:flex;gap:12px;align-items:center"><span class="icon-btn soft" style="flex:none">${icon("device")}</span>
+    <div style="flex:1"><b>Saved on this device</b><div class="small muted">It will upload by itself when the hub is reachable. Nothing for you to do.</div></div></div>
+    <button class="link small" id="syncNow">Try now</button>`;
+}
+let syncTimer = null;
 function result() {
   const r = S.result;
   const fired = r.rules.filter((x) => x.status === "fired");
@@ -624,9 +671,10 @@ function result() {
       </div>` : ""}
     <div class="section-title">Handover</div>
     <details class="card" open><summary>For the receiving nurse <button class="icon-btn soft" id="sayHandover" aria-label="Read aloud">${icon("speaker")}</button></summary><pre class="mono">${esc(r.handover)}</pre></details>
-    <details class="card"><summary>FHIR record ${r.valid.ok ? `<span class="badge green">${icon("check")}Valid</span>` : `<span class="badge red">Error</span>`}</summary>
+    <div class="section-title">Record</div>
+    <div class="card" id="syncCard">${syncLine(r.sync, r.valid)}</div>
+    <details class="card"><summary>Technical record (FHIR, for supervisors) ${r.valid.ok ? `<span class="badge green">${icon("check")}Valid</span>` : `<span class="badge red">Error</span>`}</summary>
       <p class="small muted">${esc(r.valid.message)}</p>
-      <button class="btn soft" id="postFhir">${icon("send")}Send to local FHIR server</button><div id="fhirOut" class="small" style="margin-top:10px"></div>
       <pre class="mono">${esc(JSON.stringify(r.bundle, null, 2))}</pre></details>
     <div style="margin-top:18px"><button class="btn primary" id="newCheck">${icon("plus")}New check</button></div>
   </div>${nav("")}`;
@@ -637,16 +685,18 @@ bind.result = () => {
       const out = await api("/api/sms/reply", { body: { text: b.dataset.reply } });
       S.result.status = out.status;
       render();
-      if (out.fhir) toast(`FHIR Task now ${out.fhir.status}`);
+      if (out.sync) S.result.sync = out.sync;
     } catch (e) { toast(e.message); }
   });
   $("#sayHandover").onclick = (e) => { e.preventDefault(); speakText(S.result.handover.replace(/\[.*?\]/g, ""), "en"); };
-  $("#postFhir").onclick = async () => {
-    try {
-      const out = await api("/api/fhir/post");
-      $("#fhirOut").innerHTML = Object.entries(out.ids).map(([t, ref]) => `<div>${esc(t)}: <code>${esc(out.base)}/${esc(ref)}</code></div>`).join("");
-    } catch (e) { $("#fhirOut").textContent = e.message; }
-  };
+  const refreshSync = (st) => { S.result.sync = st; const c = $("#syncCard"); if (c) { c.innerHTML = syncLine(st, S.result.valid); bindSyncNow(); } };
+  const bindSyncNow = () => { const b = $("#syncNow"); if (b) b.onclick = () => api("/api/sync/now").then(refreshSync).catch((e) => toast(e.message)); };
+  bindSyncNow();
+  clearInterval(syncTimer);
+  syncTimer = setInterval(() => {
+    if (S.screen !== "result" || S.result?.sync?.synced) { clearInterval(syncTimer); return; }
+    api("/api/sync", { method: "GET" }).then(refreshSync).catch(() => {});
+  }, 5000);
   $("#newCheck").onclick = startCheck;
 };
 

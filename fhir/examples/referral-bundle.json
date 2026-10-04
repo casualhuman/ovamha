@@ -3,44 +3,114 @@
   "type": "transaction",
   "entry": [
     {
-      "fullUrl": "urn:uuid:b2ec289d-ae75-4ac7-83f4-e1a520d69666",
+      "fullUrl": "urn:uuid:b93c3071-8665-4247-a6ea-bdca5d755678",
       "resource": {
         "resourceType": "Patient",
         "identifier": [
           {
-            "system": "https://fhir.ovamha.org/sid/woman-id",
-            "value": "b22f6873-d700-42ef-8526-910b5c690ba7"
+            "system": "https://fhir.ovamha.org/id/device-uuid",
+            "value": "ae739168-cc74-4e43-ae22-90eb62108069"
           },
           {
-            "system": "https://fhir.ovamha.org/sid/card-code",
-            "value": "JGTYJ8"
+            "system": "https://fhir.ovamha.org/id/card",
+            "value": "SZPMK6"
           }
         ],
         "gender": "female"
       },
       "request": {
         "method": "POST",
-        "url": "Patient"
+        "url": "Patient",
+        "ifNoneExist": "identifier=https://fhir.ovamha.org/id/device-uuid|ae739168-cc74-4e43-ae22-90eb62108069"
       }
     },
     {
-      "fullUrl": "urn:uuid:bee9609d-7b33-40a6-b4a0-6d5fe223dbbf",
+      "fullUrl": "urn:uuid:36c76568-a207-47b8-849c-1746f5804be9",
       "resource": {
-        "resourceType": "Practitioner",
+        "resourceType": "Organization",
+        "name": "Demo Community Health Post",
+        "active": true,
         "identifier": [
           {
-            "system": "https://fhir.ovamha.org/sid/worker-id",
+            "system": "https://fhir.ovamha.org/id/facility",
+            "value": "demo-chp"
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Organization",
+        "ifNoneExist": "identifier=https://fhir.ovamha.org/id/facility|demo-chp"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:e87797a6-e807-41dd-ab72-0a0031eb5eb2",
+      "resource": {
+        "resourceType": "Organization",
+        "name": "Demo District Hospital",
+        "active": true,
+        "identifier": [
+          {
+            "system": "https://fhir.ovamha.org/id/facility",
+            "value": "demo-district-hospital"
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Organization",
+        "ifNoneExist": "identifier=https://fhir.ovamha.org/id/facility|demo-district-hospital"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:ea3949e6-6aad-4961-862a-f97c500b8a6d",
+      "resource": {
+        "resourceType": "Practitioner",
+        "active": true,
+        "identifier": [
+          {
+            "system": "https://fhir.ovamha.org/id/worker",
             "value": "chw-demo-01"
           }
         ]
       },
       "request": {
         "method": "POST",
-        "url": "Practitioner"
+        "url": "Practitioner",
+        "ifNoneExist": "identifier=https://fhir.ovamha.org/id/worker|chw-demo-01"
       }
     },
     {
-      "fullUrl": "urn:uuid:1f59a535-93be-41ec-ae0d-fb15fd353661",
+      "fullUrl": "urn:uuid:304cf3e7-13d9-418a-bcde-07b34ff4126a",
+      "resource": {
+        "resourceType": "PractitionerRole",
+        "active": true,
+        "practitioner": {
+          "reference": "urn:uuid:ea3949e6-6aad-4961-862a-f97c500b8a6d"
+        },
+        "organization": {
+          "reference": "urn:uuid:36c76568-a207-47b8-849c-1746f5804be9"
+        },
+        "code": [
+          {
+            "text": "Community health worker"
+          }
+        ],
+        "identifier": [
+          {
+            "system": "https://fhir.ovamha.org/id/worker-role",
+            "value": "chw-demo-01@demo-chp"
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "PractitionerRole",
+        "ifNoneExist": "identifier=https://fhir.ovamha.org/id/worker-role|chw-demo-01@demo-chp"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:de43bb24-bab6-4627-8ae2-ab51ad8e47e0",
       "resource": {
         "resourceType": "Device",
         "deviceName": [
@@ -50,24 +120,80 @@
           }
         ],
         "type": {
-          "text": "Automatic speech recognition model"
-        }
+          "text": "Automatic speech recognition model (language: en)"
+        },
+        "identifier": [
+          {
+            "system": "https://fhir.ovamha.org/id/device-model",
+            "value": "asr/faster-whisper openai/whisper-small (CTranslate2 int8)/en"
+          }
+        ]
       },
       "request": {
         "method": "POST",
-        "url": "Device"
+        "url": "Device",
+        "ifNoneExist": "identifier=https://fhir.ovamha.org/id/device-model|asr/faster-whisper openai/whisper-small (CTranslate2 int8)/en"
       }
     },
     {
-      "fullUrl": "urn:uuid:1faf0761-760f-4e27-8cc8-ac3c7539344d",
+      "fullUrl": "urn:uuid:d4168bce-a87a-4f92-a443-9452028d731f",
       "resource": {
-        "resourceType": "Encounter",
-        "identifier": [
+        "resourceType": "Device",
+        "deviceName": [
           {
-            "system": "https://fhir.ovamha.org/sid/encounter-code",
-            "value": "SMV4"
+            "name": "Ovamha lexicon extraction and AI safety net v0.1",
+            "type": "model-name"
           }
         ],
+        "type": {
+          "text": "Field extraction and danger-sign safety net"
+        },
+        "identifier": [
+          {
+            "system": "https://fhir.ovamha.org/id/device-model",
+            "value": "extract-safety-net/v0.1"
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Device",
+        "ifNoneExist": "identifier=https://fhir.ovamha.org/id/device-model|extract-safety-net/v0.1"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:75b07453-8283-482b-b214-a2b7e6861be9",
+      "resource": {
+        "resourceType": "EpisodeOfCare",
+        "status": "active",
+        "type": [
+          {
+            "text": "Antenatal care"
+          }
+        ],
+        "patient": {
+          "reference": "urn:uuid:b93c3071-8665-4247-a6ea-bdca5d755678"
+        },
+        "managingOrganization": {
+          "reference": "urn:uuid:36c76568-a207-47b8-849c-1746f5804be9"
+        },
+        "identifier": [
+          {
+            "system": "https://fhir.ovamha.org/id/pregnancy",
+            "value": "23704583-275d-461e-a31c-5288e883c178"
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "EpisodeOfCare",
+        "ifNoneExist": "identifier=https://fhir.ovamha.org/id/pregnancy|23704583-275d-461e-a31c-5288e883c178"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:6a285647-ec59-4099-93c8-9e30d0ebdf4a",
+      "resource": {
+        "resourceType": "Encounter",
         "status": "finished",
         "class": {
           "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
@@ -75,40 +201,55 @@
           "display": "home health"
         },
         "subject": {
-          "reference": "urn:uuid:b2ec289d-ae75-4ac7-83f4-e1a520d69666"
+          "reference": "urn:uuid:b93c3071-8665-4247-a6ea-bdca5d755678"
         },
+        "episodeOfCare": [
+          {
+            "reference": "urn:uuid:75b07453-8283-482b-b214-a2b7e6861be9"
+          }
+        ],
         "participant": [
           {
             "individual": {
-              "reference": "urn:uuid:bee9609d-7b33-40a6-b4a0-6d5fe223dbbf"
+              "reference": "urn:uuid:304cf3e7-13d9-418a-bcde-07b34ff4126a"
             }
           }
         ],
+        "serviceProvider": {
+          "reference": "urn:uuid:36c76568-a207-47b8-849c-1746f5804be9"
+        },
         "period": {
-          "start": "2026-10-03T23:17:05+00:00",
-          "end": "2026-10-03T23:17:05+00:00"
-        }
+          "start": "2026-10-04T00:59:05+00:00",
+          "end": "2026-10-04T00:59:05+00:00"
+        },
+        "identifier": [
+          {
+            "system": "https://fhir.ovamha.org/id/encounter",
+            "value": "HYRK-21aee158"
+          }
+        ]
       },
       "request": {
         "method": "POST",
-        "url": "Encounter"
+        "url": "Encounter",
+        "ifNoneExist": "identifier=https://fhir.ovamha.org/id/encounter|HYRK-21aee158"
       }
     },
     {
-      "fullUrl": "urn:uuid:da3fb859-ab5b-40bb-a930-6e8207dbd024",
+      "fullUrl": "urn:uuid:d9740296-2a5a-4651-9aa3-0805fad4682a",
       "resource": {
         "resourceType": "Observation",
         "status": "final",
         "subject": {
-          "reference": "urn:uuid:b2ec289d-ae75-4ac7-83f4-e1a520d69666"
+          "reference": "urn:uuid:b93c3071-8665-4247-a6ea-bdca5d755678"
         },
         "encounter": {
-          "reference": "urn:uuid:1faf0761-760f-4e27-8cc8-ac3c7539344d"
+          "reference": "urn:uuid:6a285647-ec59-4099-93c8-9e30d0ebdf4a"
         },
-        "effectiveDateTime": "2026-10-03T23:17:05+00:00",
+        "effectiveDateTime": "2026-10-04T00:59:05+00:00",
         "performer": [
           {
-            "reference": "urn:uuid:bee9609d-7b33-40a6-b4a0-6d5fe223dbbf"
+            "reference": "urn:uuid:304cf3e7-13d9-418a-bcde-07b34ff4126a"
           }
         ],
         "category": [
@@ -165,28 +306,35 @@
               "code": "mm[Hg]"
             }
           }
+        ],
+        "identifier": [
+          {
+            "system": "https://fhir.ovamha.org/id/resource",
+            "value": "21aee158-0d76-4617-a9ab-2d841d4c0652/bp"
+          }
         ]
       },
       "request": {
         "method": "POST",
-        "url": "Observation"
+        "url": "Observation",
+        "ifNoneExist": "identifier=https://fhir.ovamha.org/id/resource|21aee158-0d76-4617-a9ab-2d841d4c0652/bp"
       }
     },
     {
-      "fullUrl": "urn:uuid:6c8e881d-de35-49a6-9d9b-749352ae00e3",
+      "fullUrl": "urn:uuid:8c9d73c7-cc51-4eaf-aa68-f11c32439183",
       "resource": {
         "resourceType": "Observation",
         "status": "final",
         "subject": {
-          "reference": "urn:uuid:b2ec289d-ae75-4ac7-83f4-e1a520d69666"
+          "reference": "urn:uuid:b93c3071-8665-4247-a6ea-bdca5d755678"
         },
         "encounter": {
-          "reference": "urn:uuid:1faf0761-760f-4e27-8cc8-ac3c7539344d"
+          "reference": "urn:uuid:6a285647-ec59-4099-93c8-9e30d0ebdf4a"
         },
-        "effectiveDateTime": "2026-10-03T23:17:05+00:00",
+        "effectiveDateTime": "2026-10-04T00:59:05+00:00",
         "performer": [
           {
-            "reference": "urn:uuid:bee9609d-7b33-40a6-b4a0-6d5fe223dbbf"
+            "reference": "urn:uuid:304cf3e7-13d9-418a-bcde-07b34ff4126a"
           }
         ],
         "category": [
@@ -209,28 +357,35 @@
           ],
           "text": "Vaginal bleeding"
         },
-        "valueBoolean": true
+        "valueBoolean": true,
+        "identifier": [
+          {
+            "system": "https://fhir.ovamha.org/id/resource",
+            "value": "21aee158-0d76-4617-a9ab-2d841d4c0652/vaginal_bleeding"
+          }
+        ]
       },
       "request": {
         "method": "POST",
-        "url": "Observation"
+        "url": "Observation",
+        "ifNoneExist": "identifier=https://fhir.ovamha.org/id/resource|21aee158-0d76-4617-a9ab-2d841d4c0652/vaginal_bleeding"
       }
     },
     {
-      "fullUrl": "urn:uuid:1da3624b-113a-43e5-a52f-75fddf8fd3ca",
+      "fullUrl": "urn:uuid:5789308b-4151-4ce7-8366-a890f6477d28",
       "resource": {
         "resourceType": "Observation",
         "status": "final",
         "subject": {
-          "reference": "urn:uuid:b2ec289d-ae75-4ac7-83f4-e1a520d69666"
+          "reference": "urn:uuid:b93c3071-8665-4247-a6ea-bdca5d755678"
         },
         "encounter": {
-          "reference": "urn:uuid:1faf0761-760f-4e27-8cc8-ac3c7539344d"
+          "reference": "urn:uuid:6a285647-ec59-4099-93c8-9e30d0ebdf4a"
         },
-        "effectiveDateTime": "2026-10-03T23:17:05+00:00",
+        "effectiveDateTime": "2026-10-04T00:59:05+00:00",
         "performer": [
           {
-            "reference": "urn:uuid:bee9609d-7b33-40a6-b4a0-6d5fe223dbbf"
+            "reference": "urn:uuid:304cf3e7-13d9-418a-bcde-07b34ff4126a"
           }
         ],
         "code": {
@@ -243,28 +398,35 @@
           ],
           "text": "Bleeding amount"
         },
-        "valueString": "heavy"
+        "valueString": "heavy",
+        "identifier": [
+          {
+            "system": "https://fhir.ovamha.org/id/resource",
+            "value": "21aee158-0d76-4617-a9ab-2d841d4c0652/bleeding_amount"
+          }
+        ]
       },
       "request": {
         "method": "POST",
-        "url": "Observation"
+        "url": "Observation",
+        "ifNoneExist": "identifier=https://fhir.ovamha.org/id/resource|21aee158-0d76-4617-a9ab-2d841d4c0652/bleeding_amount"
       }
     },
     {
-      "fullUrl": "urn:uuid:d1ad7d4e-83b0-4893-8be9-8ebde6d7aad1",
+      "fullUrl": "urn:uuid:c217fae6-dea7-4449-82f7-8054411e88eb",
       "resource": {
         "resourceType": "Observation",
         "status": "final",
         "subject": {
-          "reference": "urn:uuid:b2ec289d-ae75-4ac7-83f4-e1a520d69666"
+          "reference": "urn:uuid:b93c3071-8665-4247-a6ea-bdca5d755678"
         },
         "encounter": {
-          "reference": "urn:uuid:1faf0761-760f-4e27-8cc8-ac3c7539344d"
+          "reference": "urn:uuid:6a285647-ec59-4099-93c8-9e30d0ebdf4a"
         },
-        "effectiveDateTime": "2026-10-03T23:17:05+00:00",
+        "effectiveDateTime": "2026-10-04T00:59:05+00:00",
         "performer": [
           {
-            "reference": "urn:uuid:bee9609d-7b33-40a6-b4a0-6d5fe223dbbf"
+            "reference": "urn:uuid:304cf3e7-13d9-418a-bcde-07b34ff4126a"
           }
         ],
         "category": [
@@ -287,28 +449,35 @@
           ],
           "text": "Fainting"
         },
-        "valueBoolean": true
+        "valueBoolean": true,
+        "identifier": [
+          {
+            "system": "https://fhir.ovamha.org/id/resource",
+            "value": "21aee158-0d76-4617-a9ab-2d841d4c0652/fainting"
+          }
+        ]
       },
       "request": {
         "method": "POST",
-        "url": "Observation"
+        "url": "Observation",
+        "ifNoneExist": "identifier=https://fhir.ovamha.org/id/resource|21aee158-0d76-4617-a9ab-2d841d4c0652/fainting"
       }
     },
     {
-      "fullUrl": "urn:uuid:b7255d65-5239-4e63-9e7f-e4f077183292",
+      "fullUrl": "urn:uuid:0d67910a-0eb7-4099-ae0b-d82ee193214a",
       "resource": {
         "resourceType": "Observation",
         "status": "final",
         "subject": {
-          "reference": "urn:uuid:b2ec289d-ae75-4ac7-83f4-e1a520d69666"
+          "reference": "urn:uuid:b93c3071-8665-4247-a6ea-bdca5d755678"
         },
         "encounter": {
-          "reference": "urn:uuid:1faf0761-760f-4e27-8cc8-ac3c7539344d"
+          "reference": "urn:uuid:6a285647-ec59-4099-93c8-9e30d0ebdf4a"
         },
-        "effectiveDateTime": "2026-10-03T23:17:05+00:00",
+        "effectiveDateTime": "2026-10-04T00:59:05+00:00",
         "performer": [
           {
-            "reference": "urn:uuid:bee9609d-7b33-40a6-b4a0-6d5fe223dbbf"
+            "reference": "urn:uuid:304cf3e7-13d9-418a-bcde-07b34ff4126a"
           }
         ],
         "code": {
@@ -326,31 +495,32 @@
           "unit": "weeks",
           "system": "http://unitsofmeasure.org",
           "code": "wk"
-        }
+        },
+        "identifier": [
+          {
+            "system": "https://fhir.ovamha.org/id/resource",
+            "value": "21aee158-0d76-4617-a9ab-2d841d4c0652/gestational_age_weeks"
+          }
+        ]
       },
       "request": {
         "method": "POST",
-        "url": "Observation"
+        "url": "Observation",
+        "ifNoneExist": "identifier=https://fhir.ovamha.org/id/resource|21aee158-0d76-4617-a9ab-2d841d4c0652/gestational_age_weeks"
       }
     },
     {
-      "fullUrl": "urn:uuid:d705e874-3c7d-4a54-b39c-48bd097f493b",
+      "fullUrl": "urn:uuid:12fcfaad-0b3d-42de-9a87-120c7ada2f97",
       "resource": {
         "resourceType": "GuidanceResponse",
-        "identifier": [
-          {
-            "system": "https://fhir.ovamha.org/sid/guidance",
-            "value": "SMV4-ANC.DT.01"
-          }
-        ],
         "status": "success",
         "subject": {
-          "reference": "urn:uuid:b2ec289d-ae75-4ac7-83f4-e1a520d69666"
+          "reference": "urn:uuid:b93c3071-8665-4247-a6ea-bdca5d755678"
         },
         "encounter": {
-          "reference": "urn:uuid:1faf0761-760f-4e27-8cc8-ac3c7539344d"
+          "reference": "urn:uuid:6a285647-ec59-4099-93c8-9e30d0ebdf4a"
         },
-        "occurrenceDateTime": "2026-10-03T23:17:05+00:00",
+        "occurrenceDateTime": "2026-10-04T00:59:05+00:00",
         "reasonCode": [
           {
             "text": "ANC.DT.01 Danger signs requiring referral: fired"
@@ -361,31 +531,32 @@
             "text": "WHO DAK for antenatal care (2021), Fig. 11 quick check. Demo rule from the WHO ANC DAK PDF, pending Annex B extraction."
           }
         ],
-        "moduleCanonical": "http://fhir.org/guides/who/anc-cds/PlanDefinition/ANCDT01"
+        "moduleCanonical": "http://fhir.org/guides/who/anc-cds/PlanDefinition/ANCDT01",
+        "identifier": [
+          {
+            "system": "https://fhir.ovamha.org/id/resource",
+            "value": "21aee158-0d76-4617-a9ab-2d841d4c0652/guidance/ANC.DT.01"
+          }
+        ]
       },
       "request": {
         "method": "POST",
-        "url": "GuidanceResponse"
+        "url": "GuidanceResponse",
+        "ifNoneExist": "identifier=https://fhir.ovamha.org/id/resource|21aee158-0d76-4617-a9ab-2d841d4c0652/guidance/ANC.DT.01"
       }
     },
     {
-      "fullUrl": "urn:uuid:754574ee-d2b7-4b8c-b8f1-14f378edd327",
+      "fullUrl": "urn:uuid:efa6b2a3-1a0f-40f3-9708-5a9838aa3835",
       "resource": {
         "resourceType": "GuidanceResponse",
-        "identifier": [
-          {
-            "system": "https://fhir.ovamha.org/sid/guidance",
-            "value": "SMV4-ANC.PE"
-          }
-        ],
         "status": "success",
         "subject": {
-          "reference": "urn:uuid:b2ec289d-ae75-4ac7-83f4-e1a520d69666"
+          "reference": "urn:uuid:b93c3071-8665-4247-a6ea-bdca5d755678"
         },
         "encounter": {
-          "reference": "urn:uuid:1faf0761-760f-4e27-8cc8-ac3c7539344d"
+          "reference": "urn:uuid:6a285647-ec59-4099-93c8-9e30d0ebdf4a"
         },
-        "occurrenceDateTime": "2026-10-03T23:17:05+00:00",
+        "occurrenceDateTime": "2026-10-04T00:59:05+00:00",
         "reasonCode": [
           {
             "text": "ANC.PE Pre-eclampsia: not_fired"
@@ -396,23 +567,24 @@
             "text": "WHO DAK for antenatal care (2021), Table 12 worked example (ANC.DT.16 / Table 10 ANC.DT.17). Demo rule from the WHO ANC DAK PDF, pending Annex B extraction."
           }
         ],
-        "moduleUri": "https://fhir.ovamha.org/rules/ANC.PE"
+        "moduleUri": "https://fhir.ovamha.org/rules/ANC.PE",
+        "identifier": [
+          {
+            "system": "https://fhir.ovamha.org/id/resource",
+            "value": "21aee158-0d76-4617-a9ab-2d841d4c0652/guidance/ANC.PE"
+          }
+        ]
       },
       "request": {
         "method": "POST",
-        "url": "GuidanceResponse"
+        "url": "GuidanceResponse",
+        "ifNoneExist": "identifier=https://fhir.ovamha.org/id/resource|21aee158-0d76-4617-a9ab-2d841d4c0652/guidance/ANC.PE"
       }
     },
     {
-      "fullUrl": "urn:uuid:386b26e1-bba5-4334-b3ae-0f7a3cbab036",
+      "fullUrl": "urn:uuid:b1339659-5a0c-43a3-ac1a-fdeb30e7b49d",
       "resource": {
         "resourceType": "ServiceRequest",
-        "identifier": [
-          {
-            "system": "https://fhir.ovamha.org/sid/encounter-code",
-            "value": "SMV4"
-          }
-        ],
         "status": "active",
         "intent": "order",
         "priority": "urgent",
@@ -420,15 +592,20 @@
           "text": "Urgent referral to hospital"
         },
         "subject": {
-          "reference": "urn:uuid:b2ec289d-ae75-4ac7-83f4-e1a520d69666"
+          "reference": "urn:uuid:b93c3071-8665-4247-a6ea-bdca5d755678"
         },
         "encounter": {
-          "reference": "urn:uuid:1faf0761-760f-4e27-8cc8-ac3c7539344d"
+          "reference": "urn:uuid:6a285647-ec59-4099-93c8-9e30d0ebdf4a"
         },
-        "authoredOn": "2026-10-03T23:17:05+00:00",
+        "authoredOn": "2026-10-04T00:59:05+00:00",
         "requester": {
-          "reference": "urn:uuid:bee9609d-7b33-40a6-b4a0-6d5fe223dbbf"
+          "reference": "urn:uuid:304cf3e7-13d9-418a-bcde-07b34ff4126a"
         },
+        "performer": [
+          {
+            "reference": "urn:uuid:e87797a6-e807-41dd-ab72-0a0031eb5eb2"
+          }
+        ],
         "reasonCode": [
           {
             "text": "Vaginal bleeding"
@@ -436,71 +613,153 @@
         ],
         "reasonReference": [
           {
-            "reference": "urn:uuid:6c8e881d-de35-49a6-9d9b-749352ae00e3"
+            "reference": "urn:uuid:8c9d73c7-cc51-4eaf-aa68-f11c32439183"
           },
           {
-            "reference": "urn:uuid:d1ad7d4e-83b0-4893-8be9-8ebde6d7aad1"
+            "reference": "urn:uuid:5789308b-4151-4ce7-8366-a890f6477d28"
+          },
+          {
+            "reference": "urn:uuid:c217fae6-dea7-4449-82f7-8054411e88eb"
+          }
+        ],
+        "supportingInfo": [
+          {
+            "reference": "urn:uuid:d9740296-2a5a-4651-9aa3-0805fad4682a"
+          },
+          {
+            "reference": "urn:uuid:0d67910a-0eb7-4099-ae0b-d82ee193214a"
+          }
+        ],
+        "identifier": [
+          {
+            "system": "https://fhir.ovamha.org/id/referral",
+            "value": "HYRK"
           }
         ]
       },
       "request": {
         "method": "POST",
-        "url": "ServiceRequest"
+        "url": "ServiceRequest",
+        "ifNoneExist": "identifier=https://fhir.ovamha.org/id/referral|HYRK"
       }
     },
     {
-      "fullUrl": "urn:uuid:ed4615c6-7b9f-4842-bb3c-fc0963eb23cd",
+      "fullUrl": "urn:uuid:8874feb5-016e-4c1b-8f49-1f534ff6e96e",
       "resource": {
         "resourceType": "Task",
-        "identifier": [
-          {
-            "system": "https://fhir.ovamha.org/sid/encounter-code",
-            "value": "SMV4"
-          }
-        ],
         "status": "requested",
         "intent": "order",
         "priority": "urgent",
         "focus": {
-          "reference": "urn:uuid:386b26e1-bba5-4334-b3ae-0f7a3cbab036"
+          "reference": "urn:uuid:b1339659-5a0c-43a3-ac1a-fdeb30e7b49d"
         },
         "for": {
-          "reference": "urn:uuid:b2ec289d-ae75-4ac7-83f4-e1a520d69666"
+          "reference": "urn:uuid:b93c3071-8665-4247-a6ea-bdca5d755678"
         },
         "encounter": {
-          "reference": "urn:uuid:1faf0761-760f-4e27-8cc8-ac3c7539344d"
+          "reference": "urn:uuid:6a285647-ec59-4099-93c8-9e30d0ebdf4a"
         },
-        "authoredOn": "2026-10-03T23:17:05+00:00",
+        "authoredOn": "2026-10-04T00:59:05+00:00",
         "requester": {
-          "reference": "urn:uuid:bee9609d-7b33-40a6-b4a0-6d5fe223dbbf"
+          "reference": "urn:uuid:304cf3e7-13d9-418a-bcde-07b34ff4126a"
         },
-        "description": "Referral SMV4: awaiting ACK/FULL by SMS"
+        "owner": {
+          "reference": "urn:uuid:e87797a6-e807-41dd-ab72-0a0031eb5eb2"
+        },
+        "description": "Referral HYRK: awaiting ACK/FULL by SMS",
+        "identifier": [
+          {
+            "system": "https://fhir.ovamha.org/id/referral-task",
+            "value": "HYRK"
+          }
+        ]
       },
       "request": {
         "method": "POST",
-        "url": "Task"
+        "url": "Task",
+        "ifNoneExist": "identifier=https://fhir.ovamha.org/id/referral-task|HYRK"
       }
     },
     {
-      "fullUrl": "urn:uuid:5d7af002-62da-4f99-8db2-80f9860e2299",
+      "fullUrl": "urn:uuid:7d7fa86d-f92a-4171-b028-551d76f457b2",
       "resource": {
         "resourceType": "Provenance",
         "target": [
           {
-            "reference": "urn:uuid:6c8e881d-de35-49a6-9d9b-749352ae00e3"
+            "reference": "urn:uuid:d9740296-2a5a-4651-9aa3-0805fad4682a"
           },
           {
-            "reference": "urn:uuid:1da3624b-113a-43e5-a52f-75fddf8fd3ca"
-          },
-          {
-            "reference": "urn:uuid:d1ad7d4e-83b0-4893-8be9-8ebde6d7aad1"
+            "reference": "urn:uuid:0d67910a-0eb7-4099-ae0b-d82ee193214a"
           }
         ],
-        "recorded": "2026-10-03T23:17:05+00:00",
+        "recorded": "2026-10-04T00:59:05+00:00",
         "activity": {
           "coding": [
             {
-              "system": "https://fhir.ovamha.org/CodeSystem/provenance-activity",
+              "system": "https://fhir.ovamha.org/CodeSystem/capture",
+              "code": "keyed"
+            }
+          ]
+        },
+        "agent": [
+          {
+            "type": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
+                  "code": "author"
+                }
+              ]
+            },
+            "who": {
+              "reference": "urn:uuid:304cf3e7-13d9-418a-bcde-07b34ff4126a"
+            }
+          },
+          {
+            "type": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
+                  "code": "verifier"
+                }
+              ]
+            },
+            "who": {
+              "reference": "urn:uuid:304cf3e7-13d9-418a-bcde-07b34ff4126a"
+            }
+          }
+        ],
+        "entity": [
+          {
+            "role": "source",
+            "what": {
+              "display": "Ovamha demo content pack v0.1 (rules from the WHO ANC DAK PDF, pending Annex B extraction)"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Provenance"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:24d27751-8463-4565-b1d7-2bf25ab3bd6c",
+      "resource": {
+        "resourceType": "Provenance",
+        "target": [
+          {
+            "reference": "urn:uuid:8c9d73c7-cc51-4eaf-aa68-f11c32439183"
+          },
+          {
+            "reference": "urn:uuid:5789308b-4151-4ce7-8366-a890f6477d28"
+          }
+        ],
+        "recorded": "2026-10-04T00:59:05+00:00",
+        "activity": {
+          "coding": [
+            {
+              "system": "https://fhir.ovamha.org/CodeSystem/capture",
               "code": "spoken-ai-extracted-confirmed"
             }
           ]
@@ -516,7 +775,7 @@
               ]
             },
             "who": {
-              "reference": "urn:uuid:bee9609d-7b33-40a6-b4a0-6d5fe223dbbf"
+              "reference": "urn:uuid:304cf3e7-13d9-418a-bcde-07b34ff4126a"
             }
           },
           {
@@ -529,7 +788,28 @@
               ]
             },
             "who": {
-              "reference": "urn:uuid:1f59a535-93be-41ec-ae0d-fb15fd353661"
+              "reference": "urn:uuid:de43bb24-bab6-4627-8ae2-ab51ad8e47e0"
+            }
+          },
+          {
+            "type": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
+                  "code": "assembler"
+                }
+              ]
+            },
+            "who": {
+              "reference": "urn:uuid:d4168bce-a87a-4f92-a443-9452028d731f"
+            }
+          }
+        ],
+        "entity": [
+          {
+            "role": "source",
+            "what": {
+              "display": "Ovamha demo content pack v0.1 (rules from the WHO ANC DAK PDF, pending Annex B extraction)"
             }
           }
         ]
@@ -540,40 +820,24 @@
       }
     },
     {
-      "fullUrl": "urn:uuid:235905ce-673f-48eb-821a-f3268d0faf13",
+      "fullUrl": "urn:uuid:026edde9-0c5c-424b-b37c-c88d8b665fd0",
       "resource": {
         "resourceType": "Provenance",
         "target": [
           {
-            "reference": "urn:uuid:da3fb859-ab5b-40bb-a930-6e8207dbd024"
-          },
-          {
-            "reference": "urn:uuid:b7255d65-5239-4e63-9e7f-e4f077183292"
+            "reference": "urn:uuid:c217fae6-dea7-4449-82f7-8054411e88eb"
           }
         ],
-        "recorded": "2026-10-03T23:17:05+00:00",
+        "recorded": "2026-10-04T00:59:05+00:00",
         "activity": {
           "coding": [
             {
-              "system": "https://fhir.ovamha.org/CodeSystem/provenance-activity",
-              "code": "keypad-entered-confirmed"
+              "system": "https://fhir.ovamha.org/CodeSystem/capture",
+              "code": "ai-flag-confirmed"
             }
           ]
         },
         "agent": [
-          {
-            "type": {
-              "coding": [
-                {
-                  "system": "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
-                  "code": "author"
-                }
-              ]
-            },
-            "who": {
-              "reference": "urn:uuid:bee9609d-7b33-40a6-b4a0-6d5fe223dbbf"
-            }
-          },
           {
             "type": {
               "coding": [
@@ -584,7 +848,28 @@
               ]
             },
             "who": {
-              "reference": "urn:uuid:bee9609d-7b33-40a6-b4a0-6d5fe223dbbf"
+              "reference": "urn:uuid:304cf3e7-13d9-418a-bcde-07b34ff4126a"
+            }
+          },
+          {
+            "type": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
+                  "code": "assembler"
+                }
+              ]
+            },
+            "who": {
+              "reference": "urn:uuid:d4168bce-a87a-4f92-a443-9452028d731f"
+            }
+          }
+        ],
+        "entity": [
+          {
+            "role": "source",
+            "what": {
+              "display": "Ovamha demo content pack v0.1 (rules from the WHO ANC DAK PDF, pending Annex B extraction)"
             }
           }
         ]

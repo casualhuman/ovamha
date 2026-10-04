@@ -57,4 +57,5 @@ def test_record_visit():
 def test_no_personal_data_stored():
     w = registry.register("nurse-test")
     rec = registry.find(w.card_code)[0]
-    assert set(vars(rec)) == {"woman_id", "card_code", "created_at", "created_by", "visits", "last_visit"}
+    assert set(vars(rec)) == {"woman_id", "card_code", "created_at", "created_by", "visits", "last_visit", "episode_id", "national_id"}
+    assert rec.national_id is None

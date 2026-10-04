@@ -42,7 +42,8 @@ def test_bundle_validates_and_has_required_resources(enc):
     gr = next(e["resource"] for e in b["entry"] if e["resource"]["resourceType"] == "GuidanceResponse")
     assert gr["moduleCanonical"] == "http://fhir.org/guides/who/anc-cds/PlanDefinition/ANCDT01"
     prov = [e["resource"] for e in b["entry"] if e["resource"]["resourceType"] == "Provenance"]
-    assert {p["activity"]["coding"][0]["code"] for p in prov} == {"spoken-ai-extracted-confirmed", "keypad-entered-confirmed"}
+    assert {p["activity"]["coding"][0]["code"] for p in prov} == {"spoken-ai-extracted-confirmed", "ai-flag-confirmed", "keyed"}
+    assert all(p["activity"]["coding"][0]["system"] == "https://fhir.ovamha.org/CodeSystem/capture" for p in prov)
 
 
 def test_bundle_only_loinc_codes_are_the_confirmed_ones(enc):
@@ -71,3 +72,38 @@ def test_ack_and_full(enc):
     assert sms.handle_reply(f"ACK {enc.code}", enc) == "accepted"
     assert sms.handle_reply("ACK ZZZZ", enc) is None
     assert sms.handle_reply(f"full {enc.code.lower()}", enc) == "rejected"
+
+
+def test_spec_identifiers_and_conditional_create(enc):
+    b = build_bundle(enc)
+    pat = next(e for e in b["entry"] if e["resource"]["resourceType"] == "Patient")
+    systems = {i["system"] for i in pat["resource"]["identifier"]}
+    assert systems == {"https://fhir.ovamha.org/id/device-uuid", "https://fhir.ovamha.org/id/card"}
+    assert pat["request"]["ifNoneExist"].startswith("identifier=https://fhir.ovamha.org/id/device-uuid|")
+    # SY-02: every resource except Provenance is a conditional create
+    for e in b["entry"]:
+        if e["resource"]["resourceType"] != "Provenance":
+            assert "ifNoneExist" in e["request"], e["resource"]["resourceType"]
+
+
+def test_referral_resources_per_spec(enc):
+    enc.sms = {"text": "OVAMHA REFERRAL X", "sent": enc.at, "channel": "SIMULATED"}
+    b = build_bundle(enc)
+    validate(b)
+    by = {}
+    for e in b["entry"]:
+        by.setdefault(e["resource"]["resourceType"], []).append(e["resource"])
+    for t in ("EpisodeOfCare", "PractitionerRole", "Organization", "Communication"):
+        assert t in by, t
+    sr = by["ServiceRequest"][0]
+    assert sr["supportingInfo"] and sr["reasonReference"] and sr["performer"]
+    assert by["Task"][0]["owner"]["reference"].startswith("urn:uuid:")
+    assert "SIMULATED" in by["Communication"][0]["note"][0]["text"]
+
+
+def test_national_id_number_never_in_bundle(enc):
+    enc.national_id = {"document": "Sierra Leone NIN card", "method": "document-shown", "verified": False, "consent_at": enc.at}
+    b = build_bundle(enc)
+    validate(b)
+    consent = [e["resource"] for e in b["entry"] if e["resource"]["resourceType"] == "Consent"]
+    assert len(consent) == 1 and consent[0]["status"] == "active"

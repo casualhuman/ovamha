@@ -19,7 +19,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import fhir_client, registry, sms
+from . import fhir_client, registry, sms, sync
 from .asr import model_name, transcribe
 from .auth import Worker, login
 from .confirm import KEYPAD_FIELDS, Session, fmt, label
@@ -53,7 +53,6 @@ class Visit:
     notes: list[str] = field(default_factory=list)
     encounter: Encounter | None = None
     bundle: dict | None = None
-    fhir_ids: dict = field(default_factory=dict)
     woman: registry.Woman | None = None
 
 
@@ -69,13 +68,14 @@ def visit(authorization: str = Header(default="")) -> Visit:
 
 def _new_session(v: Visit) -> None:
     v.session = Session(worker_id=v.worker.worker_id)
-    v.transcript, v.notes, v.encounter, v.bundle, v.fhir_ids = "", [], None, None, {}
+    v.transcript, v.notes, v.encounter, v.bundle = "", [], None, None
 
 
 def _woman_view(w: registry.Woman | None) -> dict | None:
     if not w:
         return None
-    return {"card_code": registry.display(w.card_code), "visits": w.visits, "last_visit": w.last_visit, "new": w.visits == 0}
+    return {"card_code": registry.display(w.card_code), "visits": w.visits, "last_visit": w.last_visit, "new": w.visits == 0,
+            "id_check": w.national_id}
 
 
 def _rule_view(results) -> dict:
@@ -159,6 +159,25 @@ def woman_new(v: Visit = Depends(visit)):
 
 class CardIn(BaseModel):
     card_code: str
+
+
+class IdCheckIn(BaseModel):
+    document: str
+    consent: bool
+
+
+@app.post("/api/woman/id-check")
+def woman_id_check(body: IdCheckIn, v: Visit = Depends(visit)):
+    """Optional, consented national ID check (ID-03). Records that a document was shown; never the number (ID-04)."""
+    if not v.woman:
+        raise HTTPException(409, "Choose First visit or Returning first.")
+    if not body.consent:
+        raise HTTPException(422, "Her consent is needed to record an ID check. Care continues without it.")
+    try:
+        v.woman = registry.record_id_check(v.woman.card_code, body.document)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc))
+    return state(v)
 
 
 @app.post("/api/woman/find")
@@ -341,18 +360,23 @@ def do_finish(v: Visit = Depends(visit)):
     e.facility = v.worker.facility
     e.woman_id, e.card_code = v.woman.woman_id, v.woman.card_code
     registry.record_visit(v.woman.card_code)
+    e.worker_role = v.worker.role
+    e.episode_id = v.woman.episode_id or e.episode_id
+    e.national_id = v.woman.national_id
     v.encounter = e
-    v.bundle = build_bundle(e)
-    try:
-        validate(v.bundle)
-        valid = {"ok": True, "message": "FHIR Bundle passes structural validation (fhir.resources, R4B models)."}
-    except Exception as exc:  # show, never hide, a validation failure
-        valid = {"ok": False, "message": str(exc)}
     out_sms = None
     if e.referral:
         m = sms.send(sms.referral_text(e))
         out_sms = {"text": m.text, "channel": m.channel, "at": m.at}
-    return {**_rule_view(results), "code": e.code, "card_code": registry.display(e.card_code), "handover": handover_text(e), "sms": out_sms,
+        e.sms = {"text": m.text, "sent": m.at, "channel": m.channel}
+    v.bundle = build_bundle(e)
+    try:
+        validate(v.bundle)
+        valid = {"ok": True, "message": "FHIR Bundle passes structural validation (fhir.resources, R4B models)."}
+        sync.enqueue_bundle(e.code, v.bundle)  # SY-01: saved on the device; uploads itself when the hub is reachable
+    except Exception as exc:  # show, never hide, a validation failure; an invalid Bundle is never queued
+        valid = {"ok": False, "message": str(exc)}
+    return {**_rule_view(results), "code": e.code, "card_code": registry.display(e.card_code), "sync": sync.status(e.code), "handover": handover_text(e), "sms": out_sms,
             "status": e.referral_status, "bundle": v.bundle, "valid": valid}
 
 
@@ -366,21 +390,22 @@ def do_reply(body: ReplyIn, v: Visit = Depends(visit)):
     if not e:
         raise HTTPException(409, "Finish the encounter first.")
     status = sms.handle_reply(body.text, e)
-    out = {"status": e.referral_status, "matched": status is not None, "fhir": None}
-    task = v.fhir_ids.get("Task")
-    if status and task and fhir_client.available():
-        out["fhir"] = {"task": task, "status": fhir_client.set_task_status(task, status).get("status")}
-    return out
+    if status:
+        sync.enqueue_task_status(e.code, status)  # Task -> accepted / rejected on the hub, via the outbox
+    return {"status": e.referral_status, "matched": status is not None, "sync": sync.status(e.code)}
 
 
-@app.post("/api/fhir/post")
-def post_fhir(v: Visit = Depends(visit)):
-    if not v.bundle:
-        raise HTTPException(409, "Finish the encounter first.")
-    if not fhir_client.available():
-        raise HTTPException(503, f"FHIR server not reachable at {fhir_client.FHIR_BASE}. Start it with Docker (hub/docker-compose.yml).")
-    v.fhir_ids = fhir_client.server_ids(fhir_client.post_transaction(v.bundle))
-    return {"base": fhir_client.FHIR_BASE, "ids": v.fhir_ids}
+@app.get("/api/sync")
+def sync_status(v: Visit = Depends(visit)):
+    """Where this encounter's record is: saved on the device, waiting, or synced to the hub."""
+    return sync.status(v.encounter.code if v.encounter else None)
+
+
+@app.post("/api/sync/now")
+def sync_now(v: Visit = Depends(visit)):
+    """Try the hub now instead of waiting for the next background attempt."""
+    sync.flush()
+    return sync.status(v.encounter.code if v.encounter else None)
 
 
 # ---------------- static web app ----------------
@@ -391,6 +416,11 @@ def index():
 
 
 app.mount("/", StaticFiles(directory=WEB), name="web")
+
+
+@app.on_event("startup")
+def _start_sync() -> None:
+    sync.start_worker()
 
 
 def _self_signed_cert() -> tuple[str, str]:

@@ -55,7 +55,8 @@
       "ask_fhr": "Fetal heart rate, in beats per minute.",
       "ask_protein": "Urine protein. Choose the dipstick result.",
       "ask_severe_pe": "Does she have symptoms of severe pre-eclampsia?",
-      "card_new": "Write this card number on her antenatal card."
+      "card_new": "Write this card number on her antenatal card.",
+      "guide_describe": "Tell me about her. How many weeks pregnant is she? Is there any bleeding, pain in the belly, headache or blurred vision, fits, fever, or trouble breathing? Has she fainted?"
     }
   },
   "kri": {
@@ -113,7 +114,8 @@
       "ask_fhr": "",
       "ask_protein": "",
       "ask_severe_pe": "",
-      "card_new": ""
+      "card_new": "",
+      "guide_describe": ""
     }
   },
   "yo": {
@@ -171,7 +173,8 @@
       "ask_fhr": "",
       "ask_protein": "",
       "ask_severe_pe": "",
-      "card_new": ""
+      "card_new": "",
+      "guide_describe": ""
     }
   }
 }
