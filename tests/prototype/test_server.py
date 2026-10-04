@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 
 from ovamha_proto import auth, server, sms
 
-REG = {"national_id": "none", "age_years": 24, "details": {"first_name": "Mariama"}}
+REG = {"notice_given": True, "national_id": "none", "age_years": 24, "details": {"first_name": "Mariama"}}
 SCENARIO = "She is 28 weeks pregnant and she has heavy vaginal bleeding since this morning. She fainted yesterday but is fine now. No fever."
 
 
@@ -138,7 +138,7 @@ def test_speak_prompt(client):
 
 
 def test_register_requires_birth_info(client):
-    r = client.post("/api/woman/new", json={"national_id": "none", "details": {"first_name": "A"}})
+    r = client.post("/api/woman/new", json={"notice_given": True, "national_id": "none", "details": {"first_name": "A"}})
     assert r.status_code == 422 and "date of birth" in r.json()["detail"].lower()
 
 
@@ -154,7 +154,7 @@ PROFILE = {
 def test_registration_and_profile_flow_into_bundle_and_handover(client):
     from datetime import date, timedelta
 
-    st = client.post("/api/woman/new", json={"national_id": "nin", "consent": True, "age_years": 24,
+    st = client.post("/api/woman/new", json={"notice_given": True, "national_id": "nin", "consent": True, "age_years": 24,
                                              "details": {"first_name": "Mariama", "phone": "+232 76 123456", "wants_reminders": "yes"}}).json()
     assert st["needs_profile"] is True and st["woman"]["name"] == "Mariama"
     prof = dict(PROFILE, lmp=(date.today() - timedelta(weeks=20)).isoformat())
@@ -186,7 +186,7 @@ def test_profile_rejects_missing_answers(client):
 
 
 def test_registration_requires_first_name(client):
-    r = client.post("/api/woman/new", json={"national_id": "none", "age_years": 24, "details": {}})
+    r = client.post("/api/woman/new", json={"notice_given": True, "national_id": "none", "age_years": 24, "details": {}})
     assert r.status_code == 422 and "First name" in r.json()["detail"]
 
 

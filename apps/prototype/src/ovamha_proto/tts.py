@@ -17,6 +17,7 @@ import json
 import shutil
 import subprocess
 import tempfile
+import uuid
 from functools import lru_cache
 from pathlib import Path
 
@@ -108,17 +109,24 @@ def _speak_mms(text: str, lang: str, out: Path) -> None:
     scipy.io.wavfile.write(out, model.config.sampling_rate, (np.clip(wav, -1, 1) * 32767).astype("int16"))
 
 
-def speak(text: str, lang: str, clip_key: str | None = None) -> tuple[Path | None, str]:
-    """Synthesize text in lang. Returns (wav path, voice used)."""
+def speak(text: str, lang: str, clip_key: str | None = None, cache: bool = True) -> tuple[Path | None, str]:
+    """Synthesize text in lang. Returns (wav path, voice used).
+
+    cache=False is for text about a particular woman (her transcript, card number, handover): the
+    audio goes to a one-off file the caller deletes after sending, so no recording of her details
+    stays on disk (architecture DEV-03). Shared wording (questions, prompts, labels) is cached."""
     if clip_key:
         clip = CLIPS / lang / f"{clip_key}.wav"
         if clip.exists():
             return clip, "recorded clip"
     text = re.sub(r"\d+(?:\.\d+)?", lambda m: number_words(float(m.group()) if "." in m.group() else int(m.group())), text)
     CACHE.mkdir(exist_ok=True)
-    out = CACHE / (hashlib.sha1(f"{lang}|{text}".encode()).hexdigest() + ".wav")
-    if out.exists():
-        return out, "cached"
+    if cache:
+        out = CACHE / (hashlib.sha1(f"{lang}|{text}".encode()).hexdigest() + ".wav")
+        if out.exists():
+            return out, "cached"
+    else:
+        out = CACHE / f"once-{uuid.uuid4().hex}.wav"
     if lang in MMS and mms_available(lang):
         _speak_mms(text, lang, out)
         return out, f"MMS-TTS ({MMS[lang]})"

@@ -67,7 +67,8 @@
       "dob_exact": "Exact date. Choose this if she knows her date of birth.",
       "dob_estimate": "Estimate her age. If she does not know her date of birth, ask about how old she is.",
       "prev_pregnancies": "How many times has she been pregnant before this pregnancy?",
-      "births": "How many babies has she given birth to alive?"
+      "births": "How many babies has she given birth to alive?",
+      "privacy_notice": "I will write down your health details, and record what I say about your health so the phone can type it. The recording is deleted as soon as it is typed, and is never used to train the computer. Your record stays at this health facility, is shared only to care for you or refer you, and you can ask to see it at any time. You do not have to answer every question; your care will be the same."
     }
   },
   "kri": {
@@ -137,7 +138,8 @@
       "dob_exact": "",
       "dob_estimate": "",
       "prev_pregnancies": "",
-      "births": ""
+      "births": "",
+      "privacy_notice": ""
     }
   },
   "yo": {
@@ -207,7 +209,8 @@
       "dob_exact": "",
       "dob_estimate": "",
       "prev_pregnancies": "",
-      "births": ""
+      "births": "",
+      "privacy_notice": ""
     }
   }
 }

@@ -4,8 +4,8 @@
     {
       "name": "ovamha-prototype",
       "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "cd apps/prototype/src && ../../../.venv/bin/python -m ovamha_proto.app"],
-      "port": 7860
+      "runtimeArgs": ["-c", "cd apps/prototype/src && HF_HUB_OFFLINE=1 ../../../.venv/bin/python -m ovamha_proto.server --port 8001"],
+      "port": 8001
     }
   ]
 }

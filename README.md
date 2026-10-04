@@ -119,6 +119,25 @@ Where the guideline does not define a threshold, Ovamha states its assumption on
 | [OpenHIE architecture](https://guides.ohie.org/arch-spec/architecture-specification/standards-and-profiles.md) | Device → facility hub → national systems design, with a mediator for national exchange (see the architecture document) |
 | [World Bank ID4D principles](https://id4d.worldbank.org/principles) | Ovamha creates its own woman ID and card number; the national ID is optional, consented, never stored as a number and never used as a key or sent by SMS |
 
+### 4. Privacy and data protection
+
+Sierra Leone has no data protection law yet. Ovamha follows the Ministry of Health's **Health Information System Policy (2021)**, which is in force, the WHO ANC DAK security requirements (**ANC.NFXNREQ**), and, so it is ready when it passes, the draft **Data Protection and Right to Access Information Regulatory Commission Bill 2025**. Full matrix, with every measure, its source and where it is in the code: **[docs/privacy/README.md](docs/privacy/README.md)**.
+
+**Voice is never stored and never used for training.** A recording exists only until it is transcribed, then it is deleted, also when transcription fails ([`server.py` `_transcribe_upload`](apps/prototype/src/ovamha_proto/server.py)). Read-aloud audio of her details is deleted once played ([`server.py` `do_speak`](apps/prototype/src/ovamha_proto/server.py), [`tts.py` `speak(cache=False)`](apps/prototype/src/ovamha_proto/tts.py)). Models are trained only on public datasets and text we wrote. Details: [docs/privacy/voice-data.md](docs/privacy/voice-data.md).
+
+| What Ovamha does | Follows | Code |
+|---|---|---|
+| Encrypts the registry, SMS log, sync outbox and audit log on disk; owner-only files | HIS 3.6(c); DAK NFXNREQ.002; Bill s.55 | [`secure_store.py`](apps/prototype/src/ovamha_proto/secure_store.py) |
+| Audit trail of sign-ins, record access, exchanges; no names or health details in it | HIS 3.9; DAK NFXNREQ.016-021 | [`audit.py`](apps/prototype/src/ovamha_proto/audit.py) |
+| Signs out after 15 minutes without use and after an 8-hour shift; PIN never remembered; lockout after 5 wrong PINs | DAK NFXNREQ.005, .006, .013 | [`server.py` `visit`](apps/prototype/src/ovamha_proto/server.py), [`auth.py`](apps/prototype/src/ovamha_proto/auth.py) |
+| Privacy notice read to her before registration (registration refused without it) | Bill s.27(3); HIS 3.5.9 | [`app.js` `PRIVACY_NOTICE`](apps/prototype/web/app.js), [`registry.py` `register`](apps/prototype/src/ovamha_proto/registry.py) |
+| "Show her record": she can see and print what is held about her | HIS 3.5.10(a); Bill s.43 | [`registry.py` `her_record`](apps/prototype/src/ovamha_proto/registry.py), `/api/woman/record` |
+| Anonymised export for reports (no names, phones, IDs, exact dates) | DAK NFXNREQ.004; Bill s.36(2) | [`scripts/export_anonymised.py`](scripts/export_anonymised.py) |
+| Worker confirms every AI suggestion and makes the referral decision | Bill s.46 | [`confirm.py`](apps/prototype/src/ovamha_proto/confirm.py) |
+| Speech recognition and danger-sign detection run on the device | Bill s.41 | [`asr.py`](apps/prototype/src/ovamha_proto/asr.py), [`classifier.py`](apps/prototype/src/ovamha_proto/classifier.py) |
+
+Tests: `.venv/bin/pytest tests/prototype/test_privacy.py`. Drafts for review: [data protection impact assessment](docs/privacy/dpia.md), [privacy design policy](docs/privacy/privacy-design-policy.md) (including retention), [breach response plan](docs/privacy/breach-response.md). Not done yet: hardware-backed keys, TLS on every link, role-based access, the national retention schedule, Krio and Yoruba notices, and ethics approval before recording anyone (HIS 3.5.10(d)).
+
 ## Understanding what the worker says
 
 Speech is transcribed offline (Whisper small). Ovamha then has to work out which danger signs were described, often in everyday words ("her wrapper is red", "she sees stars"). Two detectors are built in; the **text classifier is the default**, and everything either one proposes must be confirmed by the worker.
@@ -167,6 +186,7 @@ Speak → What we understood (worker confirms each item) → Her history (first 
 
 ## Key documents
 
+- [docs/privacy/README.md](docs/privacy/README.md): **privacy and data protection**: what is followed, where in the code, DPIA, policy, breach plan
 - [docs/architecture/README.md](docs/architecture/README.md): **backend architecture specification** (tiers, FHIR resource model, identity, sync, SMS, security, AI provenance)
 - [docs/decisions/dak-first-contact.md](docs/decisions/dak-first-contact.md): element-by-element alignment with the WHO ANC DAK
 - [docs/decisions/guideline-advice-not-fine-tuning.md](docs/decisions/guideline-advice-not-fine-tuning.md): why cited guideline rules, and why the worker decides

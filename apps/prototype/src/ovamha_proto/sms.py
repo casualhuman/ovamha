@@ -6,7 +6,6 @@ Replies: "ACK <code>" -> referral accepted; "FULL <code>" -> facility full (reje
 """
 from __future__ import annotations
 
-import json
 import os
 import re
 import shutil
@@ -16,6 +15,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .encounter import Encounter
+
+from . import secure_store
 
 OUTBOX = Path(os.environ.get("OVAMHA_OUTBOX", Path(__file__).resolve().parents[4] / "outbox"))
 REFERRAL_NUMBER = os.environ.get("OVAMHA_REFERRAL_NUMBER", "+00000000000")
@@ -42,9 +43,7 @@ def _gammu_available() -> bool:
 
 
 def _log(sms: Sms) -> None:
-    OUTBOX.mkdir(parents=True, exist_ok=True)
-    with open(OUTBOX / "sms.jsonl", "a") as fh:
-        fh.write(json.dumps(asdict(sms)) + "\n")
+    secure_store.append_jsonl(OUTBOX / "sms.jsonl", asdict(sms))  # phone numbers and text encrypted at rest (DB-02)
 
 
 def send(text: str, number: str = REFERRAL_NUMBER) -> Sms:
