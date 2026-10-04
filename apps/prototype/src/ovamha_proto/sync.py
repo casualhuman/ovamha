@@ -7,11 +7,10 @@ idempotent because every resource is a conditional create (SY-02). Referral stat
 changes (ACK/FULL) are queued the same way and applied with If-Match on the Task
 version (SY-03).
 
-Outbox: OVAMHA_DATA/outbox/*.json (default ~/.ovamha/outbox), never in the repo.
+Outbox: OVAMHA_DATA/outbox/*.json (default ~/.ovamha/outbox), never in the repo, encrypted at rest (secure_store).
 """
 from __future__ import annotations
 
-import json
 import os
 import threading
 import time
@@ -20,7 +19,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from . import fhir_client
+from . import audit, fhir_client, secure_store
 
 _lock = threading.Lock()
 _state = {"last_attempt": None, "last_success": None, "last_error": None, "hub": fhir_client.FHIR_BASE}
@@ -48,11 +47,11 @@ def _write(item: dict) -> None:
     item |= {"queued_at": _now(), "attempts": 0}
     name = f"{time.time_ns()}-{uuid.uuid4().hex[:6]}.json"
     with _lock:
-        (_dir("outbox") / name).write_text(json.dumps(item))
+        secure_store.write_json(_dir("outbox") / name, item)
 
 
 def pending() -> list[dict]:
-    return [json.loads(p.read_text()) | {"file": p.name} for p in sorted(_dir("outbox").glob("*.json"))]
+    return [secure_store.read_json(p) | {"file": p.name} for p in sorted(_dir("outbox").glob("*.json"))]
 
 
 def status(code: str | None = None) -> dict:
@@ -72,7 +71,7 @@ def _task_for(code: str) -> str | None:
 def _apply(item: dict) -> None:
     if item["kind"] == "bundle":
         resp = fhir_client.post_transaction(item["bundle"])
-        (_dir("sent") / f"{item['code']}.json").write_text(json.dumps({"at": _now(), "ids": fhir_client.server_ids(resp)}))
+        secure_store.write_json(_dir("sent") / f"{item['code']}.json", {"at": _now(), "ids": fhir_client.server_ids(resp)})
     elif item["kind"] == "task-status":
         task = _task_for(item["code"])
         if task is None:
@@ -92,16 +91,18 @@ def flush() -> int:
         _state["last_error"] = f"Hub not reachable at {fhir_client.FHIR_BASE}"
         return 0
     for p in files:
-        item = json.loads(p.read_text())
+        item = secure_store.read_json(p)
         try:
             _apply(item)
         except (urllib.error.URLError, OSError, RuntimeError, ValueError) as exc:
             item["attempts"] += 1
             item["last_error"] = str(exc)
-            p.write_text(json.dumps(item))
+            secure_store.write_json(p, item)
+            audit.log("fhir-upload-failed", outcome="failure", encounter=item["code"], kind=item["kind"])
             _state["last_error"] = str(exc)
             break  # keep order: a status change must not overtake its Bundle
         p.unlink()
+        audit.log("fhir-upload", encounter=item["code"], kind=item["kind"])  # SY-07
         sent += 1
     if sent:
         _state["last_success"], _state["last_error"] = _now(), None

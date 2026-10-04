@@ -5,6 +5,7 @@ httpx
 faster-whisper==1.2.1
 av>=11,<16  # faster-whisper 1.2.1 decode_audio breaks on PyAV 16+
 fhir.resources==8.3.0
+cryptography>=42  # encryption at rest (secure_store.py)
 numpy
 scipy
 torch        # MMS-TTS read-aloud

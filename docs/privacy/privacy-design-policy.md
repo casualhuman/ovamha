@@ -1,0 +1,75 @@
+# Privacy design policy: Ovamha
+
+**Status: DRAFT**, 2026-10-04. Structured to the privacy design policy required by s.54 of the draft
+*Data Protection and Right to Access Information Regulatory Commission Bill, 2025* (not yet law),
+and to the MoHS *Health Information System Policy* 2021 (in force). Once the Bill is enacted, this
+policy must be approved by the Data Protection Commission and published (s.54(2)-(4)).
+
+## 1. Practices that anticipate and avoid harm (s.54(1)(a))
+
+- **Collect only what care needs** (Bill s.26(1)(c), s.27(2)): fields follow the WHO ANC DAK data
+  dictionary; national ID is optional and its number is never stored; most registration details are
+  optional.
+- **Tell her first** (Bill s.27(3)): the worker reads the privacy notice before registering a woman.
+  Ovamha refuses to register without it and records when it was read.
+- **Her data is hers** (HIS 3.5.9(a)): she can see her record ("Show her record", printable) (HIS
+  3.5.10(a); Bill s.43) and ask for corrections (Bill s.42).
+- **Share only for her care, or with her written consent** (HIS 3.5.9(c), 3.7(b)): referral data goes
+  to the receiving facility after her consent to referral is recorded.
+- **People decide, not the software** (Bill s.46): AI output is a proposal until the worker confirms it.
+- **Purpose limitation** (Bill s.27(1), s.39): data collected for care is not used for anything else;
+  voice is never used for training ([voice-data.md](voice-data.md)); research needs SLESRC ethical
+  clearance (HIS 3.5.10(d)).
+- **Accountability** (HIS 3.7(b), Bill s.26(1)(a)): every sign-in, record access and data exchange is
+  audited.
+
+## 2. Technology (s.54(1)(b))
+
+| Control | Standard | Prototype | Production |
+|---|---|---|---|
+| Encryption at rest | AES (Fernet: AES-128-CBC + HMAC-SHA256) | `secure_store.py` | Android FHIR SDK encrypted database, key in Android Keystore |
+| Encryption in transit | TLS 1.2+ | Self-signed HTTPS for testing | TLS on device-hub and hub-national links (ARCH SEC-02) |
+| Authentication | Salted PBKDF2-SHA256 PINs, lockout | `auth.py` | Plus role-based access, admin user management (DAK NFXNREQ.008-032) |
+| Session control | Idle sign-out 15 min, shift limit 8 h | `server.py` `visit` | Same, plus device screen lock |
+| Audit | Append-only, identifiers only | `audit.py` | FHIR AuditEvent, IHE BALP (ARCH SEC-06) |
+| Identity | Random woman ID + card code with check character | `registry.py` | Linked to national ID only with consent (ID4D) |
+| AI | On-device speech recognition and text classifier | `asr.py`, `classifier.py` | Same |
+| Data exchange | FHIR R4, through the hub mediator only | `fhir_bundle.py`, `sync.py` | ARCH AP-05 |
+
+## 3. Legitimate interests and innovation without compromising privacy (s.54(1)(c))
+
+Faster, safer antenatal care: voice entry for busy health workers and danger-sign detection to
+speed up referral. Innovation is kept on the device, and models are trained only on public or
+consented data, never on patient records or recordings.
+
+## 4. Obligations (s.54(1)(d))
+
+| Who | Obligation |
+|---|---|
+| Controller (facility / DHMT under MoHS, to be confirmed) | Register with the Commission (Bill s.49); approve this policy and the [DPIA](dpia.md); respond to her requests (access s.43, correction s.42, restriction s.28) within the legal time limits; report breaches ([breach-response.md](breach-response.md)) |
+| Health workers | Keep information confidential (HIS 3.7(b)); read the privacy notice; never share PINs or devices while signed in; report lost devices and suspected breaches immediately (HIS 3.7(c)) |
+| Ovamha developers | Build privacy in by default (Bill s.55); keep the controls in [README.md](README.md) tested; never use patient data or recordings for development or training |
+
+## 5. Privacy from collection to deletion (s.54(1)(e))
+
+| Data | Kept | Then |
+|---|---|---|
+| Voice recording | Until transcribed (seconds) | Deleted (`server.py` `_transcribe_upload`) |
+| Read-aloud audio of her details | Until played | Deleted (`server.py` `do_speak`) |
+| Transcript, AI proposals, unconfirmed items | Until the encounter closes | Discarded (ARCH DEV-03; `confirm.py` `finalise`) |
+| Registry on the phone | While she is in care at the facility | Per MoHS retention schedule (to be obtained) |
+| Sync outbox | Until uploaded to the hub | Deleted after upload (`sync.py` `flush`) |
+| Hub health records | Per national health-records retention policy (ARCH DB-07; HIS 3.6(a)) | Deleted or de-identified at the end of the period (Bill s.40(4)) |
+| SMS bodies | Configurable period (ARCH DB-07) | Purged; the FHIR Communication remains |
+| Audit log | Per national policy (needed to answer access requests, Bill s.40(3)(b)) | Archived |
+| Anonymised exports | As needed for the report | Not personal data, but review small counts before sharing |
+
+**Test and demo data:** only fictional women. The hosted demo shows "Do not enter real patient
+information". Local test data lives in `OVAMHA_DATA` and can be wiped by deleting that folder.
+
+## Sources
+
+- *The Data Protection and Right to Access Information Regulatory Commission Act, 2025* (Bill, not yet law): s.26-28, 39-43, 46, 49, 54, 55.
+- MoHS Sierra Leone, *Health Information System Policy*, 2021: s.3.5.9, 3.5.10, 3.6, 3.7.
+- WHO, *Digital adaptation kit for antenatal care*, 2021: ANC.NFXNREQ.001-043.
+- Ovamha architecture: AP-05, DEV-03, DB-07, SEC-02, SEC-06.

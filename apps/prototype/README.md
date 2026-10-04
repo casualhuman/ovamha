@@ -36,3 +36,7 @@ The first transcription downloads Whisper small (~460 MB) once; after that, no i
 | Nurse Fati | fati | 769131 |
 | CHW Aminata | aminata | 507892 |
 | Midwife Funmi | funmi | 186706 |
+
+## Privacy
+
+Voice recordings are deleted as soon as they are transcribed and never used for training. Everything stored about a woman (`OVAMHA_DATA`, default `~/.ovamha`, plus the SMS log) is encrypted at rest; sign-ins end after 15 minutes without use. What is followed and where it is in the code: [docs/privacy/README.md](../../docs/privacy/README.md). Anonymised export: `.venv/bin/python scripts/export_anonymised.py -o export.csv`.

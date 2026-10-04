@@ -238,10 +238,10 @@ function login() {
         <button type="button" class="field-link" id="forgot">Forgot PIN?</button></div>
       <div class="field-wrap">
         <input class="field" id="pin" name="pin" type="${S.showPin ? "text" : "password"}" inputmode="numeric" pattern="[0-9]*" maxlength="6"
-          autocomplete="current-password" placeholder="6-digit PIN" value="${esc(S.pin || "")}">
+          autocomplete="off" placeholder="6-digit PIN" value="${esc(S.pin || "")}">
         <button type="button" class="field-eye" id="eye" aria-label="${S.showPin ? "Hide PIN" : "Show PIN"}">${icon(S.showPin ? "eyeoff" : "eye")}</button>
       </div>
-      <label class="keep"><input type="checkbox" id="keep" ${S.keep ? "checked" : ""}><span>Keep me signed in on this device</span></label>
+      <label class="keep"><input type="checkbox" id="keep" ${S.keep ? "checked" : ""}><span>Stay signed in for this shift (up to 8 hours; signs out after 15 minutes without use)</span></label>
       <div class="err" id="err">${esc(S.err)}</div>
       <button class="btn primary" type="submit" id="signin">Sign in</button>
     </form>
@@ -270,7 +270,8 @@ bind.login = () => {
 };
 function signOut(silent) {
   if (!silent) api("/api/logout").catch(() => {});
-  S.token = null; S.worker = null; S.username = ""; session.clear();
+  if (S.audioUrl) URL.revokeObjectURL(S.audioUrl);
+  S.token = null; S.worker = null; S.username = ""; S.audioBlob = null; S.audioUrl = null; S.st = null; session.clear();
   go("login");
 }
 
@@ -309,6 +310,7 @@ bind.home = () => {
 async function startCheck() {
   try {
     S.st = await api("/api/encounter/new", { body: { lang: S.lang } });
+    if (S.audioUrl) URL.revokeObjectURL(S.audioUrl);
     S.result = null; S.audioBlob = null; S.audioUrl = null; S.transcript = ""; S.typing = false; S.numbers = {};
     S.cardMode = null; S.cardErr = ""; S.reg = null;
     go("woman");
@@ -423,6 +425,11 @@ function keepScroll(fn) { const y = window.scrollY; fn(); window.scrollTo(0, y);
 function registration() {
   const r = S.reg;
   return `
+    <div class="card">${qhead("Read this to her first", "privacy_notice")}
+      <p class="small" style="margin:0 0 10px">${esc(PRIVACY_NOTICE)}</p>
+      <label class="consent"><input type="checkbox" id="notice" ${r.notice ? "checked" : ""}>
+        <span>I read this notice to her.</span></label>
+    </div>
     <div class="card">${qhead("Does she have a national ID card?", "id_question")}
       <p class="small muted" style="margin:0 0 10px">Asked first. Her care is the same either way.</p>
       ${choice("data-nid", "nin", "National NIN", "She has a national ID card", "idcard", "id_nin", r.national_id === "nin")}
@@ -442,6 +449,10 @@ function registration() {
     <div class="err">${esc(S.cardErr)}</div>
     <button class="btn primary" id="createCard" style="margin-top:6px">${icon("plus")}Create her card number</button>`;
 }
+// Privacy notice (draft Data Protection Bill 2025 s.27(3); MoHS HIS Policy 2021 s.3.5.9-3.5.10). Read-aloud: phrases.json prompts.privacy_notice
+const PRIVACY_NOTICE = "I will write down your health details, and record what I say about your health so the phone can type it. " +
+  "The recording is deleted as soon as it is typed, and is never used to train the computer. Your record stays at this health facility, " +
+  "is shared only to care for you or refer you, and you can ask to see it at any time. You do not have to answer every question; your care will be the same.";
 function woman() {
   const w = S.st?.woman;
   let body;
@@ -453,7 +464,8 @@ function woman() {
       <div class="badge green" style="margin-bottom:10px">${icon("check")}${w.new ? "New card number created" : "Card found"}</div>
       ${who}<div class="small muted">${w.new ? "Write this on her antenatal card" : "Her card number"}</div>
       <div class="card-code">${esc(w.card_code)}</div>
-      <button class="btn soft" id="sayCard">${icon("speaker")}Read aloud</button>
+      <div class="row" style="justify-content:center;gap:8px"><button class="btn soft" id="sayCard">${icon("speaker")}Read aloud</button>
+        <button class="btn soft" id="herRecord">${icon("file")}Show her record</button></div>
       <div class="small muted" style="margin-top:12px;display:flex;flex-direction:column;gap:4px;align-items:center">
         <span style="display:inline-flex;gap:6px;align-items:center">${idLine}</span>${dob ? `<span>${esc(dob)}</span>` : ""}
         ${w.new ? "" : `<span>${w.visits} previous ${w.visits === 1 ? "check" : "checks"} on this device</span>`}</div>
@@ -478,7 +490,7 @@ bind.woman = () => {
   document.querySelectorAll("[data-prompt]").forEach((b) => b.onclick = (e) => { e.preventDefault(); speakPrompt(b.dataset.prompt); });
   document.querySelectorAll("[data-mode]").forEach((b) => b.onclick = () => {
     S.cardMode = b.dataset.mode; S.cardErr = "";
-    if (S.cardMode === "new") S.reg = { national_id: null, consent: false, dobMode: null, birth_date: "", age: 25, details: {} };
+    if (S.cardMode === "new") S.reg = { notice: false, national_id: null, consent: false, dobMode: null, birth_date: "", age: 25, details: {} };
     const show = () => { render(); window.scrollTo(0, 0); };
     if (S.cardMode === "new") qset("anc-registration").then(show).catch((e) => toast(e.message)); else show();
     if (S.cardMode === "find") $("#card").focus();
@@ -486,6 +498,7 @@ bind.woman = () => {
   document.querySelectorAll("[data-nid]").forEach((b) => b.onclick = () => { S.reg.national_id = b.dataset.nid; render(); });
   document.querySelectorAll("[data-dob]").forEach((b) => b.onclick = () => { S.reg.dobMode = b.dataset.dob; render(); });
   $("#consent") && ($("#consent").onchange = (e) => { S.reg.consent = e.target.checked; });
+  $("#notice") && ($("#notice").onchange = (e) => { S.reg.notice = e.target.checked; });
   $("#dob") && ($("#dob").onchange = (e) => { S.reg.birth_date = e.target.value; });
   if (S.reg) bindSet(() => S.reg.details, () => keepScroll(render));
   const keyOf = { age: "age" };
@@ -501,10 +514,11 @@ bind.woman = () => {
   });
   $("#createCard") && ($("#createCard").onclick = () => {
     const r = S.reg;
+    if (!r.notice) { S.cardErr = "Read the privacy notice to her first."; render(); return; }
     if (!r.national_id) { S.cardErr = "Answer the national ID question first."; render(); return; }
     if (r.national_id === "nin" && !r.consent) { S.cardErr = "Ask for her consent, or choose No ID."; render(); return; }
     if (!r.dobMode) { S.cardErr = "Answer when she was born: exact date or estimate."; render(); return; }
-    const body = { national_id: r.national_id, consent: r.consent, details: Object.fromEntries(Object.entries(r.details).filter(([, v]) => v !== undefined && v !== "")) };
+    const body = { notice_given: r.notice, national_id: r.national_id, consent: r.consent, details: Object.fromEntries(Object.entries(r.details).filter(([, v]) => v !== undefined && v !== "")) };
     if (r.dobMode === "exact") body.birth_date = r.birth_date || null; else body.age_years = r.age;
     api("/api/woman/new", { body }).then(set).catch((e) => { S.cardErr = e.message; render(); });
   });
@@ -514,7 +528,32 @@ bind.woman = () => {
   $("#card") && ($("#card").onkeydown = (e) => { if (e.key === "Enter") find(); });
   $("#sayCard") && ($("#sayCard").onclick = () => speakText(`Card number: ${S.st.woman.card_code.replace("-", "").split("").join(", ")}`, "en"));
   $("#toDescribe") && ($("#toDescribe").onclick = () => go("describe"));
+  $("#herRecord") && ($("#herRecord").onclick = () => api("/api/woman/record", { method: "GET" }).then(showRecord).catch((e) => toast(e.message)));
 };
+
+// Her right to see her data (MoHS HIS Policy 2021 s.3.5.10(a); draft DP Bill 2025 s.43). Opening it is audited.
+function showRecord(rec) {
+  const line = (k, v) => v === null || v === undefined || v === "" ? "" : `<div class="small"><b>${esc(k)}:</b> ${esc(Array.isArray(v) ? v.join(", ") : String(v))}</div>`;
+  const obj = (o) => Object.entries(o || {}).map(([k, v]) => line(k.replace(/_/g, " "), v)).join("");
+  const m = document.createElement("div");
+  m.className = "modal-back";
+  m.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="rec-title" style="text-align:left;max-height:85vh;overflow:auto">
+    <button class="modal-x" aria-label="Close">${icon("x")}</button>
+    <h3 id="rec-title">Her record on this device</h3>
+    ${line("Card number", rec.card_code)}${line("Registered", rec.registered)}${line("Checks on this device", rec.visits)}
+    ${line("Last check", rec.last_visit)}${line("Born", rec.birth_date + (rec.birth_date_estimated ? " (estimated)" : ""))}
+    ${line("National ID", rec.national_id)}${line("Privacy notice read", rec.privacy_notice_at)}
+    <h4 style="margin:12px 0 4px">Registration</h4>${obj(rec.details) || '<div class="small muted">None</div>'}
+    <h4 style="margin:12px 0 4px">History and profile</h4>${obj(rec.profile) || '<div class="small muted">Not collected yet</div>'}
+    <p class="tiny muted" style="margin-top:12px">Visit records are kept at the health facility hub. She can ask for any mistake to be corrected.</p>
+    <div class="row" style="margin-top:12px"><button class="btn soft" id="recPrint">${icon("file")}Print</button><button class="btn primary modal-ok">Close</button></div></div>`;
+  const close = () => m.remove();
+  m.querySelector(".modal-x").onclick = close;
+  m.querySelector(".modal-ok").onclick = close;
+  m.querySelector("#recPrint").onclick = () => window.print();
+  m.onclick = (e) => { if (e.target === m) close(); };
+  document.body.appendChild(m);
+}
 
 // ---------------------------------------------------------------- 4. describe (record -> replay / next)
 let recTimer = null;
@@ -568,7 +607,7 @@ bind.describe = () => {
     a.play().catch(() => playBlob(S.audioBlob));
   });
   $("#guide") && ($("#guide").onclick = () => speakPrompt("guide_describe"));
-  $("#again") && ($("#again").onclick = () => { S.audioBlob = null; S.audioUrl = null; render(); });
+  $("#again") && ($("#again").onclick = () => { if (S.audioUrl) URL.revokeObjectURL(S.audioUrl); S.audioBlob = null; S.audioUrl = null; render(); });
   $("#next") && ($("#next").onclick = transcribeAndRead);
   $("#nextTyped") && ($("#nextTyped").onclick = () => readBack($("#tx").value));
 };
@@ -1144,6 +1183,7 @@ function showHostedNotice() {
     <span class="row-ico" style="margin-bottom:12px">${icon("wifioff")}</span>
     <h3 id="hn-title">Hosted demo</h3>
     <p>This online copy is for judges to try Ovamha. In the field, Ovamha runs <b>fully offline</b> on a phone and a local hub at the health post, with no internet.</p>
+    <p class="small" style="color:var(--danger,#b42318)"><b>Do not enter real patient information.</b> This copy runs on servers outside Sierra Leone.</p>
     <p class="small muted">Fictional data only. Sign in with <b>fati</b> / <b>769131</b>; returning woman card <b>MAM-A2A</b>.</p>
     <button class="btn primary modal-ok">Got it</button></div>`;
   const close = () => m.remove();

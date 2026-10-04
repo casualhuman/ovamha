@@ -7,6 +7,8 @@ Goal: measure how many danger signs Ovamha catches when health workers describe 
 - Native speakers of Krio and of Yoruba, ideally nurses, midwives or CHWs (they know how symptoms are described in clinic).
 - At least 2 speakers per language; 3 to 5 is better. Note each speaker's language, sex and age band only. No names in the files.
 - Written consent from every speaker to use their voice for testing (template below). **Never record real patients.**
+- **Ethics approval first:** recording people to test models is health research; get written ethical clearance from the Sierra Leone Ethics and Scientific Review Committee (MoHS HIS Policy 2021, s.3.5.10(d)). See [docs/privacy/voice-data.md](../../docs/privacy/voice-data.md).
+- **Testing only, never training:** the consent below covers testing. Do not use these recordings to train or fine-tune a model unless the speaker signs a separate consent that says so.
 
 ## How
 

@@ -8,9 +8,11 @@ Everything runs on this machine. No internet is used during an encounter.
 from __future__ import annotations
 
 import argparse
+import os
 import secrets
 import subprocess
 import tempfile
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -18,8 +20,9 @@ from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, UploadF
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from starlette.background import BackgroundTask
 
-from . import fhir_client, guideline, questionnaire, registry, sms, sync
+from . import audit, fhir_client, guideline, questionnaire, registry, sms, sync
 from .asr import model_name, transcribe
 from .auth import Worker, login
 from .confirm import KEYPAD_FIELDS, Session, fmt, label
@@ -53,15 +56,29 @@ class Visit:
     encounter: Encounter | None = None
     bundle: dict | None = None
     woman: registry.Woman | None = None
+    started: float = field(default_factory=time.time)
+    last_seen: float = field(default_factory=time.time)
 
 
 TOKENS: dict[str, Visit] = {}
+# WHO ANC DAK ANC.NFXNREQ.006: sign out after inactivity. A sign-in also ends after one shift.
+IDLE_SECONDS = int(os.environ.get("OVAMHA_IDLE_MINUTES", "15")) * 60
+MAX_SESSION_SECONDS = int(os.environ.get("OVAMHA_SESSION_HOURS", "8")) * 3600
 
 
 def visit(authorization: str = Header(default="")) -> Visit:
-    v = TOKENS.get(authorization.removeprefix("Bearer ").strip())
+    token = authorization.removeprefix("Bearer ").strip()
+    v = TOKENS.get(token)
     if not v:
         raise HTTPException(401, "Please sign in.")
+    now = time.time()
+    if now - v.last_seen > IDLE_SECONDS or now - v.started > MAX_SESSION_SECONDS:
+        TOKENS.pop(token, None)
+        audit.log("idle-logout", v.worker.worker_id)
+        minutes = IDLE_SECONDS // 60
+        raise HTTPException(401, f"Signed out after {minutes} minutes without use, to protect her information. Please sign in again."
+                            if now - v.last_seen > IDLE_SECONDS else "Your sign-in ended after one shift. Please sign in again.")
+    v.last_seen = now
     return v
 
 
@@ -132,7 +149,10 @@ class LoginIn(BaseModel):
 def do_login(body: LoginIn):
     w, err = login(body.username, body.pin)
     if not w:
+        audit.log("login-locked" if err.startswith("Too many") else "login-failed", outcome="failure",
+                  username=(body.username or "").strip().lower()[:40])
         raise HTTPException(401, err)
+    audit.log("login", w.worker_id)
     token = secrets.token_urlsafe(24)
     v = Visit(worker=w, lang=w.languages[0] if w.languages else "en")
     _new_session(v)
@@ -142,7 +162,9 @@ def do_login(body: LoginIn):
 
 @app.post("/api/logout")
 def do_logout(authorization: str = Header(default="")):
-    TOKENS.pop(authorization.removeprefix("Bearer ").strip(), None)
+    v = TOKENS.pop(authorization.removeprefix("Bearer ").strip(), None)
+    if v:
+        audit.log("logout", v.worker.worker_id)
     return {"ok": True}
 
 
@@ -165,6 +187,7 @@ def new_encounter(body: LangIn, v: Visit = Depends(visit)):
 class RegisterIn(BaseModel):
     national_id: str  # "nin" | "none"
     consent: bool = False
+    notice_given: bool = False  # the privacy notice was read to her (draft DP Bill 2025 s.27(3))
     birth_date: str | None = None  # exact, YYYY-MM-DD
     age_years: int | None = None  # or her estimated age
     details: dict = {}  # ANC.A4 answers (content/questions/anc-registration.json)
@@ -178,9 +201,11 @@ def woman_new(body: RegisterIn, v: Visit = Depends(visit)):
         raise HTTPException(422, " ".join(problems))
     try:
         v.woman = registry.register(v.worker.worker_id, body.national_id, body.consent, body.birth_date,
-                                    body.age_years, details)
+                                    body.age_years, details, notice_given=body.notice_given)
     except ValueError as exc:
         raise HTTPException(422, str(exc))
+    audit.log("woman-created", v.worker.worker_id, woman=v.woman.woman_id)
+    audit.log("privacy-notice-given", v.worker.worker_id, woman=v.woman.woman_id)
     return state(v)
 
 
@@ -220,7 +245,17 @@ def woman_find(body: CardIn, v: Visit = Depends(visit)):
     if not w:
         raise HTTPException(404, err)
     v.woman = w
+    audit.log("woman-opened", v.worker.worker_id, woman=w.woman_id)  # ANC.NFXNREQ.019
     return state(v)
+
+
+@app.get("/api/woman/record")
+def woman_record(v: Visit = Depends(visit)):
+    """Show her what this device holds about her (HIS Policy 2021 s.3.5.10(a); draft DP Bill 2025 s.43)."""
+    if not v.woman:
+        raise HTTPException(409, "Open her card first.")
+    audit.log("record-shown-to-woman", v.worker.worker_id, woman=v.woman.woman_id)
+    return registry.her_record(v.woman)
 
 
 @app.get("/api/state")
@@ -228,16 +263,22 @@ def get_state(v: Visit = Depends(visit)):
     return state(v)
 
 
-def _save_upload(upload: UploadFile) -> str:
+def _transcribe_upload(upload: UploadFile, lang: str):
+    """Transcribe a recording, then delete it. Audio is never stored, logged or used for training
+    (architecture DEV-03; see docs/privacy/voice-data.md)."""
     suffix = Path(upload.filename or "audio.webm").suffix or ".webm"
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as fh:
         fh.write(upload.file.read())
-        return fh.name
+        path = fh.name
+    try:
+        return transcribe(path, lang)
+    finally:
+        Path(path).unlink(missing_ok=True)
 
 
 @app.post("/api/transcribe")
 def do_transcribe(audio: UploadFile = File(...), lang: str = Form("en"), v: Visit = Depends(visit)):
-    r = transcribe(_save_upload(audio), lang)
+    r = _transcribe_upload(audio, lang)
     if not r.ok:
         return JSONResponse({"ok": False, "message": r.message}, status_code=422)
     v.asr_model = r.model
@@ -339,7 +380,7 @@ def do_measure(body: MeasureIn, v: Visit = Depends(visit)):
 @app.post("/api/number-voice")
 def number_voice(audio: UploadFile = File(...), field: str = Form(...), lang: str = Form("en"), v: Visit = Depends(visit)):
     """Transcribe a spoken number. Returns the value to put in the field; nothing is proposed or confirmed."""
-    r = transcribe(_save_upload(audio), lang)
+    r = _transcribe_upload(audio, lang)
     if not r.ok:
         return JSONResponse({"ok": False, "message": r.message}, status_code=422)
     if field in ("systolic", "diastolic", "systolic_repeat", "diastolic_repeat"):
@@ -383,11 +424,13 @@ def do_speak(body: SpeakIn, v: Visit = Depends(visit)):
         text, spoken_lang = body.text, lang
     else:
         raise HTTPException(422, "Nothing to read.")
-    path, voice = speak(text, spoken_lang)
+    personal = bool(body.text) and not body.prompt  # free text: her transcript, card number, handover
+    path, voice = speak(text, spoken_lang, cache=not personal)
     if not path:
         raise HTTPException(503, voice)
     headers = {"X-Ovamha-Voice": voice, "X-Ovamha-Lang": spoken_lang}
-    return FileResponse(path, media_type="audio/wav", headers=headers)
+    cleanup = BackgroundTask(Path(path).unlink, missing_ok=True) if personal else None  # deleted once sent
+    return FileResponse(path, media_type="audio/wav", headers=headers, background=cleanup)
 
 
 # ---------------- finish, SMS, FHIR ----------------
@@ -488,9 +531,11 @@ def _complete(v: Visit) -> dict:
     """Record the encounter: notify the receiving facility for an urgent referral, build the FHIR record, queue sync."""
     e = v.encounter
     registry.record_visit(e.card_code)
+    audit.log("encounter-finished", v.worker.worker_id, woman=e.woman_id, encounter=e.code)
     out_sms = None
     if e.urgent and not e.sms:
         m = sms.send(sms.referral_text(e))
+        audit.log("sms-sent", v.worker.worker_id, encounter=e.code, channel=m.channel)
         out_sms = {"text": m.text, "channel": m.channel, "at": m.at}
         e.sms = {"text": m.text, "sent": m.at, "channel": m.channel}
     v.bundle = build_bundle(e)
@@ -516,6 +561,7 @@ def do_reply(body: ReplyIn, v: Visit = Depends(visit)):
     if not e:
         raise HTTPException(409, "Finish the encounter first.")
     status = sms.handle_reply(body.text, e)
+    audit.log("sms-received", v.worker.worker_id, encounter=e.code, matched=status is not None)
     if status:
         sync.enqueue_task_status(e.code, status)  # Task -> accepted / rejected on the hub, via the outbox
     return {"status": e.referral_status, "matched": status is not None, "sync": sync.status(e.code)}
@@ -555,6 +601,9 @@ app.mount("/", StaticFiles(directory=WEB), name="web")
 
 @app.on_event("startup")
 def _start_sync() -> None:
+    from .tts import CACHE
+    for f in CACHE.glob("once-*.wav"):  # one-off read-aloud audio left by an interrupted request
+        f.unlink(missing_ok=True)
     registry.seed_demo()  # fictional returning woman MAM-A2A, for testing a returning check
     sync.start_worker()
 

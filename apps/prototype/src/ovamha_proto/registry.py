@@ -11,7 +11,7 @@ Card code: 5 random characters + 1 check character (weighted mod 31 over an alph
 without look-alikes 0/O, 1/I/L), shown as "K7P-3QZ". A single wrong or swapped
 character is caught before any lookup.
 
-Stored in OVAMHA_DATA (default ~/.ovamha/registry.json), never in the repo.
+Stored in OVAMHA_DATA (default ~/.ovamha/registry.json), never in the repo, encrypted at rest (secure_store).
 """
 from __future__ import annotations
 
@@ -22,6 +22,8 @@ import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
+
+from . import secure_store
 
 ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"  # 31 characters
 N = len(ALPHABET)
@@ -75,6 +77,7 @@ class Woman:
     details: dict = field(default_factory=dict)  # ANC.A4 registration details (name, community, phone, contacts...)
     profile: dict = field(default_factory=dict)  # ANC.B6 first-contact profile answers
     profile_at: str | None = None
+    privacy_notice_at: str | None = None  # when the privacy notice was read to her (draft DP Bill 2025 s.27(3))
 
 
 def _woman(rec: dict) -> Woman:
@@ -84,20 +87,16 @@ def _woman(rec: dict) -> Woman:
 
 
 def _load() -> dict[str, dict]:
-    p = _path()
-    return json.loads(p.read_text()) if p.exists() else {}
+    return secure_store.read_json(_path(), {})
 
 
 def _save(data: dict) -> None:
-    p = _path()
-    p.parent.mkdir(parents=True, exist_ok=True)
-    tmp = p.with_suffix(".tmp")
-    tmp.write_text(json.dumps(data, indent=2))
-    tmp.replace(p)
+    secure_store.write_json(_path(), data)  # encrypted at rest (DEV-02)
 
 
 def register(worker_id: str, national_id: str = "none", consent: bool = False, birth_date: str | None = None,
-             age_years: int | None = None, details: dict | None = None, today: date | None = None) -> Woman:
+             age_years: int | None = None, details: dict | None = None, today: date | None = None,
+             notice_given: bool = True) -> Woman:
     """First visit: create her Ovamha woman ID and card code, always (ID-01).
 
     national_id: "nin" (she has a national ID card) or "none". With "nin" and her consent,
@@ -107,6 +106,8 @@ def register(worker_id: str, national_id: str = "none", consent: bool = False, b
     a year and flagged as estimated, as is common where birth dates are not known.
     """
     today = today or date.today()
+    if not notice_given:
+        raise ValueError("Read the privacy notice to her first.")
     if national_id not in ("nin", "none"):
         raise ValueError("Choose National NIN or No ID.")
     if national_id == "nin" and not consent:
@@ -134,7 +135,7 @@ def register(worker_id: str, national_id: str = "none", consent: bool = False, b
         code = new_code()
     now = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     w = Woman(str(uuid.uuid4()), code, now, worker_id, episode_id=str(uuid.uuid4()),
-              birth_date=dob, birth_date_estimated=estimated, details=dict(details or {}))
+              birth_date=dob, birth_date_estimated=estimated, details=dict(details or {}), privacy_notice_at=now)
     if national_id == "nin":
         w.national_id = {"document": "National ID (NIN)", "method": "document-shown", "verified": False, "consent_at": now}
     data[code] = asdict(w)
@@ -201,3 +202,16 @@ def record_visit(code: str) -> None:
         data[c]["visits"] += 1
         data[c]["last_visit"] = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
         _save(data)
+
+
+def her_record(w: Woman) -> dict:
+    """Everything this device holds about her, to show or print for her (HIS Policy 2021 s.3.5.10(a);
+    draft DP Bill 2025 s.43). Clinical encounter records live on the hub, not in this registry."""
+    return {
+        "card_code": display(w.card_code), "woman_id": w.woman_id, "registered": w.created_at,
+        "registered_by": w.created_by, "visits": w.visits, "last_visit": w.last_visit,
+        "birth_date": w.birth_date, "birth_date_estimated": w.birth_date_estimated,
+        "national_id": "Card shown, with her consent; number not stored" if w.national_id else "Not linked",
+        "details": w.details, "profile": w.profile, "profile_at": w.profile_at,
+        "privacy_notice_at": w.privacy_notice_at,
+    }
