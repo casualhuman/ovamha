@@ -31,8 +31,8 @@ The first transcription downloads Whisper small (~460 MB) once; after that, no i
 
 ## Demo logins (fictional demo accounts, offline)
 
-| Worker | PIN |
-| --- | --- |
-| Nurse Fati | 769131 |
-| CHW Aminata | 507892 |
-| Midwife Funmi | 186706 |
+| Worker | Username | PIN |
+| --- | --- | --- |
+| Nurse Fati | fati | 769131 |
+| CHW Aminata | aminata | 507892 |
+| Midwife Funmi | funmi | 186706 |

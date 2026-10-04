@@ -42,7 +42,7 @@ const LANGS = [["kri", "Krio"], ["yo", "Yoruba"], ["en", "English"]];
 
 // ---------------------------------------------------------------- state + helpers
 const S = {
-  screen: "welcome", slide: 0, token: null, worker: null, workers: [], pick: null, pin: "", err: "",
+  screen: "welcome", slide: 0, token: null, worker: null, username: "", pin: "", err: "",
   lang: "en", st: null, result: null, rec: null, audioBlob: null, audioUrl: null, recSecs: 0,
   typing: false, transcript: "", counts: { checks: 0, referrals: 0 }, numbers: {}, numRec: null,
 };
@@ -86,24 +86,43 @@ async function api(path, { method = "POST", body, form, raw } = {}) {
 }
 
 // ---------------------------------------------------------------- audio
-let player = null;
-async function playUrl(url) {
-  if (player) { player.pause(); }
-  player = new Audio(url);
-  await player.play().catch(() => toast("Tap again to play"));
+let ctx = null;
+let current = null;
+async function playBlob(blob) {
+  try {
+    ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === "suspended") await ctx.resume();
+    const buf = await ctx.decodeAudioData(await blob.arrayBuffer());
+    if (current) { try { current.stop(); } catch { /* already ended */ } }
+    current = ctx.createBufferSource();
+    current.buffer = buf;
+    current.connect(ctx.destination);
+    current.start();
+  } catch {
+    // Fallback: a fresh <audio> element each time (some browsers cannot decode every format).
+    const a = new Audio(URL.createObjectURL(blob));
+    a.play().catch(() => toast("Could not play the audio on this device"));
+  }
 }
 async function speakItem(field, value) {
   try {
     const res = await api("/api/speak", { body: { field, value, lang: S.lang }, raw: true });
     const voiceLang = res.headers.get("X-Ovamha-Lang");
     if (voiceLang && voiceLang !== S.lang) toast("Read in English: this wording is not translated yet");
-    playUrl(URL.createObjectURL(await res.blob()));
+    playBlob(await res.blob());
+  } catch (e) { toast(e.message); }
+}
+async function speakPrompt(prompt) {
+  try {
+    const res = await api("/api/speak", { body: { prompt, lang: S.lang }, raw: true });
+    if (res.headers.get("X-Ovamha-Lang") !== S.lang) toast("Read in English: this wording is not translated yet");
+    playBlob(await res.blob());
   } catch (e) { toast(e.message); }
 }
 async function speakText(text, lang = S.lang) {
   try {
     const res = await api("/api/speak", { body: { text, lang }, raw: true });
-    playUrl(URL.createObjectURL(await res.blob()));
+    playBlob(await res.blob());
   } catch (e) { toast(e.message); }
 }
 
@@ -131,7 +150,7 @@ const extFor = (blob) => (blob.type.includes("mp4") ? "m4a" : blob.type.includes
 function go(screen) { S.screen = screen; render(); window.scrollTo(0, 0); }
 function render() {
   const app = $("#app");
-  const view = { welcome, login, home, describe, confirm, measure, result, profile }[S.screen] || home;
+  const view = { welcome, login, home, woman, describe, confirm, measure, result, profile }[S.screen] || home;
   app.innerHTML = view();
   bind[S.screen]?.();
 }
@@ -148,8 +167,9 @@ document.addEventListener("click", (e) => {
 });
 function steps(n) { return `<div class="steps">${[1, 2, 3, 4].map((i) => `<i class="${i <= n ? "on" : ""}"></i>`).join("")}</div>`; }
 function topbar(title, back) {
+  const card = S.screen !== "woman" && S.st?.woman ? `<span class="badge" title="Her card number">${icon("file")}${esc(S.st.woman.card_code)}</span>` : "";
   return `<div class="top">${back ? `<button class="icon-btn" data-back="${back}" aria-label="Back">${icon("left")}</button>` : ""}<h1>${esc(title)}</h1>
-    <span class="badge green" title="Everything runs on this device">${icon("wifioff")}Offline</span></div>`;
+    ${card || `<span class="badge green" title="Everything runs on this device">${icon("wifioff")}Offline</span>`}</div>`;
 }
 document.addEventListener("click", (e) => { const b = e.target.closest("[data-back]"); if (b) go(b.dataset.back); });
 
@@ -194,43 +214,47 @@ bind.welcome = () => {
 // ---------------------------------------------------------------- 2. login (offline PIN)
 const initials = (n) => n.replace(/^(Nurse|CHW|Midwife)\s+/i, "").slice(0, 2).toUpperCase();
 function login() {
-  const people = S.workers.map((w) => `<button class="person ${S.pick === w.worker_id ? "on" : ""}" data-pick="${esc(w.worker_id)}">
-      <span class="avatar">${esc(initials(w.display_name))}</span><span><b>${esc(w.display_name)}</b><br><span class="small muted">${esc(w.role)}</span></span></button>`).join("");
   const keys = [1, 2, 3, 4, 5, 6, 7, 8, 9].map((k) => `<button data-k="${k}">${k}</button>`).join("");
   return `<div class="screen" style="padding-bottom:28px">
     <div class="brand" style="justify-content:flex-start;margin-bottom:18px">${icon("plus")}Ovamha</div>
-    <h1 style="margin:0 0 4px;font-size:1.6rem">Welcome back</h1>
-    <p class="muted" style="margin:0 0 18px">Choose your name, then enter your PIN. Sign-in is checked on this device: no internet needed.</p>
-    <div class="people">${people || '<p class="muted">No accounts found on this device.</p>'}</div>
-    ${S.pick ? `<div class="pin-dots">${[0, 1, 2, 3, 4, 5].map((i) => `<i class="${i < S.pin.length ? "on" : ""}"></i>`).join("")}</div>
+    <h1 style="margin:0 0 4px;font-size:1.6rem">Sign in</h1>
+    <p class="muted" style="margin:0 0 18px">Sign-in is checked on this device: no internet needed.</p>
+    <label class="small muted" for="user" style="font-weight:650">Username</label>
+    <input class="input" id="user" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false"
+      placeholder="e.g. fati" value="${esc(S.username || "")}" style="margin:6px 0 4px">
+    <div class="small muted" style="margin-top:14px;font-weight:650">PIN</div>
+    <div class="pin-dots">${[0, 1, 2, 3, 4, 5].map((i) => `<i class="${i < S.pin.length ? "on" : ""}"></i>`).join("")}</div>
     <div class="err" id="err">${esc(S.err)}</div>
-    <div class="pinpad">${keys}<button class="fn" data-k="clear">Clear</button><button data-k="0">0</button><button class="fn" data-k="del" aria-label="Delete">${icon("back")}</button></div>` : ""}
+    <div class="pinpad">${keys}<button class="fn" data-k="clear">Clear</button><button data-k="0">0</button><button class="fn" data-k="del" aria-label="Delete">${icon("back")}</button></div>
   </div>`;
 }
 bind.login = () => {
-  document.querySelectorAll("[data-pick]").forEach((b) => b.onclick = () => { S.pick = b.dataset.pick; S.pin = ""; S.err = ""; render(); });
+  const u = $("#user");
+  u.oninput = () => { S.username = u.value; };
+  if (!S.username) u.focus();
   document.querySelectorAll("[data-k]").forEach((b) => b.onclick = () => pinKey(b.dataset.k));
 };
 document.addEventListener("keydown", (e) => {
-  if (S.screen !== "login" || !S.pick) return;
+  if (S.screen !== "login" || document.activeElement?.id === "user") return;
   if (/^\d$/.test(e.key)) pinKey(e.key); else if (e.key === "Backspace") pinKey("del");
 });
 async function pinKey(k) {
   if (k === "clear") S.pin = ""; else if (k === "del") S.pin = S.pin.slice(0, -1); else if (S.pin.length < 6) S.pin += k;
   S.err = "";
+  if (S.pin.length === 6 && !(S.username || "").trim()) { S.err = "Enter your username first."; S.pin = ""; }
   render();
   if (S.pin.length === 6) {
     try {
-      const r = await api("/api/login", { body: { worker_id: S.pick, pin: S.pin } });
+      const r = await api("/api/login", { body: { username: S.username, pin: S.pin } });
       S.token = r.token; S.worker = r.worker; S.lang = r.worker.languages?.[0] || "en";
       store.set("ovamha", { token: S.token, worker: S.worker, lang: S.lang });
-      S.pin = ""; go("home");
+      S.pin = ""; S.username = ""; go("home");
     } catch (e) { S.err = e.message; S.pin = ""; render(); }
   }
 }
 function signOut(silent) {
   if (!silent) api("/api/logout").catch(() => {});
-  S.token = null; S.worker = null; S.pick = null; store.del("ovamha");
+  S.token = null; S.worker = null; S.username = ""; store.del("ovamha");
   go("login");
 }
 
@@ -245,7 +269,7 @@ function home() {
       <svg class="plus" width="150" height="150" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16" stroke="#fff" stroke-width="5" stroke-linecap="round"/></svg>
       <h2>New pregnancy check</h2>
       <p>Describe the woman's situation. Ovamha checks for danger signs and prepares the referral.</p>
-      <button class="btn" id="start">${icon("mic")}Start check</button>
+      <button class="btn" id="start">${icon("mic")}Guide me</button>
     </div>
     <div class="section-title">Language for this check</div>
     <div class="chips">${LANGS.map(([c, n]) => `<button class="chip ${S.lang === c ? "on" : ""}" data-lang="${c}">${n}</button>`).join("")}</div>
@@ -269,9 +293,58 @@ async function startCheck() {
   try {
     S.st = await api("/api/encounter/new", { body: { lang: S.lang } });
     S.result = null; S.audioBlob = null; S.audioUrl = null; S.transcript = ""; S.typing = false; S.numbers = {};
-    go("describe");
+    S.cardMode = null; S.cardErr = "";
+    go("woman");
   } catch (e) { toast(e.message); }
 }
+
+// ---------------------------------------------------------------- 3b. who is this check for (card number)
+function woman() {
+  const w = S.st?.woman;
+  let body;
+  if (w && w.new) {
+    body = `<div class="card" style="text-align:center">
+      <div class="badge green" style="margin-bottom:10px">${icon("check")}New card number created</div>
+      <div class="small muted">Write this on her antenatal card</div>
+      <div style="font-size:2.6rem;font-weight:800;letter-spacing:.12em;color:var(--blue-700);margin:10px 0 6px;font-family:ui-monospace,Menlo,monospace">${esc(w.card_code)}</div>
+      <button class="btn soft" id="sayCard">${icon("speaker")}Read aloud</button>
+      <p class="tiny" style="margin:12px 0 0">No name or phone number is stored. Ovamha keeps its own ID for her on this device.</p>
+    </div>
+    <div style="margin-top:16px"><button class="btn primary" id="toDescribe">Continue${icon("right")}</button></div>`;
+  } else if (w) {
+    body = `<div class="card" style="text-align:center">
+      <div class="badge green" style="margin-bottom:10px">${icon("check")}Card found</div>
+      <div style="font-size:2.2rem;font-weight:800;letter-spacing:.12em;color:var(--blue-700);margin:6px 0;font-family:ui-monospace,Menlo,monospace">${esc(w.card_code)}</div>
+      <div class="small muted">${w.visits} previous ${w.visits === 1 ? "check" : "checks"} on this device</div>
+    </div>
+    <div style="margin-top:16px"><button class="btn primary" id="toDescribe">Continue${icon("right")}</button></div>`;
+  } else if (S.cardMode === "find") {
+    body = `<div class="card"><h3>Her card number</h3><p class="small muted" style="margin:2px 0 12px">6 characters, as written on her antenatal card.</p>
+      <input class="input" id="card" autocapitalize="characters" autocorrect="off" spellcheck="false" maxlength="7" placeholder="K7P-3QZ"
+        style="font-size:1.6rem;text-align:center;letter-spacing:.15em;font-weight:700;font-family:ui-monospace,Menlo,monospace">
+      <div class="err">${esc(S.cardErr)}</div>
+      <div class="row" style="margin-top:6px"><button class="btn soft" id="cardBack">Back</button><button class="btn primary" id="findCard">Find</button></div></div>`;
+  } else {
+    body = `<button class="card" id="newWoman" style="width:100%;text-align:left;display:flex;gap:14px;align-items:center;border:0">
+        <span class="icon-btn blue" style="flex:none">${icon("plus")}</span>
+        <span style="flex:1"><b style="font-size:1.1rem">First visit</b><br><span class="small muted">Create a new card number for her</span></span>${icon("right")}</button>
+      <button class="card" id="oldWoman" style="width:100%;text-align:left;display:flex;gap:14px;align-items:center;border:0">
+        <span class="icon-btn soft" style="flex:none">${icon("file")}</span>
+        <span style="flex:1"><b style="font-size:1.1rem">Returning</b><br><span class="small muted">Enter the number on her card</span></span>${icon("right")}</button>`;
+  }
+  return `<div class="screen">${topbar("Who is this check for?", "home")}${body}</div>${nav("describe")}`;
+}
+bind.woman = () => {
+  const set = (st) => { S.st = st; S.cardErr = ""; render(); };
+  $("#newWoman") && ($("#newWoman").onclick = () => api("/api/woman/new").then(set).catch((e) => toast(e.message)));
+  $("#oldWoman") && ($("#oldWoman").onclick = () => { S.cardMode = "find"; render(); $("#card").focus(); });
+  $("#cardBack") && ($("#cardBack").onclick = () => { S.cardMode = null; S.cardErr = ""; render(); });
+  const find = () => api("/api/woman/find", { body: { card_code: $("#card").value } }).then(set).catch((e) => { S.cardErr = e.message; render(); });
+  $("#findCard") && ($("#findCard").onclick = find);
+  $("#card") && ($("#card").onkeydown = (e) => { if (e.key === "Enter") find(); });
+  $("#sayCard") && ($("#sayCard").onclick = () => speakText(`Card number: ${S.st.woman.card_code.replace("-", "").split("").join(", ")}`, "en"));
+  $("#toDescribe") && ($("#toDescribe").onclick = () => go("describe"));
+};
 
 // ---------------------------------------------------------------- 4. describe (record -> replay / next)
 let recTimer = null;
@@ -289,7 +362,7 @@ function describe() {
       <h3 style="font-size:1.2rem">Check the recording</h3>
       <p class="muted small" style="margin:4px 0 18px">Listen to it again, or go on to the read-back.</p>
       <div class="stack">
-        <button class="btn outline" id="replay">${icon("replay")}Replay what was said</button>
+        <button class="btn outline" id="replay">${icon("replay")}Replay guidance</button>
         <button class="btn primary" id="next">Next${icon("right")}</button>
         <button class="link" id="again">Record again</button>
       </div></div>`;
@@ -303,7 +376,7 @@ function describe() {
       ${live ? "" : `<button class="link" id="type">${icon("keyboard")} Type instead</button>`}
     </div>`;
   }
-  return `<div class="screen">${topbar("Describe", "home")}${steps(1)}
+  return `<div class="screen">${topbar("Describe", "woman")}${steps(1)}
     <div class="chips" style="margin-bottom:14px">${LANGS.map(([c, n]) => `<button class="chip ${S.lang === c ? "on" : ""}" data-lang="${c}">${n}</button>`).join("")}</div>
     ${body}
     <p class="tiny" style="text-align:center;margin-top:16px">Speech is turned into text on this device. Nothing is sent to the internet.</p>
@@ -315,7 +388,7 @@ bind.describe = () => {
   $("#mic") && ($("#mic").onclick = toggleRecord);
   $("#type") && ($("#type").onclick = () => { S.typing = true; render(); });
   $("#toVoice") && ($("#toVoice").onclick = () => { S.transcript = $("#tx").value; S.typing = false; render(); });
-  $("#replay") && ($("#replay").onclick = () => playUrl(S.audioUrl));
+  $("#replay") && ($("#replay").onclick = () => playBlob(S.audioBlob));
   $("#again") && ($("#again").onclick = () => { S.audioBlob = null; S.audioUrl = null; render(); });
   $("#next") && ($("#next").onclick = transcribeAndRead);
   $("#nextTyped") && ($("#nextTyped").onclick = () => readBack($("#tx").value));
@@ -417,12 +490,12 @@ bind.confirm = () => {
 
 // ---------------------------------------------------------------- 6. measurements (keypad default, voice optional)
 const MEASURES = [
-  { id: "ga", title: "Gestational age", icon: "calendar", fields: [["gestational_age_weeks", "weeks"]] },
-  { id: "bp", title: "Blood pressure", icon: "heart", fields: [["systolic", "systolic"], ["diastolic", "diastolic"]], unit: "mmHg · say “90 over 60”" },
-  { id: "bp2", title: "Repeat blood pressure", icon: "heart", fields: [["systolic_repeat", "systolic"], ["diastolic_repeat", "diastolic"]], unit: "mmHg · only if the first was high", optional: true },
-  { id: "pulse", title: "Pulse", icon: "heart", fields: [["pulse", "/min"]], optional: true },
-  { id: "temp", title: "Temperature", icon: "temp", fields: [["temperature", "°C"]], optional: true },
-  { id: "fhr", title: "Fetal heart rate", icon: "baby", fields: [["fetal_heart_rate", "/min"]], optional: true },
+  { id: "ga", prompt: "ask_ga", title: "Gestational age", icon: "calendar", fields: [["gestational_age_weeks", "weeks"]] },
+  { id: "bp", prompt: "ask_bp", title: "Blood pressure", icon: "heart", fields: [["systolic", "systolic"], ["diastolic", "diastolic"]], unit: "mmHg · say “90 over 60”" },
+  { id: "bp2", prompt: "ask_bp_repeat", title: "Repeat blood pressure", icon: "heart", fields: [["systolic_repeat", "systolic"], ["diastolic_repeat", "diastolic"]], unit: "mmHg · only if the first was high", optional: true },
+  { id: "pulse", prompt: "ask_pulse", title: "Pulse", icon: "heart", fields: [["pulse", "/min"]], optional: true },
+  { id: "temp", prompt: "ask_temp", title: "Temperature", icon: "temp", fields: [["temperature", "°C"]], optional: true },
+  { id: "fhr", prompt: "ask_fhr", title: "Fetal heart rate", icon: "baby", fields: [["fetal_heart_rate", "/min"]], optional: true },
 ];
 const item = (f) => (S.st?.items || []).find((i) => i.field === f);
 function measureCard(m) {
@@ -432,28 +505,28 @@ function measureCard(m) {
   return `<div class="card measure">
     <div style="display:flex;align-items:center;gap:10px"><span class="icon-btn soft" style="width:40px;height:40px">${icon(m.icon)}</span>
       <h3 style="flex:1;margin:0">${m.title}${m.optional ? ' <span class="tiny">optional</span>' : ""}</h3>
-      ${allOk ? `<button class="icon-btn soft" data-msay="${m.id}" aria-label="Read aloud">${icon("speaker")}</button>` : ""}</div>
+      <button class="icon-btn soft" data-prompt="${m.prompt}" aria-label="Read the question aloud">${icon("speaker")}</button></div>
     <div class="num-row">${inputs}${allOk ? "" : `<button class="mic-sm ${live ? "live" : ""}" data-mrec="${m.id}" aria-label="Say the number">${icon(live ? "stop" : "mic")}</button>`}</div>
     ${m.unit ? `<div class="unit">${esc(m.unit)}</div>` : ""}
-    ${allOk ? `<div class="done-line">${icon("check")}Confirmed <button class="link small" data-mundo="${m.id}">Change</button></div>`
+    ${allOk ? `<div class="done-line">${icon("check")}Confirmed <button class="link small" data-msay="${m.id}">Read back</button><button class="link small" data-mundo="${m.id}">Change</button></div>`
       : `<div class="row" style="margin-top:12px"><button class="btn soft" data-msay="${m.id}">${icon("speaker")}Read back</button><button class="btn primary" data-mok="${m.id}">${icon("check")}Confirm</button></div>`}
   </div>`;
 }
 const choiceKey = (v) => (v === true ? "yes" : v === false ? "no" : String(v));
-function choiceCard(field, title, opts, ic) {
+function choiceCard(field, title, opts, ic, prompt) {
   const it = item(field);
   return `<div class="card measure"><div style="display:flex;align-items:center;gap:10px"><span class="icon-btn soft" style="width:40px;height:40px">${icon(ic)}</span><h3 style="flex:1;margin:0">${title} <span class="tiny">optional</span></h3>
-    ${it?.confirmed ? `<button class="icon-btn soft" data-csay="${field}" aria-label="Read aloud">${icon("speaker")}</button>` : ""}</div>
+    <button class="icon-btn soft" data-prompt="${prompt}" aria-label="Read the question aloud">${icon("speaker")}</button></div>
     <div class="seg">${opts.map(([v, l]) => `<button data-choice="${field}" data-v="${esc(v)}" class="${it?.confirmed && choiceKey(it.value) === v ? "on" : ""}">${l}</button>`).join("")}</div>
-    ${it?.confirmed ? `<div class="done-line">${icon("check")}Confirmed: ${esc(it.confirmed_value)}</div>` : ""}</div>`;
+    ${it?.confirmed ? `<div class="done-line">${icon("check")}Confirmed: ${esc(it.confirmed_value)} <button class="link small" data-csay="${field}">Read back</button></div>` : ""}</div>`;
 }
 function measure() {
   const danger = S.st?.preview?.danger;
   return `<div class="screen">${topbar("Measurements", "confirm")}${steps(3)}
     ${danger ? `<div class="banner red">${icon("alert")}Danger sign confirmed. Refer now: measurements are optional.</div>` : `<p class="muted small" style="margin-top:0">Type the numbers, or tap the microphone and say them. Each one is read back for you to confirm.</p>`}
     ${MEASURES.map(measureCard).join("")}
-    ${choiceCard("urine_protein", "Urine protein", [["negative", "Negative"], ["trace", "Trace"], ["+", "+"], ["++", "++"], ["+++", "+++"], ["unknown", "Not done"]], "flask")}
-    ${choiceCard("severe_pe_symptoms", "Severe pre-eclampsia symptoms", [["yes", "Yes"], ["no", "No"], ["unknown", "Don't know"]], "alert")}
+    ${choiceCard("urine_protein", "Urine protein", [["negative", "Negative"], ["trace", "Trace"], ["+", "+"], ["++", "++"], ["+++", "+++"], ["unknown", "Not done"]], "flask", "ask_protein")}
+    ${choiceCard("severe_pe_symptoms", "Severe pre-eclampsia symptoms", [["yes", "Yes"], ["no", "No"], ["unknown", "Don't know"]], "alert", "ask_severe_pe")}
   </div>
   <div class="sticky">${statusBanner()}<button class="btn primary" id="finish">${icon("send")}Finish and see result</button></div>`;
 }
@@ -492,6 +565,7 @@ bind.measure = () => {
     } catch (e) { toast(e.message); }
   });
   document.querySelectorAll("[data-csay]").forEach((b) => b.onclick = () => speakItem(b.dataset.csay));
+  document.querySelectorAll("[data-prompt]").forEach((b) => b.onclick = () => speakPrompt(b.dataset.prompt));
   $("#finish").onclick = finish;
 };
 let numRecorder = null;
@@ -590,7 +664,6 @@ bind.profile = () => { $("#signout").onclick = () => signOut(false); };
 
 // ---------------------------------------------------------------- boot
 (async function boot() {
-  try { S.workers = await api("/api/workers", { method: "GET" }); } catch { S.workers = []; }
   const saved = store.get("ovamha");
   if (saved?.token) {
     S.token = saved.token; S.worker = saved.worker; S.lang = saved.lang || "en";

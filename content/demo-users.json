@@ -2,6 +2,7 @@
   "_note": "DEMO accounts for the hackathon prototype. PINs are stored as salted PBKDF2 hashes; demo PINs are listed in apps/prototype/README.md.",
   "users": [
     {
+      "username": "fati",
       "worker_id": "nurse-fati",
       "display_name": "Nurse Fati",
       "role": "Nurse",
@@ -14,6 +15,7 @@
       "pin_hash": "ddfd53b6e56f5f96975c38f357ba971c04d88d3f9bf2269aa39d3e0ea4db2636"
     },
     {
+      "username": "aminata",
       "worker_id": "chw-aminata",
       "display_name": "CHW Aminata",
       "role": "Community health worker",
@@ -26,6 +28,7 @@
       "pin_hash": "d5c9ad0bdd11cf2117d833b60681d69b436bcc1a6d4a150dd89f892d2fb39102"
     },
     {
+      "username": "funmi",
       "worker_id": "midwife-funmi",
       "display_name": "Midwife Funmi",
       "role": "Midwife",

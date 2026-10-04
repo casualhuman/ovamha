@@ -46,7 +46,16 @@
       "please_confirm": "Please confirm each item.",
       "is_this_correct": "Is this correct?",
       "refer_now": "Danger sign. Refer now.",
-      "say_number": "Say the number now."
+      "say_number": "Say the number now.",
+      "ask_ga": "Gestational age. How many weeks pregnant is she?",
+      "ask_bp": "Blood pressure. Say the top number, then the bottom number. For example: ninety over sixty.",
+      "ask_bp_repeat": "Repeat blood pressure. Only needed if the first reading was high.",
+      "ask_pulse": "Pulse, in beats per minute.",
+      "ask_temp": "Temperature, in degrees Celsius.",
+      "ask_fhr": "Fetal heart rate, in beats per minute.",
+      "ask_protein": "Urine protein. Choose the dipstick result.",
+      "ask_severe_pe": "Does she have symptoms of severe pre-eclampsia?",
+      "card_new": "Write this card number on her antenatal card."
     }
   },
   "kri": {
@@ -95,7 +104,16 @@
       "please_confirm": "",
       "is_this_correct": "",
       "refer_now": "",
-      "say_number": ""
+      "say_number": "",
+      "ask_ga": "",
+      "ask_bp": "",
+      "ask_bp_repeat": "",
+      "ask_pulse": "",
+      "ask_temp": "",
+      "ask_fhr": "",
+      "ask_protein": "",
+      "ask_severe_pe": "",
+      "card_new": ""
     }
   },
   "yo": {
@@ -144,7 +162,16 @@
       "please_confirm": "",
       "is_this_correct": "",
       "refer_now": "",
-      "say_number": ""
+      "say_number": "",
+      "ask_ga": "",
+      "ask_bp": "",
+      "ask_bp_repeat": "",
+      "ask_pulse": "",
+      "ask_temp": "",
+      "ask_fhr": "",
+      "ask_protein": "",
+      "ask_severe_pe": "",
+      "card_new": ""
     }
   }
 }

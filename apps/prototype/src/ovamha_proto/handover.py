@@ -24,7 +24,7 @@ def handover_text(e: Encounter) -> str:
     measured = [(f, v) for f, v in e.confirmed.items() if f in KEYPAD_FIELDS]
     lines = [
         f"OVAMHA HANDOVER  {e.code}  ({'URGENT REFERRAL' if e.referral else 'no referral rule fired'})",
-        f"Card code: {e.card_code}   Time: {e.at}   From: {e.facility}   Worker: {e.worker_id}",
+        f"Card number: {e.card_code[:3]}-{e.card_code[3:]}   Time: {e.at}   From: {e.facility}   Worker: {e.worker_id}",
         "",
         "REPORTED SYMPTOMS (history)",
     ]

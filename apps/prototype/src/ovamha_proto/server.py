@@ -19,9 +19,9 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import fhir_client, sms
+from . import fhir_client, registry, sms
 from .asr import model_name, transcribe
-from .auth import Worker, login, workers
+from .auth import Worker, login
 from .confirm import KEYPAD_FIELDS, Session, fmt, label
 from .encounter import Encounter
 from .extract import extract
@@ -30,7 +30,7 @@ from .handover import handover_text
 from .numbers import parse_bp, parse_number
 from .rules import evaluate, questions_to_ask
 from .safety_net import scan
-from .tts import item_text, speak
+from .tts import item_text, speak, text_in
 
 WEB = Path(__file__).resolve().parents[2] / "web"
 PLAUSIBLE = {"gestational_age_weeks": (4, 45), "systolic": (50, 300), "diastolic": (20, 200),
@@ -54,6 +54,7 @@ class Visit:
     encounter: Encounter | None = None
     bundle: dict | None = None
     fhir_ids: dict = field(default_factory=dict)
+    woman: registry.Woman | None = None
 
 
 TOKENS: dict[str, Visit] = {}
@@ -69,6 +70,12 @@ def visit(authorization: str = Header(default="")) -> Visit:
 def _new_session(v: Visit) -> None:
     v.session = Session(worker_id=v.worker.worker_id)
     v.transcript, v.notes, v.encounter, v.bundle, v.fhir_ids = "", [], None, None, {}
+
+
+def _woman_view(w: registry.Woman | None) -> dict | None:
+    if not w:
+        return None
+    return {"card_code": registry.display(w.card_code), "visits": w.visits, "last_visit": w.last_visit, "new": w.visits == 0}
 
 
 def _rule_view(results) -> dict:
@@ -98,25 +105,20 @@ def state(v: Visit) -> dict:
     return {
         "worker": v.worker.__dict__, "lang": v.lang, "transcript": v.transcript, "notes": v.notes,
         "items": items, "preview": _rule_view(evaluate(s.confirmed)) if s.confirmed else None,
-        "finished": v.encounter is not None,
+        "finished": v.encounter is not None, "woman": _woman_view(v.woman),
     }
 
 
 # ---------------- auth ----------------
 
 class LoginIn(BaseModel):
-    worker_id: str
+    username: str
     pin: str
-
-
-@app.get("/api/workers")
-def list_workers():
-    return [{"worker_id": w.worker_id, "display_name": w.display_name, "role": w.role} for w in workers()]
 
 
 @app.post("/api/login")
 def do_login(body: LoginIn):
-    w, err = login(body.worker_id, body.pin)
+    w, err = login(body.username, body.pin)
     if not w:
         raise HTTPException(401, err)
     token = secrets.token_urlsafe(24)
@@ -141,7 +143,30 @@ class LangIn(BaseModel):
 @app.post("/api/encounter/new")
 def new_encounter(body: LangIn, v: Visit = Depends(visit)):
     _new_session(v)
+    v.woman = None
     v.lang = body.lang
+    return state(v)
+
+
+# ---------------- woman (card number) ----------------
+
+@app.post("/api/woman/new")
+def woman_new(v: Visit = Depends(visit)):
+    """First visit: create her woman ID and card number."""
+    v.woman = registry.register(v.worker.worker_id)
+    return state(v)
+
+
+class CardIn(BaseModel):
+    card_code: str
+
+
+@app.post("/api/woman/find")
+def woman_find(body: CardIn, v: Visit = Depends(visit)):
+    w, err = registry.find(body.card_code)
+    if not w:
+        raise HTTPException(404, err)
+    v.woman = w
     return state(v)
 
 
@@ -277,6 +302,7 @@ def number_voice(audio: UploadFile = File(...), field: str = Form(...), lang: st
 # ---------------- read aloud ----------------
 
 class SpeakIn(BaseModel):
+    prompt: str | None = None
     field: str | None = None
     value: str | float | bool | None = None
     text: str | None = None
@@ -286,7 +312,9 @@ class SpeakIn(BaseModel):
 @app.post("/api/speak")
 def do_speak(body: SpeakIn, v: Visit = Depends(visit)):
     lang = body.lang or v.lang
-    if body.field:
+    if body.prompt:
+        text, spoken_lang = text_in(lang, body.prompt, body.text or body.prompt)
+    elif body.field:
         val = v.session.proposals[body.field].value if body.value is None and body.field in v.session.proposals else body.value
         text, spoken_lang = item_text(body.field, label(body.field), val, lang)
     elif body.text:
@@ -304,11 +332,15 @@ def do_speak(body: SpeakIn, v: Visit = Depends(visit)):
 
 @app.post("/api/finish")
 def do_finish(v: Visit = Depends(visit)):
+    if not v.woman:
+        raise HTTPException(409, "Choose First visit or enter her card number first.")
     s = v.session
     confirmed = s.finalise()  # unconfirmed items are discarded here
     results = evaluate(confirmed)
     e = Encounter(confirmed, dict(s.sources), results, v.lang, s.worker_id, v.asr_model or model_name(v.lang))
     e.facility = v.worker.facility
+    e.woman_id, e.card_code = v.woman.woman_id, v.woman.card_code
+    registry.record_visit(v.woman.card_code)
     v.encounter = e
     v.bundle = build_bundle(e)
     try:
@@ -320,7 +352,7 @@ def do_finish(v: Visit = Depends(visit)):
     if e.referral:
         m = sms.send(sms.referral_text(e))
         out_sms = {"text": m.text, "channel": m.channel, "at": m.at}
-    return {**_rule_view(results), "code": e.code, "handover": handover_text(e), "sms": out_sms,
+    return {**_rule_view(results), "code": e.code, "card_code": registry.display(e.card_code), "handover": handover_text(e), "sms": out_sms,
             "status": e.referral_status, "bundle": v.bundle, "valid": valid}
 
 

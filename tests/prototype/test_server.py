@@ -13,13 +13,14 @@ SCENARIO = "She is 28 weeks pregnant and she has heavy vaginal bleeding since th
 def client(tmp_path, monkeypatch):
     salt, h = auth.hash_pin("123456")
     f = tmp_path / "users.json"
-    f.write_text(json.dumps({"users": [{"worker_id": "nurse-test", "display_name": "Nurse Test", "role": "Nurse",
+    f.write_text(json.dumps({"users": [{"username": "test", "worker_id": "nurse-test", "display_name": "Nurse Test", "role": "Nurse",
                                         "facility": "Test CHP", "languages": ["kri", "en"], "pin_salt": salt, "pin_hash": h}]}))
     monkeypatch.setattr(auth, "USERS_FILE", f)
     monkeypatch.setattr(auth, "_failures", {})
     monkeypatch.setattr(sms, "OUTBOX", tmp_path)
+    monkeypatch.setenv("OVAMHA_DATA", str(tmp_path))
     c = TestClient(server.app)
-    token = c.post("/api/login", json={"worker_id": "nurse-test", "pin": "123456"}).json()["token"]
+    token = c.post("/api/login", json={"username": "test", "pin": "123456"}).json()["token"]
     c.headers["Authorization"] = f"Bearer {token}"
     return c
 
@@ -29,11 +30,12 @@ def test_requires_login():
 
 
 def test_wrong_pin_rejected(client):
-    r = TestClient(server.app).post("/api/login", json={"worker_id": "nurse-test", "pin": "000000"})
+    r = TestClient(server.app).post("/api/login", json={"username": "test", "pin": "000000"})
     assert r.status_code == 401
 
 
 def test_full_scenario(client):
+    card = client.post("/api/woman/new").json()["woman"]["card_code"]
     st = client.post("/api/extract", json={"transcript": SCENARIO, "lang": "en"}).json()
     fields = {i["field"]: i for i in st["items"]}
     assert fields["vaginal_bleeding"]["value"] is True
@@ -50,6 +52,8 @@ def test_full_scenario(client):
 
     r = client.post("/api/finish").json()
     assert r["referral"] and r["valid"]["ok"]
+    assert r["card_code"] == card and card in r["handover"]
+    assert card.replace("-", "") not in r["sms"]["text"]  # SMS carries the encounter code only
     assert "Fever" not in r["handover"]  # proposed, never confirmed -> discarded
     assert r["sms"]["channel"] == "SIMULATED" and r["code"] in r["sms"]["text"]
 
@@ -71,3 +75,20 @@ def test_severity_confirmation(client):
 def test_static_app_served(client):
     r = client.get("/")
     assert r.status_code == 200 and "app.js" in r.text
+
+
+def test_finish_requires_woman(client):
+    assert client.post("/api/finish").status_code == 409
+
+
+def test_returning_woman_by_card(client):
+    card = client.post("/api/woman/new").json()["woman"]["card_code"]
+    client.post("/api/encounter/new", json={"lang": "en"})
+    st = client.post("/api/woman/find", json={"card_code": card.lower()}).json()
+    assert st["woman"]["card_code"] == card
+    assert client.post("/api/woman/find", json={"card_code": "AAA-AAA"}).status_code == 404
+
+
+def test_speak_prompt(client):
+    r = client.post("/api/speak", json={"prompt": "ask_bp", "lang": "en"})
+    assert r.status_code == 200 and r.headers["content-type"] == "audio/wav"
