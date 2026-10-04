@@ -1,8 +1,8 @@
 # Decision: national guidelines as cited rules, not a fine-tuned model; the health worker decides
 
-## MaternalSave suggests, the health worker decides
+## MaternaSave suggests, the health worker decides
 
-The Sierra Leone Integrated Obstetric and Newborn Care Guideline (2026 draft) makes referral the referring health worker's responsibility: assess, stabilise, explain and obtain consent, communicate with iSBAR, complete the standard referral form, record call and ambulance times. MaternalSave therefore never refers on its own:
+The Sierra Leone Integrated Obstetric and Newborn Care Guideline (2026 draft) makes referral the referring health worker's responsibility: assess, stabilise, explain and obtain consent, communicate with iSBAR, complete the standard referral form, record call and ambulance times. MaternaSave therefore never refers on its own:
 
 1. **Assess** (`/api/finish`): confirmed data only; WHO DAK demo rules plus national guideline advice, each item with its table citation.
 2. **Decide** (`/api/decision`): the worker chooses urgent referral, planned referral or no referral. Declining a suggested referral, or downgrading an urgent one, requires a written reason. The advice is never hidden or removed (decision 1).

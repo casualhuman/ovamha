@@ -1,10 +1,10 @@
-# MaternalSave — Agent Handover
+# MaternaSave — Agent Handover
 
 Read this whole note before writing code. It is the single source of context for this task.
 
 ## 1. What we are building
 
-**MaternalSave (Offline Voice Assistant for Maternal Healthcare in Africa)** is an offline voice assistant for community health workers (CHWs), nurses and midwives. A worker describes a pregnant woman's situation by voice. MaternalSave transcribes it, structures it, reads critical values back for confirmation, applies WHO danger-sign and referral rules to the confirmed data, prepares a handover, and sends a referral notice by SMS. It must work with no internet.
+**MaternaSave (Offline Voice Assistant for Maternal Healthcare in Africa)** is an offline voice assistant for community health workers (CHWs), nurses and midwives. A worker describes a pregnant woman's situation by voice. MaternaSave transcribes it, structures it, reads critical values back for confirmation, applies WHO danger-sign and referral rules to the confirmed data, prepares a handover, and sends a referral notice by SMS. It must work with no internet.
 
 Focus countries are Sierra Leone and Nigeria. Demo languages are **Yoruba, Krio and English**.
 
@@ -27,7 +27,7 @@ Focus countries are Sierra Leone and Nigeria. Demo languages are **Yoruba, Krio 
 6. **SMS only for messaging.** Referral notices, acknowledgements (ACK / FULL) and appointment reminders. No WhatsApp. SMS carries an encounter code, never the woman's name or HIV status.
 7. **Clinical content comes from the WHO Digital Adaptation Kit (DAK) for antenatal care.** Data model is **HL7 FHIR R4**, reusing WHO SMART ANC profiles and codes where possible.
 8. **History questions are tiered.** Danger sign present: refer immediately, no history first. Otherwise ask only what the current rules need. "Don't know" is recorded as unknown, never treated as normal.
-9. **Identity.** MaternalSave creates its own woman ID (UUID) and a short card code at first contact. National ID is optional, consented, and linked via a token or verification reference, never used as a key (World Bank ID4D guidance).
+9. **Identity.** MaternaSave creates its own woman ID (UUID) and a short card code at first contact. National ID is optional, consented, and linked via a token or verification reference, never used as a key (World Bank ID4D guidance).
 10. **Licences.** Do not block work on licence questions. Do list every dataset, model and WHO source in `THIRD_PARTY.md` (that list is the IP-compliance deliverable).
 
 ## 4. Where we are
@@ -68,13 +68,13 @@ Chain: microphone or uploaded audio → ASR → field extraction → AI safety-n
 
 Make the prototype emit and exchange real FHIR, validated.
 
-1. Build an R4 **transaction Bundle** from the confirmed encounter: Patient (identifiers: MaternalSave UUID, card code), Encounter, Observations (BP panel LOINC 85354-9 with 8480-6 / 8462-4; danger-sign Observations), GuidanceResponse (rule fired: canonical `http://fhir.org/guides/who/anc-cds/PlanDefinition/ANCDT01`), ServiceRequest (urgent referral), Task (status `requested`), Provenance (verifier = worker, assembler = ASR model Device, activity = `spoken-ai-extracted-confirmed`). Follow section 13 of the architecture specification.
+1. Build an R4 **transaction Bundle** from the confirmed encounter: Patient (identifiers: MaternaSave UUID, card code), Encounter, Observations (BP panel LOINC 85354-9 with 8480-6 / 8462-4; danger-sign Observations), GuidanceResponse (rule fired: canonical `http://fhir.org/guides/who/anc-cds/PlanDefinition/ANCDT01`), ServiceRequest (urgent referral), Task (status `requested`), Provenance (verifier = worker, assembler = ASR model Device, activity = `spoken-ai-extracted-confirmed`). Follow section 13 of the architecture specification.
 2. Validate it. Use the Python `fhir.resources` library for structural validation in code, and the official HL7 FHIR Validator (`validator_cli.jar`) against base R4 in a script. Show zero errors.
 3. Run a local **HAPI FHIR server** in Docker (`hapiproject/hapi`) on the laptop or Pi. POST the Bundle; show the resources via the FHIR REST API (e.g. `GET /Patient/{id}/$everything` or a search for Observations).
 4. On simulated ACK SMS, PUT the Task to `accepted`; on FULL, to `rejected`. Show the status change via the API.
 5. Save the example Bundle to `fhir/examples/referral-bundle.json`.
 
-Danger-sign codes: use placeholders in an MaternalSave code system (`https://fhir.ovamha.org/CodeSystem/danger-signs`) mapped to the DAK quick-check names, and state in the README that SMART ANC codes replace them after Annex extraction. Do not invent SNOMED or LOINC codes; only the LOINC codes listed above are confirmed.
+Danger-sign codes: use placeholders in an MaternaSave code system (`https://fhir.ovamha.org/CodeSystem/danger-signs`) mapped to the DAK quick-check names, and state in the README that SMART ANC codes replace them after Annex extraction. Do not invent SNOMED or LOINC codes; only the LOINC codes listed above are confirmed.
 
 ### P0-3. Demo scenario and video support
 
@@ -145,7 +145,7 @@ Do not use speech enhancement by default (it degraded medical ASR in every confi
 
 ## 9. README outline (one section per judging criterion)
 
-1. MaternalSave in one line + demo video link
+1. MaternaSave in one line + demo video link
 2. Problem and users
 3. Operating constraints (no connectivity, 2G/SMS, low-cost Android, three languages, low literacy)
 4. How it works (architecture diagram; rules floor, AI net, worker confirms)

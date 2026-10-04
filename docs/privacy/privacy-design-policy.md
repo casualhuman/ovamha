@@ -1,6 +1,6 @@
-# Privacy design policy: MaternalSave
+# Privacy design policy: MaternaSave
 
-**Status: DRAFT**, 2026-10-04. One policy for every country where MaternalSave runs, built on
+**Status: DRAFT**, 2026-10-04. One policy for every country where MaternaSave runs, built on
 international health guidance (WHO *Ethics and governance of AI for health* 2021; WHO *Data
 principles* 2020; WHO ANC DAK ANC.NFXNREQ) and the African baseline (ECOWAS Supplementary Act
 A/SA.1/01/10; AU Data Policy Framework 2022: privacy by design and by default). Country rules:
@@ -16,7 +16,7 @@ unprefixed "Bill" and "HIS" mean the Sierra Leone texts.
   dictionary; national ID is optional and its number is never stored; most registration details are
   optional.
 - **Tell her first** (Bill s.27(3)): the worker reads the privacy notice before registering a woman.
-  MaternalSave refuses to register without it and records when it was read.
+  MaternaSave refuses to register without it and records when it was read.
 - **Her data is hers** (HIS 3.5.9(a)): she can see her record ("Show record", printable) (HIS
   3.5.10(a); Bill s.43) and ask for corrections (Bill s.42).
 - **Share only for her care, or with her written consent** (HIS 3.5.9(c), 3.7(b)): referral data goes
@@ -53,7 +53,7 @@ consented data, never on patient records or recordings.
 |---|---|
 | Controller (Sierra Leone: facility / DHMT under MoHS; Nigeria: the health facility or state ministry; to be confirmed) | Approve this policy and the [DPIA](dpia.md); respond to her requests (ECOWAS Art. 39-41; NDPA s.34-36; SL-Bill s.28, 42, 43); report breaches ([breach-response.md](breach-response.md)); Nigeria: NDPC consultation and registration where required (NDPA s.28, s.44); Sierra Leone: register once the Bill is enacted (s.49) |
 | Health workers | Keep information confidential (SL-HIS 3.7(b); NHA s.26(1)); read the privacy notice; never share PINs or devices while signed in; report lost devices and suspected breaches immediately (SL-HIS 3.7(c)) |
-| MaternalSave developers | Build privacy in by default (Bill s.55); keep the controls in [README.md](README.md) tested; never use patient data or recordings for development or training |
+| MaternaSave developers | Build privacy in by default (Bill s.55); keep the controls in [README.md](README.md) tested; never use patient data or recordings for development or training |
 
 ## 5. Privacy from collection to deletion (s.54(1)(e))
 
@@ -80,4 +80,4 @@ information". Local test data lives in `OVAMHA_DATA` and can be wiped by deletin
 - *The Data Protection and Right to Access Information Regulatory Commission Act, 2025* (Sierra Leone Bill, not yet law): s.26-28, 39-43, 46, 49, 54, 55.
 - MoHS Sierra Leone, *Health Information System Policy*, 2021: s.3.5.9, 3.5.10, 3.6, 3.7.
 - WHO, *Digital adaptation kit for antenatal care*, 2021: ANC.NFXNREQ.001-043.
-- MaternalSave architecture: AP-05, DEV-03, DB-07, SEC-02, SEC-06.
+- MaternaSave architecture: AP-05, DEV-03, DB-07, SEC-02, SEC-06.

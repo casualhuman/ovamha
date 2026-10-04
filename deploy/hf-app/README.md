@@ -1,5 +1,5 @@
 ---
-title: MaternalSave
+title: MaternaSave
 emoji: 🤰
 colorFrom: blue
 colorTo: blue
@@ -9,9 +9,9 @@ pinned: true
 short_description: Offline voice guidance for safer maternal care (demo)
 ---
 
-# MaternalSave: offline voice guidance for safer maternal care
+# MaternaSave: offline voice guidance for safer maternal care
 
-**Hosted demo for judges.** In the field, MaternalSave runs fully offline on a phone and a local hub; this Space runs the same code, with its speech and voice models inside the container (no external AI service).
+**Hosted demo for judges.** In the field, MaternaSave runs fully offline on a phone and a local hub; this Space runs the same code, with its speech and voice models inside the container (no external AI service).
 
 Sign in: username `fati`, PIN `769131` (fictional demo account). Returning woman: card `MAM-A2A`. Fictional data only; the demo resets when the Space restarts.
 
