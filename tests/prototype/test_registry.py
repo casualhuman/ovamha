@@ -59,7 +59,7 @@ def test_no_personal_data_stored():
     rec = registry.find(w.card_code)[0]
     assert set(vars(rec)) == {"woman_id", "card_code", "created_at", "created_by", "visits", "last_visit", "episode_id",
                               "national_id", "birth_date", "birth_date_estimated", "details", "profile", "profile_at",
-                              "privacy_notice_at"}
+                              "privacy_notice_at", "history"}
     assert rec.national_id is None
 
 

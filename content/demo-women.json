@@ -1,5 +1,5 @@
 {
-  "_note": "Fictional demo women, added on every fresh start (local and hosted). MAM-A2A: returning woman for a quick test. ANC-24T: the point-of-care demo (32 weeks, previous pre-eclampsia), see docs/demo/point-of-care-demo.md. lmp_weeks_ago keeps their gestational age the same whenever the server starts.",
+  "_note": "Fictional demo women, added on every fresh start (local and hosted). MAM-A2A: returning woman for a quick test. ANC-24T: the point-of-care demo (32 weeks, previous pre-eclampsia), see docs/demo/point-of-care-demo.md. lmp_weeks_ago keeps their gestational age the same whenever the server starts. history: a fictional earlier check for each woman, so her previous findings show in her record.",
   "women": [
     {
       "card_code": "MAMA2A",
@@ -47,7 +47,27 @@
         "occupation": [
           "trading"
         ]
-      }
+      },
+      "history": [
+        {
+          "weeks_ago": 6,
+          "ga_weeks": 14,
+          "worker": "Nurse Fati",
+          "facility": "Demo Community Health Post, Sierra Leone",
+          "findings": [],
+          "denied": [
+            "Vaginal bleeding",
+            "Headache"
+          ],
+          "measurements": {
+            "Blood pressure": "118/76",
+            "Urine protein": "negative"
+          },
+          "guideline": "Plan delivery at a CEmONC facility (previous pre-eclampsia and caesarean section)",
+          "decision": "Planned referral (not an emergency)",
+          "demo": true
+        }
+      ]
     },
     {
       "card_code": "ANC24T",
@@ -94,7 +114,29 @@
         "occupation": [
           "trading"
         ]
-      }
+      },
+      "history": [
+        {
+          "weeks_ago": 4,
+          "ga_weeks": 28,
+          "worker": "Nurse Fati",
+          "facility": "Demo Community Health Post, Sierra Leone",
+          "findings": [],
+          "denied": [
+            "Vaginal bleeding",
+            "Headache",
+            "Visual disturbance"
+          ],
+          "measurements": {
+            "Blood pressure": "122/78",
+            "Urine protein": "negative",
+            "Fetal heart rate": "140"
+          },
+          "guideline": "Plan delivery at a CEmONC facility (previous pre-eclampsia)",
+          "decision": "Planned referral (not an emergency)",
+          "demo": true
+        }
+      ]
     }
   ]
 }

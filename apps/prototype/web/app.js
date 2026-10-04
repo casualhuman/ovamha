@@ -465,10 +465,14 @@ function woman() {
       ${who}<div class="small muted">${w.new ? "Write this on her antenatal card" : "Her card number"}</div>
       <div class="card-code">${esc(w.card_code)}</div>
       <div class="row" style="justify-content:center;gap:8px"><button class="btn soft" id="sayCard">${icon("speaker")}Read aloud</button>
-        <button class="btn soft" id="herRecord">${icon("file")}Show her record</button></div>
+        <button class="btn soft" id="herRecord">${icon("file")}Show record</button></div>
       <div class="small muted" style="margin-top:12px;display:flex;flex-direction:column;gap:4px;align-items:center">
         <span style="display:inline-flex;gap:6px;align-items:center">${idLine}</span>${dob ? `<span>${esc(dob)}</span>` : ""}
         ${w.new ? "" : `<span>${w.visits} previous ${w.visits === 1 ? "check" : "checks"} on this device</span>`}</div>
+      ${w.last_check ? `<div class="small" style="margin-top:10px;text-align:left;background:var(--soft,#f1f5f9);border-radius:12px;padding:10px 12px">
+        <b>Last check</b> ${esc((w.last_check.at || "").slice(0, 10))}${w.last_check.ga_weeks ? ` · ${w.last_check.ga_weeks} weeks` : ""}<br>
+        ${esc(w.last_check.findings.length ? w.last_check.findings.join(", ") : "No danger sign confirmed")}${w.last_check.measurements["Blood pressure"] ? ` · BP ${esc(w.last_check.measurements["Blood pressure"])}` : ""}<br>
+        <span class="muted">${esc(w.last_check.decision || w.last_check.guideline || "")}</span></div>` : ""}
     </div>
     <div style="margin-top:16px"><button class="btn primary" id="toDescribe">Continue${icon("right")}</button></div>`;
   } else if (S.cardMode === "new") {
@@ -544,8 +548,12 @@ function showRecord(rec) {
     ${line("Last check", rec.last_visit)}${line("Born", rec.birth_date + (rec.birth_date_estimated ? " (estimated)" : ""))}
     ${line("National ID", rec.national_id)}${line("Privacy notice read", rec.privacy_notice_at)}
     <h4 style="margin:12px 0 4px">Registration</h4>${obj(rec.details) || '<div class="small muted">None</div>'}
+    <h4 style="margin:12px 0 4px">Previous checks</h4>${(rec.history || []).map((h) => `<div class="small" style="margin:0 0 8px">
+      <b>${esc((h.at || "").slice(0, 10))}</b>${h.ga_weeks ? ` · ${h.ga_weeks} weeks` : ""}${h.worker ? ` · ${esc(h.worker)}` : ""}<br>
+      Found: ${esc(h.findings && h.findings.length ? h.findings.join(", ") : "no danger sign confirmed")}${h.denied && h.denied.length ? ` · Not present: ${esc(h.denied.join(", "))}` : ""}<br>
+      ${Object.entries(h.measurements || {}).map(([k, v]) => `${esc(k)} ${esc(v)}`).join(" · ")}${h.decision ? `<br>Decision: ${esc(h.decision)}${h.reason ? ` (${esc(h.reason)})` : ""}` : ""}</div>`).join("") || '<div class="small muted">None recorded on this device</div>'}
     <h4 style="margin:12px 0 4px">History and profile</h4>${obj(rec.profile) || '<div class="small muted">Not collected yet</div>'}
-    <p class="tiny muted" style="margin-top:12px">Visit records are kept at the health facility hub. She can ask for any mistake to be corrected.</p>
+    <p class="tiny muted" style="margin-top:12px">Full visit records are kept at the health facility hub. She can ask for any mistake to be corrected.</p>
     <div class="row" style="margin-top:12px"><button class="btn soft" id="recPrint">${icon("file")}Print</button><button class="btn primary modal-ok">Close</button></div></div>`;
   const close = () => m.remove();
   m.querySelector(".modal-x").onclick = close;

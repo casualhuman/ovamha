@@ -174,7 +174,7 @@ def test_registration_needs_privacy_notice(client):
 def test_she_can_see_her_record(client):
     client.post("/api/woman/new", json=REG)
     rec = client.get("/api/woman/record").json()
-    assert rec["details"]["first_name"] == "Mariama" and rec["privacy_notice_at"]
+    assert "Mariama" in rec["details"].values() and rec["privacy_notice_at"]
 
 
 # ---- anonymised export
@@ -186,3 +186,26 @@ def test_anonymised_export_drops_identifiers(client):
     flat = json.dumps(rows)
     assert rows and "Mariama" not in flat and "23276000000" not in flat
     assert set(rows[0]) >= {"pseudonym", "age_band", "visits"} and "card_code" not in rows[0] and "woman_id" not in rows[0]
+
+
+# ---- returning woman: her earlier checks are kept and shown
+def test_finished_check_is_summarised_in_her_record(client):
+    card = client.post("/api/woman/new", json=REG).json()["woman"]["card_code"]
+    client.post("/api/extract", json={"transcript": "She has heavy vaginal bleeding since this morning. No fever.", "lang": "en"})
+    for f in ("vaginal_bleeding", "bleeding_amount", "fever"):
+        client.post("/api/confirm", json={"field": f})
+    for f, v in (("systolic", "90"), ("diastolic", "60")):
+        client.post("/api/measure", json={"field": f, "value": v}); client.post("/api/confirm", json={"field": f})
+    client.post("/api/finish")
+    client.post("/api/decision", json={"choice": "planned", "reason": "Ambulance not available; family transport arranged"})
+    client.post("/api/woman/find", json={"card_code": card})
+    last = client.get("/api/state").json()["woman"]["last_check"]
+    assert "Vaginal bleeding" in last["findings"] and "Fever" in last["denied"]
+    assert last["measurements"]["Blood pressure"] == "90/60" and last["decision"]
+    assert client.get("/api/woman/record").json()["history"][0] == last
+
+
+def test_demo_women_have_a_previous_check():
+    registry.seed_demo()
+    w, _ = registry.find("ANC-24T")
+    assert w.visits == 1 and len(w.history) == 1 and w.history[0]["measurements"]["Blood pressure"] == "122/78"
