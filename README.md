@@ -4,52 +4,57 @@ Ovamha (Offline Voice Assistant for Maternal Healthcare in Africa) helps communi
 
 Focus countries: Sierra Leone and Nigeria. Prototype for the World Bank Small AI for Development Hackathon (October 2026).
 
-**Contents:** [Try it online](#try-it-online-step-by-step-about-5-minutes) · [Run it offline](#run-it-offline-on-your-own-machine) · [The problem](#the-problem-and-who-it-is-for) · [Built for low connectivity and low-end devices](#built-for-no-or-low-connectivity-and-low-end-devices) · [How it works](#how-it-works) · [Judging criteria](#how-ovamha-meets-the-judging-criteria) · [Digital public infrastructure](#digital-public-infrastructure-and-the-world-bank) · [What works now](#what-works-now-all-offline) · [Limits and trade-offs](#honest-limits-and-trade-offs) · [Third-party sources](#third-party-sources-and-licences) · [All documentation](#documentation)
+**Contents:** [Try it online](#try-it-online-step-by-step-about-5-minutes) · [Run it offline](#run-it-offline-on-your-own-machine) · [The problem](#the-problem-and-who-it-is-for) · [Built for low connectivity and low-end devices](#built-for-no-or-low-connectivity-and-low-end-devices) · [How it works](#how-it-works) · [Judging criteria](#judging-criteria) · [Digital public infrastructure](#digital-public-infrastructure-and-the-world-bank) · [What works now](#what-works-now-all-offline) · [Limitations and trade-offs](#limitations-and-trade-offs) · [Third-party sources](#third-party-sources-and-licences) · [All documentation](#documentation)
 
 ## Try it online: step by step (about 5 minutes)
 
-Open **https://r8086-ovamha.hf.space** on a laptop or phone (Chrome works best). The free host sleeps when idle, so the first visit can take about a minute to wake up. It runs the same code as the offline version; no outside AI service is called. All data is fictional: **do not enter real patient information.**
+Open **https://r8086-ovamha.hf.space** on a phone or laptop with a microphone (Chrome works best). The free host sleeps when idle, so the first visit can take about a minute to wake up. It runs the same code as the offline version; no outside AI service is called. All data is fictional: **do not enter real patient information.**
 
-You can **type** everything; speaking is optional.
+Ovamha is a **voice** assistant: you describe the woman out loud, the way a health worker would to a colleague.
 
 | Step | Do this | You should see |
 | --- | --- | --- |
 | 1 | On the welcome screens, tap **Skip** | The sign-in screen |
 | 2 | Username **`fati`**, PIN **`769131`** → **Sign in** | *Hello, Nurse Fati* |
 | 3 | Under **Language for this check**, tap **English**. Then tap **Guide me** | *Who is this check for?* |
-| 4 | Tap **Returning** (a woman who has been before). Type the card number for the option you pick below (**`ANC-24T`** or **`MAM-A2A`**) → **Find** → **Continue** | *Card found*, her name, and *1 previous check on this device*. Her history is already recorded, so that step is skipped |
-| 5 | Tap **Type instead**, paste the description from your option below → **Next** | *What we understood*: each item Ovamha heard, with the words it heard it from |
-| 6 | Tap **Correct** on each item (for a headache, choose **Severe** or **Mild**). If an item was not said, tap **Not true**. Then **Next: measurements** | Only confirmed items count; nothing unconfirmed reaches the advice |
-| 7 | Type the numbers from your option and tap **Confirm** under each; for urine protein, tap the result (e.g. **++**). Then **Check the guidelines** | *Guideline advice*, every line citing its source |
+| 4 | Tap **Returning** (a woman who has been before). Enter the card number for the option you pick below (**`MAM-A2A`** or **`ANC-24T`**) → **Find** → **Continue** | *Card found*, her name, and *1 previous check on this device*. Her history is already recorded, so that step is skipped |
+| 5 | Tap the large **microphone** (allow microphone access the first time) and **say** the description from your option below. Tap the microphone again when you finish. **Replay guidance** plays back what you said → **Next** | Speech is turned into text on the device, then *What we understood*: each danger sign Ovamha heard, with the words it heard it from |
+| 6 | Tap **Correct** on each item (for a headache, choose **Severe** or **Mild**). If something was misheard, tap **Not true**. Then **Next: measurements** | Only confirmed items count; nothing unconfirmed reaches the advice |
+| 7 | Enter the numbers from your option on the keypad (or tap the microphone beside a field and say them, e.g. *"one sixty-five over one twelve"*) → **Confirm** under each; for urine protein, tap the result. Then **Check the guidelines** | *Guideline advice*, every line citing its source, and **What you can do now**: the guideline's own steps for this woman |
 | 8 | Under **Your decision**, choose one → **Confirm my decision** | The result: referral, SMS, referral letter and the record |
+
+Numbers go on the keypad by default on purpose: a misheard blood pressure is dangerous, so voice is used for symptoms and history.
 
 ### Pick one of three women to try
 
-**Option A: routine visit, no danger sign.** Card **`ANC-24T`** (*Aminata Demo*, 32 weeks pregnant, pre-eclampsia in her last pregnancy).
+**Option A: routine visit, no danger sign.** Card **`MAM-A2A`** (*Mariama Demo*, 20 weeks pregnant, previous pre-eclampsia and caesarean section).
 
-- **Type:** `Routine visit. She feels well, she only has some back pain. No bleeding, no headache, and the baby is moving well.`
-- **What we understood:** *Vaginal bleeding · No*, *Headache · No*. Ovamha records "no bleeding" as a real answer, not as missing.
-- **Measurements:** blood pressure **128 / 82**, fetal heart rate **142**, urine protein **Negative**.
-- **You should see:** *High-risk pregnancy: the guidelines suggest planning delivery at a CEmONC facility. You decide*, because of her previous pre-eclampsia (Sierra Leone guideline, Table 3.4). Under **What you can do now**: aspirin 75 mg daily, calcium, BP and urine protein every contact. Under **Care due at this contact**: IPTp SP, aspirin, multiple micronutrients, HIV retest. And the **Next contact** date.
+- **Say:** *"Routine visit. She feels well, she only has some back pain. No bleeding, no headache, and the baby is moving well."*
+- **What we understood:** *Vaginal bleeding · No*, *Headache · No*. "No bleeding" is recorded as a real answer, not as missing.
+- **Measurements:** blood pressure **124 / 80**, urine protein **Negative**.
+- **You should see:** *High-risk pregnancy: the guidelines suggest planning delivery at a CEmONC facility. You decide*, because of her previous pre-eclampsia and caesarean section (Sierra Leone guideline, Table 3.4).
+- **What you can do now:** *High risk of pre-eclampsia: prevention and monitoring*: aspirin 75 mg daily, calcium, BP and urine protein at every contact, birth at 37 weeks at a facility able to do caesarean birth. Below it, **Care due at this contact** (Td vaccine, IPTp SP, aspirin, micronutrients, birth plan) and the **Next contact** date.
 - **Decide:** **Plan a referral** → *Planned referral. Recorded.* No emergency SMS is sent.
 
-**Option B: emergency, severe pre-eclampsia.** Same card **`ANC-24T`**, two weeks later.
+**Option B: emergency, described in everyday words.** Card **`ANC-24T`** (*Aminata Demo*, 32 weeks pregnant, pre-eclampsia in her last pregnancy). This is where the AI text classifier matters: no danger-sign word is used.
 
-- **Type:** `Since this morning she has a very bad headache and her eyes are blurry. Her face and hands are swollen.`
-- **What we understood:** *Headache · Yes* (choose **Severe**), *Visual disturbance · Yes*, *Swelling · Yes*: three danger signs found in everyday words.
+- **Say:** *"Since this morning her head is banging and everything looks blurry. Her hands and face are puffy."*
+- **What we understood:** *Headache · Yes* (choose **Severe**), *Visual disturbance · Yes*, *Swelling · Yes*. The classifier understands "head is banging" as a headache and "puffy" as swelling; a keyword list misses the headache and only flags the swelling for checking.
 - **Measurements:** blood pressure **165 / 112**, urine protein **++**.
-- **You should see:** *The guidelines suggest urgent referral. You decide.* Rows: severe headache with visual disturbance (WHO danger signs), BP 165/112 with protein ++ (Sierra Leone guideline: severe pre-eclampsia). Under **What you can do now**: the magnesium sulphate protocol with exact doses, when to withhold it, and blood-pressure treatment.
-- **Decide:** **Refer urgently** → **She agrees** → read the iSBAR call script (tap 🔊 to hear it) → **I called just now** → **Refer digitally and prepare the letter**. You get the referral SMS to the hospital. Tap **ACK** to play the hospital's reply: *Hospital accepted the referral*. **Preview the letter** shows the printable referral letter with a feedback slip.
+- **You should see:** *The guidelines suggest urgent referral. You decide.* Rows: severe headache with visual disturbance (WHO danger signs), BP 165/112 with protein ++ (Sierra Leone guideline: severe pre-eclampsia), and her previous pre-eclampsia.
+- **What you can do now:** *Severe pre-eclampsia / eclampsia: act fast, magnesium sulphate*: the loading dose with exact amounts, the repeat and maintenance doses, when to withhold it (breathing below 16, no reflexes, low urine), blood-pressure treatment, and dexamethasone between 24 and 34 weeks. Tap 🔊 to hear it.
+- **Decide:** **Refer urgently** → **She agrees** → tap 🔊 to hear the iSBAR call script → **I called just now** → **Refer digitally and prepare the letter**. The referral SMS goes to the hospital; tap **ACK** to play the hospital's reply: *Hospital accepted the referral*. **Preview the letter** shows the printable referral letter with a feedback slip.
 
-**Option C: emergency, heavy bleeding.** Card **`MAM-A2A`** (*Mariama Demo*, 20 weeks pregnant, previous pre-eclampsia and caesarean section).
+**Option C: emergency, heavy bleeding.** Same card **`ANC-24T`**.
 
-- **Type:** `She has been bleeding from the vagina since this morning, a lot of blood. She fainted at the market yesterday. No fever.`
-- **What we understood:** *Vaginal bleeding · Yes*, *Bleeding amount · heavy*, *Fainting · Yes* (an event yesterday is still caught), *Fever · No*.
+- **Say:** *"Since this morning she is losing a lot of blood from below. Yesterday at the market she passed out. No fever."*
+- **What we understood:** *Vaginal bleeding · Yes*, *Bleeding amount · heavy*, *Fainting · Yes* (an event yesterday still counts), *Fever · No*.
 - **Measurements:** blood pressure **90 / 60**.
-- **You should see:** *The guidelines suggest urgent referral. You decide*, citing WHO danger signs and the Sierra Leone guideline, plus her high-risk history (previous pre-eclampsia and caesarean section).
+- **You should see:** *The guidelines suggest urgent referral. You decide*, citing the danger signs and her high-risk history.
+- **What you can do now:** *Bleeding after 24 weeks (antepartum haemorrhage): initial resuscitation*: shout for help; check danger, response, airway, breathing, circulation; **no vaginal examination**; left lateral tilt if in shock; check the fetal heart; blood sample, then IV fluids.
 - **Decide:** try **No referral now** → **Confirm my decision**. Ovamha asks you to *record your reason for not referring now*. The health worker can disagree, but the advice is never hidden and the reason is recorded.
 
-**Also try:** **First visit** instead of Returning, to register a new woman. The privacy notice is read to her first (on the hosted copy after its next update), and you get a new card number with a check character that catches typos. Or tap the microphone on the describe screen and speak instead of typing (allow microphone access). Records sync to a demo FHIR hub: https://r8086-ovamha-fhir.hf.space/fhir/ServiceRequest
+**Also try:** **First visit** instead of Returning, to register a new woman: the privacy notice is read to her first (on the hosted copy after its next update), and she gets a card number with a check character that catches typos. Records sync to a demo FHIR hub: https://r8086-ovamha-fhir.hf.space/fhir/ServiceRequest
 
 ## Run it offline on your own machine
 
@@ -92,6 +97,8 @@ Three ways, from most realistic to quickest:
 
 Nigeria accounted for **28.7% of all maternal deaths worldwide in 2023** (about 75,000 women; 993 deaths per 100,000 live births). Sierra Leone cut its maternal mortality ratio by 78% since 2000, but at 354 per 100,000 it is still almost twice the global average of 197 ([WHO, UNICEF, UNFPA, World Bank Group and UNDESA, *Trends in maternal mortality 2000 to 2023*, 2025](https://iris.who.int/server/api/core/bitstreams/29f43a3d-2228-489c-b1e7-b2f28e9101ce/content)). Many of these deaths follow danger signs that were present, but not recognised or acted on in time.
 
+Full problem statement and proposed solution: [concept note](docs/concept/README.md).
+
 **Users:** community health workers, nurses and midwives at health posts and primary health centres, often with no internet, intermittent power, a basic Android phone, and patients who speak Krio, Yoruba or English. **What changes:** the worker describes the woman in her own words; Ovamha catches danger signs she mentions, checks them against WHO and national guidance, and gets a referral, SMS and record out in minutes, all without a connection.
 
 ## Built for no or low connectivity and low-end devices
@@ -104,9 +111,9 @@ Nigeria accounted for **28.7% of all maternal deaths worldwide in 2023** (about 
 | **Low-end phones** | The phone only needs a browser: the app installs to the home screen (PWA) and the AI runs on a small local hub (laptop or Raspberry Pi 5 at the health post) over the health post's Wi-Fi. A fully on-phone Android version is the production target |
 | **Small models, no cloud** | Speech: Whisper small, int8, about 250 MB, 2 to 3 times faster than real time on 4 CPU threads (measured in the notebook). Danger signs: a 90 MB sentence encoder on CPU. Voices: MMS-TTS. No GPU, no cloud, no per-use AI fees |
 | **Low literacy, busy clinics** | Speak instead of type; everything understood is read back aloud; numbers by keypad or voice; large touch targets |
-| **Three languages** | English, Krio and Yoruba read-aloud; Krio and Yoruba speech recognition and wording need native-speaker data (see [limits](#honest-limits-and-trade-offs)) |
+| **Three languages** | English, Krio and Yoruba read-aloud; Krio and Yoruba speech recognition and wording need native-speaker data (see [limitations](#limitations-and-trade-offs)) |
 | **No national health information exchange** | Works in three deployment modes: with a national exchange, with separate national systems, or with none, and moves between them without data conversion ([architecture 3.3](docs/architecture/README.md)) |
-| **Power** | Designed for a hub on backup power; not yet measured on battery |
+| **Power** | Designed for a hub on backup power |
 
 ## How it works
 
@@ -124,17 +131,17 @@ Speak → What we understood (worker confirms each item) → Her history (first 
 
 More: [docs/ai/README.md](docs/ai/README.md) (the AI and its measured results) · [docs/guidelines/README.md](docs/guidelines/README.md) (every guideline used, with citations) · [docs/architecture/README.md](docs/architecture/README.md) (full design).
 
-## How Ovamha meets the judging criteria
+## Judging criteria
 
-| Criterion | Evidence |
-| --- | --- |
-| **Development relevance** | Maternal deaths in Nigeria and Sierra Leone ([the problem](#the-problem-and-who-it-is-for)); follows WHO antenatal care guidance (DAK) and Sierra Leone's national obstetric guideline, so the advice matches what the ministry already expects ([guidelines](docs/guidelines/README.md)) |
-| **Suitability for constrained environments** | Fully offline, SMS, low-cost hub, small CPU models, works with or without national systems ([table above](#built-for-no-or-low-connectivity-and-low-end-devices)) |
-| **Design, accessibility and inclusivity** | Voice first with read-aloud for low literacy; Krio and Yoruba alongside English; plain wording; privacy notice read to the woman before registration; she can see her own record |
-| **Practicality and local relevance** | Uses the national referral pathway (consent, pre-referral checklist, iSBAR call, referral letter with feedback slip); facility-level-aware advice; card number for women without national ID; demo runs end to end on a laptop and phone |
-| **Responsible AI** | AI proposes, the worker confirms, cited rules advise, the worker decides; AI can add a concern but never remove one; every proposal shows its evidence; voice deleted and never used for training; WHO AI-ethics principles mapped ([AI](docs/ai/README.md), [privacy](docs/privacy/README.md)) |
-| **Technical and social trade-offs** | Recall favoured over precision because the worker checks everything; keypad for numbers because speech errors on numbers are dangerous; rules instead of a generative model for advice; results and limits stated plainly ([limits](#honest-limits-and-trade-offs)) |
-| **Scaling potential** | A new country adds a guideline file and language models; FHIR R4 and OpenHIE fit national systems; builds on digital public infrastructure ([DPI](#digital-public-infrastructure-and-the-world-bank)) |
+World Bank Group Small AI for Development Hackathon:
+
+- Development relevance
+- Suitability for constrained environments
+- Design, accessibility and inclusivity
+- Practicality and local relevance
+- Responsible AI
+- Recognition of technical and social trade-offs
+- Scaling potential
 
 ## Digital public infrastructure and the World Bank
 
@@ -159,12 +166,11 @@ Full mapping: [docs/standards/README.md](docs/standards/README.md).
 - FHIR R4 records that pass the official HL7 validator with 0 errors and 0 warnings, and a device outbox that syncs to the hub FHIR server when reachable
 
 
-## Honest limits and trade-offs
+## Limitations and trade-offs
 
 - **Danger-sign detection was measured on written text, not speech:** the text classifier catches 94% of danger signs on 200 held-out descriptions, but these were AI-written, so real spoken descriptions will score lower ([AI](docs/ai/README.md))
 - **Speech recognition fine-tuning is at smoke-test stage** (accented English WER 40% → 30% on 200 clips); full runs pending ([notebook](ml/notebooks/README.md))
 - **Krio and Yoruba** speech recognition, danger-sign words and read-back wording still need native-speaker data and review; the text classifier is English only
-- **Not yet measured on a Raspberry Pi, a low-end phone or battery power**
 - WHO DAK rules are demo rules from the DAK PDF; danger-sign and profile codes are Ovamha placeholders until the DAK annex spreadsheets are extracted and replaced with WHO SMART ANC codes
 - The Sierra Leone guideline used is a January 2026 draft; Nigeria's national guideline is not encoded yet ([placeholder](docs/guidelines/README.md#4-nigeria-placeholder))
 - SMS is simulated without a GSM modem; the hub FHIR server (HAPI) needs Docker
@@ -194,6 +200,7 @@ Non-commercial licences (MMS-TTS, AfriSpeech-200, WHO DAK) suit this prototype; 
 
 | README | What it covers |
 | --- | --- |
+| [docs/concept/README.md](docs/concept/README.md) | Concept note: problem statement, proposed solution, users and languages, components, illustrative scenarios (bleeding, labour), digital public infrastructure |
 | [docs/guidelines/README.md](docs/guidelines/README.md) | Clinical guidelines: WHO ANC DAK, Sierra Leone national guideline, how to add a country, Nigeria placeholder |
 | [docs/ai/README.md](docs/ai/README.md) | The AI models, danger-sign detection results, WHO responsible-AI principles |
 | [docs/privacy/README.md](docs/privacy/README.md) | Privacy and data protection: international, Africa (ECOWAS, AU), Sierra Leone and Nigeria; where each measure is in the code; DPIA, policy, breach plan, voice data |
