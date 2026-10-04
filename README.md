@@ -4,6 +4,8 @@ Ovamha (Offline Voice Assistant for Maternal Healthcare in Africa) helps communi
 
 Focus countries: Sierra Leone and Nigeria. Prototype for the World Bank Small AI for Development Hackathon (October 2026).
 
+**Contents:** [Try it](#try-it) · [The problem](#the-problem-and-who-it-is-for) · [Built for low connectivity and low-end devices](#built-for-no-or-low-connectivity-and-low-end-devices) · [How it works](#how-it-works) · [Judging criteria](#how-ovamha-meets-the-judging-criteria) · [Digital public infrastructure](#digital-public-infrastructure-and-the-world-bank) · [What works now](#what-works-now-all-offline) · [Limits and trade-offs](#honest-limits-and-trade-offs) · [Third-party sources](#third-party-sources-and-licences) · [All documentation](#documentation)
+
 ## Try it
 
 **Online (hosted copy for judges):** https://r8086-ovamha.hf.space. The same code, with its speech and voice models inside the container; no external AI service is called. The free host sleeps when idle: the first visit can take about a minute. Records sync to a demo FHIR hub: https://r8086-ovamha-fhir.hf.space/fhir/ServiceRequest
@@ -12,7 +14,7 @@ Focus countries: Sierra Leone and Nigeria. Prototype for the World Bank Small AI
 
 ```
 make setup     # once, with internet: Python packages and the speech/voice models
-make test      # 140 automated tests
+make test      # 173 automated tests
 make run       # then switch the internet off and open http://localhost:8000
 ```
 
@@ -21,17 +23,6 @@ Phone on the same Wi-Fi as the laptop "hub": `make run-https` (phone microphones
 ## Demo script
 
 [docs/demo/point-of-care-demo.md](docs/demo/point-of-care-demo.md): a five-minute point-of-care demo with one woman at two moments (a routine visit where the guideline's suggestions do the work, then an emergency), with what to tap and what to say at each step.
-
-## Test it offline
-
-Three ways, from most realistic to quickest:
-
-1. **Health-post simulation (no internet anywhere).** Turn mobile data **off** on a phone and switch on its hotspot. Connect a laptop to that hotspot and run `make run-https` there. On the phone, open `https://<laptop-ip>:8000`, accept the local certificate, and **Add to Home Screen**: Ovamha installs like an app (own icon, full screen). Everything works: speech, voices, guideline advice, referral letter. The phone and laptop only talk over the local network.
-2. **The hosted image, offline.** Run the exact hosted demo locally with Docker, then switch the internet off:
-   `docker run -it -p 7860:7860 --platform=linux/amd64 registry.hf.space/r8086-ovamha:latest` → open http://localhost:7860
-3. **Automated check in a real browser.** `.venv/bin/python scripts/offline_check.py` (needs `pip install playwright && playwright install chromium`). It runs a check through the hub, then cuts the browser's network completely and reloads: the installed app still opens, keeps the worker signed in, and says *"Can't reach the Ovamha hub. Connect to the health post Wi-Fi. No internet is needed."*
-
-**What runs where:** the phone shows the app; the hub (laptop or Raspberry Pi at the health post) runs speech recognition, read-aloud voices, the guideline rules and the FHIR record store. Nothing calls the internet; the hub uploads records to the district/national level only when a connection exists. A fully on-phone Android version is the production target.
 
 ## For judges: demo logins
 
@@ -50,106 +41,36 @@ Two things to try:
 1. **First visit:** sign in as `fati` → **Guide me** → **First visit** → register her → describe *"She is 28 weeks pregnant, she has seen blood since this morning, a lot of it. She fainted yesterday but she is fine now. No fever."* → confirm → **Check the guidelines** → decide → referral letter.
 2. **Returning woman:** **Guide me** → **Returning** → card `MAM-A2A` → describe *"Her head is pounding and she sees stars. Her feet are swollen."* → the history step is skipped (already recorded) → enter BP, e.g. *150 over 100*, and urine protein **++** → **Check the guidelines**: the national guideline flags her previous pre-eclampsia and caesarean section (Table 3.4).
 
-## Standards and guidelines followed
+## Test it offline
 
-Ovamha does not invent clinical rules or data formats. Three layers are used, each cited inside the app and in the code:
+Three ways, from most realistic to quickest:
 
-1. **International clinical guidance:** WHO antenatal care recommendations, made computable through the WHO Digital Adaptation Kit (DAK).
-2. **National guidelines:** the country's own clinical guideline, encoded as a content file. **Sierra Leone is the worked example**; another country plugs in its own file the same way.
-3. **Health data and identity standards:** HL7 FHIR R4, LOINC, UCUM and HL7 terminologies, OpenHIE architecture patterns and World Bank ID4D identity principles.
+1. **Health-post simulation (no internet anywhere).** Turn mobile data **off** on a phone and switch on its hotspot. Connect a laptop to that hotspot and run `make run-https` there. On the phone, open `https://<laptop-ip>:8000`, accept the local certificate, and **Add to Home Screen**: Ovamha installs like an app (own icon, full screen). Everything works: speech, voices, guideline advice, referral letter. The phone and laptop only talk over the local network.
+2. **The hosted image, offline.** Run the exact hosted demo locally with Docker, then switch the internet off:
+   `docker run -it -p 7860:7860 --platform=linux/amd64 registry.hf.space/r8086-ovamha:latest` → open http://localhost:7860
+3. **Automated check in a real browser.** `.venv/bin/python scripts/offline_check.py` (needs `pip install playwright && playwright install chromium`). It runs a check through the hub, then cuts the browser's network completely and reloads: the installed app still opens, keeps the worker signed in, and says *"Can't reach the Ovamha hub. Connect to the health post Wi-Fi. No internet is needed."*
 
-### 1. WHO antenatal care: the Digital Adaptation Kit (DAK)
+**What runs where:** the phone shows the app; the hub (laptop or Raspberry Pi at the health post) runs speech recognition, read-aloud voices, the guideline rules and the FHIR record store. Nothing calls the internet; the hub uploads records to the district/national level only when a connection exists. A fully on-phone Android version is the production target.
 
-| WHO source | How Ovamha uses it | Where |
-| --- | --- | --- |
-| [WHO recommendations on antenatal care for a positive pregnancy experience (2016)](https://www.who.int/publications/i/item/9789241549912) | Minimum of 8 contacts; the basis of the contact schedule | Next-contact date |
-| [WHO DAK for antenatal care (2021)](https://www.who.int/publications/i/item/9789240020306), business process ANC.B | Order of the first contact: registration → quick check (danger signs) → history and profile **only at first contact and only if no danger sign** | [docs/decisions/dak-first-contact.md](docs/decisions/dak-first-contact.md) |
-| DAK data elements ANC.A4 (registration) | Name, date of birth or estimated age, address, phone, SMS reminders, emergency contact, co-habitants | [content/questions/anc-registration.json](content/questions/anc-registration.json) |
-| DAK data elements ANC.B4 and ANC.B6 (history and profile) | Every question cites its data element, e.g. gravida and outcomes `ANC.B6.DE23–DE26`, past pregnancy complications `ANC.B6.DE34–DE50`, chronic conditions `ANC.B6.DE83–DE99`, tetanus vaccine `ANC.B6.DE100–DE104`, partner HIV status `ANC.B6.DE156–DE161` | [content/questions/anc-profile.json](content/questions/anc-profile.json) |
-| DAK decision logic ANC.DT.01, danger signs (Fig. 11 quick check) | Danger signs requiring referral | [rules.py](apps/prototype/src/ovamha_proto/rules.py) |
-| DAK pre-eclampsia worked example (Table 12) | Pre-eclampsia rule with boundary tests (139/140, 159/160, 89/90, 109/110, protein + vs ++, missing repeat reading) | [tests/rules/test_rules.py](tests/rules/test_rules.py) |
-| [WHO SMART ANC FHIR implementation guide](http://build.fhir.org/ig/WorldHealthOrganization/smart-anc/) | Resource model and the PlanDefinition reference `ANCDT01` in each rule result | [fhir_bundle.py](apps/prototype/src/ovamha_proto/fhir_bundle.py) |
+## The problem and who it is for
 
-### 2. National guideline: Sierra Leone as the worked example
+Nigeria accounted for **28.7% of all maternal deaths worldwide in 2023** (about 75,000 women; 993 deaths per 100,000 live births). Sierra Leone cut its maternal mortality ratio by 78% since 2000, but at 354 per 100,000 it is still almost twice the global average of 197 ([WHO, UNICEF, UNFPA, World Bank Group and UNDESA, *Trends in maternal mortality 2000 to 2023*, 2025](https://iris.who.int/server/api/core/bitstreams/29f43a3d-2228-489c-b1e7-b2f28e9101ce/content)). Many of these deaths follow danger signs that were present, but not recognised or acted on in time.
 
-The **Sierra Leone Integrated Obstetric and Newborn Care Guideline** (Ministry of Health, copy-edited draft of 19 January 2026) is encoded in [content/guidelines/sierra-leone-iong-2026.json](content/guidelines/sierra-leone-iong-2026.json). Only content Ovamha can evaluate from confirmed data is encoded, and every item carries its table or section.
+**Users:** community health workers, nurses and midwives at health posts and primary health centres, often with no internet, intermittent power, a basic Android phone, and patients who speak Krio, Yoruba or English. **What changes:** the worker describes the woman in her own words; Ovamha catches danger signs she mentions, checks them against WHO and national guidance, and gets a referral, SMS and record out in minutes, all without a connection.
 
-| Guideline section | What Ovamha does with it |
+## Built for no or low connectivity and low-end devices
+
+| Constraint | How Ovamha handles it |
 | --- | --- |
-| Table 3.2 Schedule of contacts (8 contacts: 12, 20, 26, 30, 34, 36, 38, 40 weeks) | Works out the next contact date from gestational age |
-| Table 3.3 Danger signs in pregnancy | Suggests urgent referral when a listed sign is confirmed |
-| Pre-eclampsia classification after 20 weeks | Classifies pre-eclampsia, severe pre-eclampsia and eclampsia; includes *"if severe pre-eclampsia is suspected, do not wait 4 hours to repeat the BP"* |
-| Table 3.4 Referral pathway for high-risk pregnancy | Suggests the right action **for the worker's facility level** (MCHP, CHP, CHC, BEmONC vs CEmONC) |
-| Referral section (minimum requirements; roles of the referring worker) | Referral pathway: informed consent, pre-referral actions, iSBAR call script, call and ambulance times, referral form with a feedback slip for the receiving facility |
-
-**Cited examples, as the worker sees them:**
-
-| Confirmed facts | Suggestion shown | Source cited |
-| --- | --- | --- |
-| Vaginal bleeding | "Danger sign in pregnancy: assess and stabilise, then consider urgent referral to a CEmONC facility." | Sierra Leone guideline, Table 3.3; WHO DAK ANC.DT.01 |
-| BP 165/100 with urine protein ++ | "Life-threatening emergency. Stabilise and start magnesium sulphate per your level of care, then refer to a CEmONC facility for delivery and further management. Do not wait 4 hours to repeat BP." | Sierra Leone guideline, pre-eclampsia classification |
-| Previous caesarean section, at a CHP | "If at a lower facility: refer to CEmONC for further assessment… counsel and prepare her for referral for delivery at a CEmONC facility." | Sierra Leone guideline, Table 3.4 |
-| Sickle-cell disease, at a CHP | "If at a lower facility: referral to a CEmONC facility for advanced care." | Sierra Leone guideline, Table 3.4 |
-| 22 weeks pregnant | "Contact 3 at 26 weeks, around …" | Sierra Leone guideline, Table 3.2 |
-
-**Not just "refer": what the worker can do now.** With each suggestion, Ovamha shows the guideline's own management steps, transcribed word for word and cited, labelled *"do only what you are trained and supplied to do at your level of care"*:
-
-| Situation | Management shown (from the guideline) | Section |
-| --- | --- | --- |
-| Bleeding after 24 weeks | Shout for help; DR ABC; no vaginal examination; left lateral tilt if in shock; check fetal heart and movements; blood for Hb and group/screen, then IV fluids | Antepartum haemorrhage: initial resuscitation |
-| Severe pre-eclampsia / eclampsia | Magnesium sulphate loading dose (4 g 20% IV + 5 g 50% IM each buttock), repeat dose, maintenance dose if transfer exceeds 4 hours, toxicity checks; hydralazine or labetalol for BP ≥160/110; dexamethasone at 24 to below 34 weeks | Pre-eclampsia and eclampsia: management |
-| High risk of pre-eclampsia (e.g. previous PE) | Aspirin 75 mg daily; calcium 1.5–2.0 g daily; BP and urine protein every contact; birth at 37 weeks at a facility able to do caesarean birth | Tables 3.1 and 3.2; PE management |
-| Every contact | Care due at this contact: IPTp-SP dose, Td vaccine, aspirin, MMS, anti-D at 28 weeks if Rh-negative, first-contact tests | Table 3.2 |
-
-The guideline's annex on interventions by level of care is in images that could not be extracted, so the level-of-care note is shown on every management step instead of filtering by level.
-
-Where the guideline does not define a threshold, Ovamha states its assumption on screen and in the file (adolescent = under 20 years; high parity = 5 or more births; fetal heart rate normal range 110–160/min, from the guideline's intrapartum chapter). These need Ministry confirmation.
-
-**Adapting to another country (e.g. Nigeria):** add a guideline file in the same format, with that country's tables and citations. The app, the rules engine and the referral workflow stay the same. Nigeria's national guideline is not encoded yet.
-
-### 3. Health data, terminology and identity standards
-
-| Standard | How Ovamha uses it |
-| --- | --- |
-| [HL7 FHIR R4](https://hl7.org/fhir/R4/) | Every encounter becomes a transaction Bundle: Patient, EpisodeOfCare, Encounter, Observation, GuidanceResponse, ServiceRequest, Task, Communication, Consent, Provenance, Organization, PractitionerRole, Device. Example: [fhir/examples/referral-bundle.json](fhir/examples/referral-bundle.json). **Official HL7 FHIR Validator: 0 errors, 0 warnings** ([result](ml/eval/results/fhir-validation.md)); the blood pressure reading passes the FHIR vital-signs BP profile |
-| [LOINC](https://loinc.org/) | Blood pressure panel 85354-9, systolic 8480-6, diastolic 8462-4, last menstrual period 8665-2 |
-| [UCUM](https://ucum.org/) | Units of measure (mm[Hg], Cel, /min, wk) |
-| HL7 terminology | Provenance participant types (verifier, assembler, author), consent scope, data-absent-reason (`asked-unknown` for "Don't know"), confidentiality (`R`, restricted, on partner HIV status) |
-| FHIR conditional create (`ifNoneExist`) and `If-Match` | Uploads are safe to retry without duplicates; referral status changes cannot overwrite newer data |
-| [OpenHIE architecture](https://guides.ohie.org/arch-spec/architecture-specification/standards-and-profiles.md) | Device → facility hub → national systems design, with a mediator for national exchange (see the architecture document) |
-| [World Bank ID4D principles](https://id4d.worldbank.org/principles) | Ovamha creates its own woman ID and card number; the national ID is optional, consented, never stored as a number and never used as a key or sent by SMS |
-
-### 4. Privacy and data protection
-
-Sierra Leone has no data protection law yet. Ovamha follows the Ministry of Health's **Health Information System Policy (2021)**, which is in force, the WHO ANC DAK security requirements (**ANC.NFXNREQ**), and, so it is ready when it passes, the draft **Data Protection and Right to Access Information Regulatory Commission Bill 2025**. Full matrix, with every measure, its source and where it is in the code: **[docs/privacy/README.md](docs/privacy/README.md)**.
-
-**Voice is never stored and never used for training.** A recording exists only until it is transcribed, then it is deleted, also when transcription fails ([`server.py` `_transcribe_upload`](apps/prototype/src/ovamha_proto/server.py)). Read-aloud audio of her details is deleted once played ([`server.py` `do_speak`](apps/prototype/src/ovamha_proto/server.py), [`tts.py` `speak(cache=False)`](apps/prototype/src/ovamha_proto/tts.py)). Models are trained only on public datasets and text we wrote. Details: [docs/privacy/voice-data.md](docs/privacy/voice-data.md).
-
-| What Ovamha does | Follows | Code |
-|---|---|---|
-| Encrypts the registry, SMS log, sync outbox and audit log on disk; owner-only files | HIS 3.6(c); DAK NFXNREQ.002; Bill s.55 | [`secure_store.py`](apps/prototype/src/ovamha_proto/secure_store.py) |
-| Audit trail of sign-ins, record access, exchanges; no names or health details in it | HIS 3.9; DAK NFXNREQ.016-021 | [`audit.py`](apps/prototype/src/ovamha_proto/audit.py) |
-| Signs out after 15 minutes without use and after an 8-hour shift; PIN never remembered; lockout after 5 wrong PINs | DAK NFXNREQ.005, .006, .013 | [`server.py` `visit`](apps/prototype/src/ovamha_proto/server.py), [`auth.py`](apps/prototype/src/ovamha_proto/auth.py) |
-| Privacy notice read to her before registration (registration refused without it) | Bill s.27(3); HIS 3.5.9 | [`app.js` `PRIVACY_NOTICE`](apps/prototype/web/app.js), [`registry.py` `register`](apps/prototype/src/ovamha_proto/registry.py) |
-| "Show her record": she can see and print what is held about her | HIS 3.5.10(a); Bill s.43 | [`registry.py` `her_record`](apps/prototype/src/ovamha_proto/registry.py), `/api/woman/record` |
-| Anonymised export for reports (no names, phones, IDs, exact dates) | DAK NFXNREQ.004; Bill s.36(2) | [`scripts/export_anonymised.py`](scripts/export_anonymised.py) |
-| Worker confirms every AI suggestion and makes the referral decision | Bill s.46 | [`confirm.py`](apps/prototype/src/ovamha_proto/confirm.py) |
-| Speech recognition and danger-sign detection run on the device | Bill s.41 | [`asr.py`](apps/prototype/src/ovamha_proto/asr.py), [`classifier.py`](apps/prototype/src/ovamha_proto/classifier.py) |
-
-Tests: `.venv/bin/pytest tests/prototype/test_privacy.py`. Drafts for review: [data protection impact assessment](docs/privacy/dpia.md), [privacy design policy](docs/privacy/privacy-design-policy.md) (including retention), [breach response plan](docs/privacy/breach-response.md). Not done yet: hardware-backed keys, TLS on every link, role-based access, the national retention schedule, Krio and Yoruba notices, and ethics approval before recording anyone (HIS 3.5.10(d)).
-
-## Understanding what the worker says
-
-Speech is transcribed offline (Whisper small). Ovamha then has to work out which danger signs were described, often in everyday words ("her wrapper is red", "she sees stars"). Two detectors are built in; the **text classifier is the default**, and everything either one proposes must be confirmed by the worker.
-
-| Detector | How it works | Danger signs caught (recall) | Correct when it raises a sign (precision) | "No danger sign" rows left alone |
-| --- | --- | --- | --- | --- |
-| **Text classifier (default)** | A small fine-tuned sentence encoder ([all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2), Apache 2.0, about 90 MB, runs offline on CPU) scores each sentence for 15 danger signs | **94.4%** (169 of 179) | **90.9%** | 42 of 50 |
-| Keyword rules + AI safety net | Phrase list per danger sign, with negation ("no fever") and past-event ("fainted yesterday") handling | 48.0% (86 of 179) | 84.3% | 40 of 50 |
-
-Measured on 200 held-out written descriptions (E201–E400 of [ml/eval/text](ml/eval/text/)) never used for training or tuning; full per-sign and per-category results in [ml/eval/results/text-detection-classifier-vs-rules.txt](ml/eval/results/text-detection-classifier-vs-rules.txt). The decision threshold (0.15) was chosen on separate validation rows to favour catching danger signs over avoiding false alarms, because every proposal is checked by the worker. How it was built: [ml/textclf/README.md](ml/textclf/README.md).
-
-**Limits, stated plainly:** the held-out rows come from the same AI-written dataset as the training rows, so real spoken descriptions will score lower; it raised false alarms on 25 of 106 distractor sentences (signs about someone else, blood tests) and 6 of 34 denials; it is English only (Krio and Yoruba fall back to the keyword rules). Labels were curated by the team, not adjudicated by clinicians. Set `OVAMHA_DETECTOR=rules` or `both` to switch detector.
+| **No internet** | Every step of an encounter runs offline: speech recognition, danger-sign detection, read-aloud, guideline rules, records. Proven with the network cut ([offline check](ml/eval/results/offline-reload.png)) |
+| **Intermittent connectivity** | Finished records wait in an encrypted outbox on the device and sync to the facility hub automatically when reachable; uploads are safe to retry (FHIR conditional create) |
+| **2G or SMS only** | Referral notices and the receiving facility's ACK/FULL replies go by plain SMS; no data plan or WhatsApp needed |
+| **Low-end phones** | The phone only needs a browser: the app installs to the home screen (PWA) and the AI runs on a small local hub (laptop or Raspberry Pi 5 at the health post) over the health post's Wi-Fi. A fully on-phone Android version is the production target |
+| **Small models, no cloud** | Speech: Whisper small, int8, about 250 MB, 2 to 3 times faster than real time on 4 CPU threads (measured in the notebook). Danger signs: a 90 MB sentence encoder on CPU. Voices: MMS-TTS. No GPU, no cloud, no per-use AI fees |
+| **Low literacy, busy clinics** | Speak instead of type; everything understood is read back aloud; numbers by keypad or voice; large touch targets |
+| **Three languages** | English, Krio and Yoruba read-aloud; Krio and Yoruba speech recognition and wording need native-speaker data (see [limits](#honest-limits-and-trade-offs)) |
+| **No national health information exchange** | Works in three deployment modes: with a national exchange, with separate national systems, or with none, and moves between them without data conversion ([architecture 3.3](docs/architecture/README.md)) |
+| **Power** | Designed for a hub on backup power; not yet measured on battery |
 
 ## How it works
 
@@ -164,6 +85,32 @@ Speak → What we understood (worker confirms each item) → Her history (first 
 - **Unknown is never normal.** "Don't know" is recorded as unknown.
 - **The worker decides.** Declining a suggested referral needs a written or spoken reason; the advice is never hidden.
 
+
+More: [docs/ai/README.md](docs/ai/README.md) (the AI and its measured results) · [docs/guidelines/README.md](docs/guidelines/README.md) (every guideline used, with citations) · [docs/architecture/README.md](docs/architecture/README.md) (full design).
+
+## How Ovamha meets the judging criteria
+
+| Criterion | Evidence |
+| --- | --- |
+| **Development relevance** | Maternal deaths in Nigeria and Sierra Leone ([the problem](#the-problem-and-who-it-is-for)); follows WHO antenatal care guidance (DAK) and Sierra Leone's national obstetric guideline, so the advice matches what the ministry already expects ([guidelines](docs/guidelines/README.md)) |
+| **Suitability for constrained environments** | Fully offline, SMS, low-cost hub, small CPU models, works with or without national systems ([table above](#built-for-no-or-low-connectivity-and-low-end-devices)) |
+| **Design, accessibility and inclusivity** | Voice first with read-aloud for low literacy; Krio and Yoruba alongside English; plain wording; privacy notice read to the woman before registration; she can see her own record |
+| **Practicality and local relevance** | Uses the national referral pathway (consent, pre-referral checklist, iSBAR call, referral letter with feedback slip); facility-level-aware advice; card number for women without national ID; demo runs end to end on a laptop and phone |
+| **Responsible AI** | AI proposes, the worker confirms, cited rules advise, the worker decides; AI can add a concern but never remove one; every proposal shows its evidence; voice deleted and never used for training; WHO AI-ethics principles mapped ([AI](docs/ai/README.md), [privacy](docs/privacy/README.md)) |
+| **Technical and social trade-offs** | Recall favoured over precision because the worker checks everything; keypad for numbers because speech errors on numbers are dangerous; rules instead of a generative model for advice; results and limits stated plainly ([limits](#honest-limits-and-trade-offs)) |
+| **Scaling potential** | A new country adds a guideline file and language models; FHIR R4 and OpenHIE fit national systems; builds on digital public infrastructure ([DPI](#digital-public-infrastructure-and-the-world-bank)) |
+
+## Digital public infrastructure and the World Bank
+
+The World Bank treats **digital identity, trusted data sharing and digital payments** as the foundational building blocks of digital public infrastructure (DPI), built to be interoperable, open, modular, inclusive and private by design ([*Digital Public Infrastructure and Development: A World Bank Group Approach*, 2025](https://documents1.worldbank.org/curated/en/099031025172027713/pdf/P505739-84c5073b-9d40-4b83-a211-98b2263e87dd.pdf)). Ovamha is a health service designed to **sit on top of DPI rather than rebuild it**:
+
+- **Identity:** its own functional ID and card number so care never waits for an ID document; the national ID (NIN) is linked only with consent and never stored as a number or used as a key, following the World Bank's [ID4D principles](https://id4d.worldbank.org/principles).
+- **Data sharing:** every encounter is an HL7 FHIR R4 record (official validator: 0 errors, 0 warnings) exchanged through a facility hub and mediator, following OpenHIE, so it can feed a national health information exchange or HMIS when one exists.
+- **Payments:** not used.
+- **Principles:** open standards, modular country content, inclusive voice design, privacy and security by design, provenance on every record. It also follows the [Principles for Digital Development](https://digitalprinciples.org/), which the World Bank endorsed.
+
+Full mapping: [docs/standards/README.md](docs/standards/README.md).
+
 ## What works now (all offline)
 
 - Offline sign-in (username + PIN, hashed on the device)
@@ -175,19 +122,60 @@ Speak → What we understood (worker confirms each item) → Her history (first 
 - Referral pathway, simulated referral SMS with ACK/FULL replies, printable referral letter with feedback slip
 - FHIR R4 records that pass the official HL7 validator with 0 errors and 0 warnings, and a device outbox that syncs to the hub FHIR server when reachable
 
-## Honest limits
 
-- Krio and Yoruba speech recognition and read-back wording still need native-speaker data
+## Honest limits and trade-offs
+
+- **Danger-sign detection was measured on written text, not speech:** the text classifier catches 94% of danger signs on 200 held-out descriptions, but these were AI-written, so real spoken descriptions will score lower ([AI](docs/ai/README.md))
+- **Speech recognition fine-tuning is at smoke-test stage** (accented English WER 40% → 30% on 200 clips); full runs pending ([notebook](ml/notebooks/README.md))
+- **Krio and Yoruba** speech recognition, danger-sign words and read-back wording still need native-speaker data and review; the text classifier is English only
+- **Not yet measured on a Raspberry Pi, a low-end phone or battery power**
 - WHO DAK rules are demo rules from the DAK PDF; danger-sign and profile codes are Ovamha placeholders until the DAK annex spreadsheets are extracted and replaced with WHO SMART ANC codes
-- The Sierra Leone guideline used is a January 2026 draft; the Ministry's national standardized referral form layout was not available
+- The Sierra Leone guideline used is a January 2026 draft; Nigeria's national guideline is not encoded yet ([placeholder](docs/guidelines/README.md#4-nigeria-placeholder))
 - SMS is simulated without a GSM modem; the hub FHIR server (HAPI) needs Docker
 - FHIR records validate against base R4, not yet against WHO SMART ANC profiles
-- No measured accuracy yet: evaluation protocol in [ml/eval/](ml/eval/)
+- Privacy controls are prototype-level: hardware-backed keys, TLS on every link and role-based access are planned ([privacy](docs/privacy/README.md))
 
-## Key documents
+## Third-party sources and licences
 
-- [docs/privacy/README.md](docs/privacy/README.md): **privacy and data protection**: what is followed, where in the code, DPIA, policy, breach plan
-- [docs/architecture/README.md](docs/architecture/README.md): **backend architecture specification** (tiers, FHIR resource model, identity, sync, SMS, security, AI provenance)
+| Source | Used for | Licence |
+| --- | --- | --- |
+| [OpenAI Whisper small](https://huggingface.co/openai/whisper-small) via [Systran faster-whisper-small](https://huggingface.co/Systran/faster-whisper-small) | Speech recognition | Apache-2.0 / MIT |
+| [LyngualLabs whisper-small-yoruba](https://huggingface.co/LyngualLabs/whisper-small-yoruba) | Yoruba speech recognition (notebook) | Apache-2.0 |
+| [Meta MMS-TTS](https://huggingface.co/facebook/mms-tts-eng) (eng, kri, yor) | Read-aloud voices | **CC BY-NC 4.0 (non-commercial)** |
+| [all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) | Danger-sign text classifier (fine-tuned) | Apache-2.0 |
+| [AfriSpeech-200](https://huggingface.co/datasets/intronhealth/afrispeech-200) | Speech fine-tuning; 100 transcripts in the text evaluation set | **CC BY-NC-SA 4.0 (non-commercial)** |
+| [Google FLEURS](https://huggingface.co/datasets/google/fleurs) | Yoruba speech fine-tuning | CC BY 4.0 |
+| [WHO ANC Digital Adaptation Kit](https://www.who.int/publications/i/item/9789240020306) and [WHO ANC recommendations](https://www.who.int/publications/i/item/9789241549912) | Clinical content, data elements, decision logic | CC BY-NC-SA 3.0 IGO |
+| Sierra Leone Integrated Obstetric and Newborn Care Guideline (MoHS, 2026 draft) | National guideline content | Ministry of Health document; use for this prototype to be confirmed with the Ministry |
+| HL7 FHIR, LOINC, UCUM | Data standards | Free to use under their terms |
+| Python packages (FastAPI, faster-whisper, transformers, PyTorch, cryptography, fhir.resources) | Software | Open-source licences |
+
+Non-commercial licences (MMS-TTS, AfriSpeech-200, WHO DAK) suit this prototype; any commercial use needs replacements or permission. The Ovamha repository does not have a licence file yet.
+
+## Documentation
+
+**Topic guides**
+
+| README | What it covers |
+| --- | --- |
+| [docs/guidelines/README.md](docs/guidelines/README.md) | Clinical guidelines: WHO ANC DAK, Sierra Leone national guideline, how to add a country, Nigeria placeholder |
+| [docs/ai/README.md](docs/ai/README.md) | The AI models, danger-sign detection results, WHO responsible-AI principles |
+| [docs/privacy/README.md](docs/privacy/README.md) | Privacy and data protection: international, Africa (ECOWAS, AU), Sierra Leone and Nigeria; where each measure is in the code; DPIA, policy, breach plan, voice data |
+| [docs/standards/README.md](docs/standards/README.md) | Health data standards (FHIR, LOINC, UCUM, OpenHIE, ID4D) and digital public infrastructure alignment |
+| [docs/architecture/README.md](docs/architecture/README.md) | Full backend architecture specification |
+
+**Decisions and demo**
+
+- [docs/demo/point-of-care-demo.md](docs/demo/point-of-care-demo.md): five-minute demo script
 - [docs/decisions/dak-first-contact.md](docs/decisions/dak-first-contact.md): element-by-element alignment with the WHO ANC DAK
 - [docs/decisions/guideline-advice-not-fine-tuning.md](docs/decisions/guideline-advice-not-fine-tuning.md): why cited guideline rules, and why the worker decides
 - [docs/decisions/agent-handover.md](docs/decisions/agent-handover.md): project brief and design decisions
+- [docs/prd/README.md](docs/prd/README.md): product requirements
+
+**Privacy documents:** [voice data](docs/privacy/voice-data.md) · [DPIA](docs/privacy/dpia.md) · [privacy design policy](docs/privacy/privacy-design-policy.md) · [breach response](docs/privacy/breach-response.md)
+
+**AI and evaluation:** [text classifier](ml/textclf/README.md) · [speech fine-tuning notebook](ml/notebooks/README.md) · [evaluation text set](ml/eval/text/README.md) · [recording guide](ml/eval/RECORDING_GUIDE.md) · [results](ml/eval/results/README.md) · [models](ml/models/README.md)
+
+**Code and components:** [prototype app](apps/prototype/README.md) · [Android app](apps/android/README.md) · [hub FHIR server](hub/fhir-server/README.md) · [hub mediator](hub/mediator/README.md) · [hub SMS gateway](hub/sms-gateway/README.md) · [hub indicator engine](hub/indicator-engine/README.md) · [hub database](hub/db/README.md) · [district server](district-server/README.md) · [sync tests](tests/sync/README.md)
+
+**Content and deployment:** [WHO DAK content](content/dak/README.md) · [audio clips](content/audio/README.md) · [branding](apps/prototype/web/branding/README.md) · [data folder](data/README.md) · [hosted app (Hugging Face)](deploy/hf-app/README.md) · [hosted FHIR hub](deploy/hf-fhir/README.md)
