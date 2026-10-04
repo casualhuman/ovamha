@@ -166,3 +166,43 @@ def next_contact(ga_weeks: float | None, today: date | None = None) -> dict:
             return {"contact": ct["n"], "week": ct["week"], "date": when.isoformat(),
                     "text": f"Contact {ct['n']} at {ct['week']} weeks, around {when.strftime('%d %b %Y')}", "cite": sched["_cite"]}
     return {"text": sched["after_last"], "cite": sched["_cite"]}
+
+
+def management(advice: list[Advice], confirmed: dict, ga_weeks: float | None) -> list[dict]:
+    """Guideline management steps for the advice shown ("What you can do now"), transcribed and cited."""
+    m = guide().get("management", {})
+    ids = {a.id: a for a in advice}
+    out = []
+    for blk in m.get("blocks", []):
+        hits = [ids[i] for i in blk["for"] if i in ids]
+        if not hits:
+            continue
+        when = blk.get("when", {})
+        if when.get("vaginal_bleeding") and confirmed.get("vaginal_bleeding") is not True:
+            continue
+        if "ga_at_least_or_unknown" in when and ga_weeks is not None and ga_weeks < when["ga_at_least_or_unknown"]:
+            continue
+        keys = [k.lower() for k in blk.get("when_reason_contains", [])]
+        if keys and not any(k in r.lower() for a in hits for r in a.reasons for k in keys):
+            continue
+        out.append({"id": blk["id"], "title": blk["title"], "steps": blk["steps"], "for": [a.id for a in hits],
+                    "cite": f"{Advice.source}: {blk['cite']}", "scope_note": m.get("scope_note", "")})
+    return out
+
+
+def routine_care(ga_weeks: float | None, first_contact: bool) -> dict | None:
+    """Preventive care due at this contact (Table 3.2), plus first-contact tests."""
+    r = guide().get("routine_by_contact")
+    if not r:
+        return None
+    contacts = guide()["contact_schedule"]["contacts"]
+    n = None
+    if ga_weeks is not None:
+        n = next((c["n"] for c in contacts if c["week"] >= ga_weeks - 2), contacts[-1]["n"])
+    elif first_contact:
+        n = 1
+    if n is None:
+        return None
+    week = next(c["week"] for c in contacts if c["n"] == n)
+    return {"contact": n, "week": week, "items": r["contacts"][str(n)],
+            "tests": r["first_contact_tests"] if first_contact else [], "cite": f"{Advice.source}: {r['_cite']}"}

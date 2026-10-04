@@ -68,3 +68,39 @@ def test_next_contact_schedule():
     assert next_contact(22, TODAY)["week"] == 26
     assert next_contact(40.5, TODAY)["text"].startswith("Refer to CEmONC for induction")
     assert "gestational age" in next_contact(None, TODAY)["text"]
+
+
+from ovamha_proto.guideline import management, routine_care  # noqa: E402
+
+
+def test_aph_steps_only_from_24_weeks_or_unknown():
+    c = {"vaginal_bleeding": True}
+    a = adv(c)
+    assert [m["id"] for m in management(a, c, 28)] == ["aph"]
+    assert [m["id"] for m in management(a, c, None)] == ["aph"]
+    assert management(a, c, 18) == []
+    steps = " ".join(management(a, c, 28)[0]["steps"])
+    assert "Do NOT do a vaginal examination" in steps
+
+
+def test_spe_gives_magnesium_protocol_with_toxicity_checks():
+    c = {"systolic": 165, "diastolic": 100, "urine_protein": "++"}
+    m = management(adv(c), c, 30)
+    spe = next(x for x in m if x["id"] == "spe")
+    text = " ".join(spe["steps"])
+    assert "4 g MgSO4 20%" in text and "respiratory rate below 16" in text
+    assert "trained and supplied" in spe["scope_note"]
+
+
+def test_previous_pre_eclampsia_gets_prevention_but_caesarean_alone_does_not():
+    m = management(adv({}, {"past_complications": ["pre_eclampsia"]}), {}, 20)
+    assert [x["id"] for x in m] == ["pe_risk"]
+    assert management(adv({}, {"past_complications": ["caesarean"]}), {}, 20) == []
+
+
+def test_routine_care_by_contact():
+    r = routine_care(20, first_contact=False)
+    assert r["contact"] == 2 and any("IPTp-2" in i for i in r["items"]) and r["tests"] == []
+    assert routine_care(None, first_contact=True)["contact"] == 1
+    assert routine_care(None, first_contact=False) is None
+    assert routine_care(10, first_contact=True)["tests"]

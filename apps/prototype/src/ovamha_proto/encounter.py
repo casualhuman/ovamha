@@ -46,6 +46,8 @@ class Encounter:
     advice: list = field(default_factory=list)  # guideline.Advice items shown to the worker
     suggestion: str = "none"  # strongest suggestion: urgent_referral | refer_cemonc | refer_assessment | plan_cemonc_delivery | none
     next_contact: dict = field(default_factory=dict)
+    management: list = field(default_factory=list)  # guideline management steps shown with the advice
+    routine: dict | None = None  # preventive care due at this contact (Table 3.2)
     decision: dict | None = None  # the WORKER's decision: {"choice": "urgent"|"planned"|"none", "reason", "at"}
     referral_steps: dict = field(default_factory=dict)  # consent, checklist done, call/ambulance times
     sms: dict | None = None  # {"text", "sent", "channel"} once the referral SMS is sent

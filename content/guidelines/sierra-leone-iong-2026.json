@@ -7,25 +7,88 @@
     "status": "Draft provided by the team; confirm final published version"
   },
   "facility_levels": {
-    "lower": ["MCHP", "CHP", "CHC", "BEmONC"],
-    "higher": ["CEmONC"],
+    "lower": [
+      "MCHP",
+      "CHP",
+      "CHC",
+      "BEmONC"
+    ],
+    "higher": [
+      "CEmONC"
+    ],
     "_cite": "Table 3.4 Referral pathway for high-risk pregnancy"
   },
   "danger_signs_pregnancy": {
     "_cite": "Table 3.3 Danger signs in pregnancy, childbirth, and postnatal periods (during pregnancy)",
     "advice": "Danger sign in pregnancy: assess and stabilise, then consider urgent referral to a CEmONC facility.",
     "signs": [
-      {"label": "Vaginal bleeding", "fields": {"vaginal_bleeding": true}},
-      {"label": "Drainage of liquor", "fields": {"waters_broken": true}},
-      {"label": "Foul-smelling vaginal discharge", "fields": {"foul_discharge": true}},
-      {"label": "Severe abdominal pains", "fields": {"abdominal_pain": "severe"}},
-      {"label": "Severe headache", "fields": {"headache": "severe"}},
-      {"label": "Blurred vision/dizziness", "fields": {"visual_disturbance": true, "dizziness": true}},
-      {"label": "High fever", "fields": {"fever": true}},
-      {"label": "Generalized body swelling", "fields": {"swelling": true}},
-      {"label": "Reduced foetal movements", "fields": {"reduced_fetal_movement": true}},
-      {"label": "Difficulty in breathing", "fields": {"breathing_difficulty": "severe"}},
-      {"label": "Convulsions", "fields": {"convulsions": true}}
+      {
+        "label": "Vaginal bleeding",
+        "fields": {
+          "vaginal_bleeding": true
+        }
+      },
+      {
+        "label": "Drainage of liquor",
+        "fields": {
+          "waters_broken": true
+        }
+      },
+      {
+        "label": "Foul-smelling vaginal discharge",
+        "fields": {
+          "foul_discharge": true
+        }
+      },
+      {
+        "label": "Severe abdominal pains",
+        "fields": {
+          "abdominal_pain": "severe"
+        }
+      },
+      {
+        "label": "Severe headache",
+        "fields": {
+          "headache": "severe"
+        }
+      },
+      {
+        "label": "Blurred vision/dizziness",
+        "fields": {
+          "visual_disturbance": true,
+          "dizziness": true
+        }
+      },
+      {
+        "label": "High fever",
+        "fields": {
+          "fever": true
+        }
+      },
+      {
+        "label": "Generalized body swelling",
+        "fields": {
+          "swelling": true
+        }
+      },
+      {
+        "label": "Reduced foetal movements",
+        "fields": {
+          "reduced_fetal_movement": true
+        }
+      },
+      {
+        "label": "Difficulty in breathing",
+        "fields": {
+          "breathing_difficulty": "severe"
+        }
+      },
+      {
+        "label": "Convulsions",
+        "fields": {
+          "convulsions": true
+        }
+      }
     ]
   },
   "high_risk": {
@@ -37,8 +100,22 @@
         "kind": "refer_cemonc",
         "recommendation": "If at a lower facility (BEmONC, CHC, CHP, MCHP): refer to a CEmONC facility for assessment and delivery or follow-up.",
         "conditions": [
-          {"label": "Severe pre-eclampsia / eclampsia", "match": {"rule": "ANC.PE.severe"}},
-          {"label": "Abnormal fetal heart rate", "match": {"fetal_heart_rate_outside": [110, 160]}, "assumption": "Normal range 110-160/min is not stated in Table 3.4; confirm with MoHS."}
+          {
+            "label": "Severe pre-eclampsia / eclampsia",
+            "match": {
+              "rule": "ANC.PE.severe"
+            }
+          },
+          {
+            "label": "Abnormal fetal heart rate",
+            "match": {
+              "fetal_heart_rate_outside": [
+                110,
+                160
+              ]
+            },
+            "assumption": "Normal range 110-160/min is not stated in Table 3.4; confirm with MoHS."
+          }
         ]
       },
       {
@@ -47,9 +124,25 @@
         "kind": "refer_assessment",
         "recommendation": "If at a lower facility: refer to CEmONC for assessment. She can be followed up at the lower-level facility; counsel her about referral to CEmONC for delivery.",
         "conditions": [
-          {"label": "Mild pre-eclampsia", "match": {"rule": "ANC.PE"}},
-          {"label": "Age: adolescent", "match": {"age_below": 20}, "assumption": "Adolescent taken as under 20 years (WHO: 10-19)."},
-          {"label": "Age: 35 years and above", "match": {"age_at_least": 35}}
+          {
+            "label": "Mild pre-eclampsia",
+            "match": {
+              "rule": "ANC.PE"
+            }
+          },
+          {
+            "label": "Age: adolescent",
+            "match": {
+              "age_below": 20
+            },
+            "assumption": "Adolescent taken as under 20 years (WHO: 10-19)."
+          },
+          {
+            "label": "Age: 35 years and above",
+            "match": {
+              "age_at_least": 35
+            }
+          }
         ]
       },
       {
@@ -58,14 +151,74 @@
         "kind": "plan_cemonc_delivery",
         "recommendation": "If at a lower facility: refer to CEmONC for further assessment. She can have ANC follow-up at the lower-level facility; counsel and prepare her for referral for delivery at a CEmONC facility, and follow her for complications.",
         "conditions": [
-          {"label": "Previous pre-eclampsia or eclampsia", "match": {"past_complications": ["pre_eclampsia", "eclampsia"]}},
-          {"label": "Previous PPH or retained placenta / previous antepartum haemorrhage", "match": {"past_complications": ["heavy_bleeding"]}},
-          {"label": "Previous caesarean section", "match": {"past_complications": ["caesarean"], "past_surgeries": ["caesarean"]}},
-          {"label": "Previous difficult delivery", "match": {"past_complications": ["prolonged_labour"]}},
-          {"label": "Extensive perineal, vaginal or cervical tear", "match": {"past_complications": ["perineal_tear"]}},
-          {"label": "Unexplained stillbirth / neonatal death", "match": {"past_complications": ["baby_died_early"], "stillbirths_at_least": 1}},
-          {"label": "Previous baby more than 4.5 kg", "match": {"past_complications": ["large_baby"]}},
-          {"label": "High parity", "match": {"live_births_at_least": 5}, "assumption": "High parity taken as 5 or more births (grand multiparity); not defined in the guideline."}
+          {
+            "label": "Previous pre-eclampsia or eclampsia",
+            "match": {
+              "past_complications": [
+                "pre_eclampsia",
+                "eclampsia"
+              ]
+            }
+          },
+          {
+            "label": "Previous PPH or retained placenta / previous antepartum haemorrhage",
+            "match": {
+              "past_complications": [
+                "heavy_bleeding"
+              ]
+            }
+          },
+          {
+            "label": "Previous caesarean section",
+            "match": {
+              "past_complications": [
+                "caesarean"
+              ],
+              "past_surgeries": [
+                "caesarean"
+              ]
+            }
+          },
+          {
+            "label": "Previous difficult delivery",
+            "match": {
+              "past_complications": [
+                "prolonged_labour"
+              ]
+            }
+          },
+          {
+            "label": "Extensive perineal, vaginal or cervical tear",
+            "match": {
+              "past_complications": [
+                "perineal_tear"
+              ]
+            }
+          },
+          {
+            "label": "Unexplained stillbirth / neonatal death",
+            "match": {
+              "past_complications": [
+                "baby_died_early"
+              ],
+              "stillbirths_at_least": 1
+            }
+          },
+          {
+            "label": "Previous baby more than 4.5 kg",
+            "match": {
+              "past_complications": [
+                "large_baby"
+              ]
+            }
+          },
+          {
+            "label": "High parity",
+            "match": {
+              "live_births_at_least": 5
+            },
+            "assumption": "High parity taken as 5 or more births (grand multiparity); not defined in the guideline."
+          }
         ]
       },
       {
@@ -74,11 +227,46 @@
         "kind": "refer_cemonc",
         "recommendation": "If at a lower facility: referral to a CEmONC facility for advanced care.",
         "conditions": [
-          {"label": "Cardiac disease", "match": {"chronic_conditions": ["heart_disease"]}},
-          {"label": "Existing diabetes mellitus", "match": {"chronic_conditions": ["diabetes"]}},
-          {"label": "Gestational diabetes (previous)", "match": {"past_complications": ["gestational_diabetes"]}},
-          {"label": "Sickle-cell disease", "match": {"chronic_conditions": ["sickle_cell"]}},
-          {"label": "Renal disease", "match": {"chronic_conditions": ["kidney_disease"]}}
+          {
+            "label": "Cardiac disease",
+            "match": {
+              "chronic_conditions": [
+                "heart_disease"
+              ]
+            }
+          },
+          {
+            "label": "Existing diabetes mellitus",
+            "match": {
+              "chronic_conditions": [
+                "diabetes"
+              ]
+            }
+          },
+          {
+            "label": "Gestational diabetes (previous)",
+            "match": {
+              "past_complications": [
+                "gestational_diabetes"
+              ]
+            }
+          },
+          {
+            "label": "Sickle-cell disease",
+            "match": {
+              "chronic_conditions": [
+                "sickle_cell"
+              ]
+            }
+          },
+          {
+            "label": "Renal disease",
+            "match": {
+              "chronic_conditions": [
+                "kidney_disease"
+              ]
+            }
+          }
         ]
       },
       {
@@ -87,11 +275,46 @@
         "kind": "plan_cemonc_delivery",
         "recommendation": "If at a lower facility: refer to CEmONC for assessment. She can have ANC follow-up at the lower-level facility; counsel and prepare her for referral for delivery at CEmONC as necessary.",
         "conditions": [
-          {"label": "HIV disease", "match": {"chronic_conditions": ["hiv"]}},
-          {"label": "Chronic hypertensive disorder", "match": {"chronic_conditions": ["hypertension"]}},
-          {"label": "Asthma", "match": {"chronic_conditions": ["asthma"]}},
-          {"label": "Epilepsy", "match": {"chronic_conditions": ["epilepsy"]}},
-          {"label": "Under psychiatric care", "match": {"chronic_conditions": ["mental_health"]}}
+          {
+            "label": "HIV disease",
+            "match": {
+              "chronic_conditions": [
+                "hiv"
+              ]
+            }
+          },
+          {
+            "label": "Chronic hypertensive disorder",
+            "match": {
+              "chronic_conditions": [
+                "hypertension"
+              ]
+            }
+          },
+          {
+            "label": "Asthma",
+            "match": {
+              "chronic_conditions": [
+                "asthma"
+              ]
+            }
+          },
+          {
+            "label": "Epilepsy",
+            "match": {
+              "chronic_conditions": [
+                "epilepsy"
+              ]
+            }
+          },
+          {
+            "label": "Under psychiatric care",
+            "match": {
+              "chronic_conditions": [
+                "mental_health"
+              ]
+            }
+          }
         ]
       },
       {
@@ -100,15 +323,54 @@
         "kind": "refer_assessment",
         "recommendation": "Refer to the CEmONC facility for assessment as soon as she starts ANC. If stable, she can attend ANC at the lower-level facility until 36 weeks, then be referred to CEmONC for delivery.",
         "conditions": [
-          {"label": "Previous uterine surgery", "match": {"past_surgeries": ["uterine_surgery"]}}
+          {
+            "label": "Previous uterine surgery",
+            "match": {
+              "past_surgeries": [
+                "uterine_surgery"
+              ]
+            }
+          }
         ]
       }
     ]
   },
   "contact_schedule": {
     "_cite": "Table 3.2 Schedule of contacts and care provided (minimum eight contacts)",
-    "contacts": [{"n": 1, "week": 12}, {"n": 2, "week": 20}, {"n": 3, "week": 26}, {"n": 4, "week": 30}, {"n": 5, "week": 34},
-                 {"n": 6, "week": 36}, {"n": 7, "week": 38}, {"n": 8, "week": 40}],
+    "contacts": [
+      {
+        "n": 1,
+        "week": 12
+      },
+      {
+        "n": 2,
+        "week": 20
+      },
+      {
+        "n": 3,
+        "week": 26
+      },
+      {
+        "n": 4,
+        "week": 30
+      },
+      {
+        "n": 5,
+        "week": 34
+      },
+      {
+        "n": 6,
+        "week": 36
+      },
+      {
+        "n": 7,
+        "week": 38
+      },
+      {
+        "n": 8,
+        "week": 40
+      }
+    ],
     "after_last": "Refer to CEmONC for induction of labour at 41 weeks."
   },
   "referral_pathway": {
@@ -126,5 +388,132 @@
     ],
     "call": "Inform the call centre / referral coordinator using iSBAR (Identification, Situation, Background, Assessment, Recommendation) and alert the receiving facility.",
     "document": "Complete the standard referral form; record the time of the call for the ambulance and the time it arrived."
+  },
+  "management": {
+    "_note": "Worker-facing management steps, transcribed from the guideline (it incorporates WHO ANC 2016 and WHO pre-eclampsia/eclampsia recommendations). Shown with the advice they belong to; never generated. The guideline's levels-of-care annex is not machine-readable, so every block carries the scope note.",
+    "scope_note": "Do only what you are trained and supplied to do at your level of care.",
+    "blocks": [
+      {
+        "id": "aph",
+        "for": [
+          "SL.T3.3"
+        ],
+        "when": {
+          "vaginal_bleeding": true,
+          "ga_at_least_or_unknown": 24
+        },
+        "title": "Bleeding after 24 weeks (antepartum haemorrhage): initial resuscitation",
+        "cite": "Obstetric complications: Antepartum haemorrhage (initial resuscitation and general management)",
+        "steps": [
+          "SHOUT FOR HELP to urgently mobilise all available personnel.",
+          "Rapid evaluation of her general condition, then DR. ABC: Danger, Response, Airway, Breathing, Circulation. Check level of consciousness (AVPU).",
+          "Do NOT do a vaginal examination.",
+          "If shock is suspected, position her immediately and begin treatment; give a left lateral tilt.",
+          "Check the fetal heart rate and ask about fetal movements (below 110 or above 160 beats per minute: suspect fetal distress).",
+          "Send a blood sample for haemoglobin or haematocrit and type and screen (and order blood) before IV fluids; start an IV infusion and infuse IV fluids."
+        ]
+      },
+      {
+        "id": "spe",
+        "for": [
+          "SL.SPE"
+        ],
+        "title": "Severe pre-eclampsia / eclampsia: act fast, magnesium sulphate",
+        "cite": "Pre-eclampsia and eclampsia: management; magnesium sulphate loading dose",
+        "steps": [
+          "Respond as an emergency and work as a team. Magnesium sulphate (MgSO4) is the best anticonvulsant.",
+          "Loading dose (both): 4 g MgSO4 20% solution IV over 5-20 minutes (8 mL of 50% + 12 mL sterile water) AND 10 g MgSO4 50% IM: 5 g (10 mL) deep IM in each buttock, each with 1 mL lignocaine 2%.",
+          "If convulsions recur after 15 minutes: 2 g MgSO4 20% IV over 5 minutes (4 mL of 50% + 6 mL sterile water).",
+          "If advanced care will not be reached within 4 hours: first maintenance dose 5 g MgSO4 50% + 1 mL lignocaine 2% IM in one buttock, 4 hours after the loading dose.",
+          "Withhold MgSO4 if any toxicity sign: respiratory rate below 16 per minute, absent patellar reflexes, or urine output below 30 mL per hour over the preceding 4 hours.",
+          "Severe hypertension (BP 160/110 or above): hydralazine or labetalol may be used to control it.",
+          "If 24 to below 34 weeks and birth is expected within 7 days, with no suspected infection: dexamethasone 12 mg IM, repeat 12 mg IM after 24 hours.",
+          "Record on the MgSO4 monitoring sheet."
+        ]
+      },
+      {
+        "id": "pe_risk",
+        "for": [
+          "SL.T3.4.previous",
+          "SL.T3.4.current_assessment",
+          "SL.T3.4.medical_assessment"
+        ],
+        "when_reason_contains": [
+          "pre-eclampsia",
+          "Mild pre-eclampsia",
+          "Chronic hypertensive"
+        ],
+        "title": "High risk of pre-eclampsia: prevention and monitoring",
+        "cite": "Table 3.1 Antenatal care interventions (supplements); Table 3.2 Schedule of contacts; Pre-eclampsia and eclampsia: management",
+        "steps": [
+          "Aspirin 75 mg daily (from after 12 weeks, as in the contact schedule).",
+          "Calcium 1.5-2.0 g oral elemental calcium daily (populations with low dietary calcium).",
+          "Check BP at every contact; if BP is raised, check urine for protein. Assess for danger signs.",
+          "If BP exceeds 140/90 mmHg, antihypertensive treatment may be initiated (labetalol, nifedipine or methyldopa are preferred in pregnancy).",
+          "Counsel: birth is recommended at 37 weeks for women with pre-eclampsia, at a facility able to do caesarean birth; educate her and her family about danger signs."
+        ]
+      }
+    ]
+  },
+  "routine_by_contact": {
+    "_cite": "Table 3.2 Schedule of contacts and care provided; Table 3.1 Antenatal care interventions",
+    "first_contact_tests": [
+      "Haemoglobin (full blood count), blood group and Rhesus",
+      "HIV (PITC), syphilis and hepatitis B and C",
+      "Malaria RDT",
+      "Urine for protein and glucose",
+      "Random blood glucose"
+    ],
+    "contacts": {
+      "1": [
+        "Tetanus Diphtheria vaccine, depending on previous TD",
+        "Albendazole in the second trimester, after 12 weeks",
+        "IPTp-1 SP from the contact between 13 and 16 weeks",
+        "Aspirin 75 mg daily after 12 weeks and before 16 weeks",
+        "Multiple micronutrient supplement (MMS): give the whole bottle",
+        "Long-lasting insecticide-treated bed net"
+      ],
+      "2": [
+        "Tetanus Diphtheria vaccine, depending on previous TD",
+        "IPTp-2 SP",
+        "Aspirin 75 mg daily",
+        "Multiple micronutrient supplement (MMS)",
+        "Individual birth plan"
+      ],
+      "3": [
+        "IPTp-3 SP",
+        "Aspirin 75 mg daily",
+        "Multiple micronutrient supplement (MMS)",
+        "Rhesus-negative: indirect Coombs test, then prophylactic anti-D at 28 weeks"
+      ],
+      "4": [
+        "IPTp-4 SP",
+        "Aspirin 75 mg daily",
+        "Multiple micronutrient supplement (MMS)",
+        "Retest HIV if negative at the first contact; repeat full haemogram"
+      ],
+      "5": [
+        "IPTp-5 SP",
+        "Aspirin 75 mg daily",
+        "Multiple micronutrient supplement (MMS)",
+        "Individual birth plan"
+      ],
+      "6": [
+        "Multiple micronutrient supplement (MMS)",
+        "Recheck haemoglobin at 36 weeks",
+        "Check lie, presentation and engagement; refer any deviation from normal",
+        "Birth preparedness: transport, place of birth, skilled attendant, possible blood donors, birth companion"
+      ],
+      "7": [
+        "Multiple micronutrient supplement (MMS)",
+        "Aspirin 75 mg daily",
+        "Signs of labour and what to bring to the facility"
+      ],
+      "8": [
+        "Multiple micronutrient supplement (MMS)",
+        "Aspirin 75 mg daily",
+        "Refer to CEmONC for induction of labour at 41 weeks"
+      ]
+    }
   }
 }

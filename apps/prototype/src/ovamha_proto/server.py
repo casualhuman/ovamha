@@ -427,7 +427,10 @@ def do_finish(v: Visit = Depends(visit)):
     ga = confirmed.get("gestational_age_weeks") or e.profile_derived.get("ga_weeks")
     e.next_contact = guideline.next_contact(ga)
     v.encounter, v.bundle = e, None
-    return {**_rule_view(results), **_advice_view(e), "code": e.code, "card_code": registry.display(e.card_code)}
+    e.management = guideline.management(e.advice, confirmed, ga)
+    e.routine = guideline.routine_care(ga, first_contact=v.woman.visits == 0)
+    return {**_rule_view(results), **_advice_view(e), "management": e.management, "routine": e.routine,
+            "code": e.code, "card_code": registry.display(e.card_code)}
 
 
 class DecisionIn(BaseModel):

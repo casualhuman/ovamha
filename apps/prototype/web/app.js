@@ -860,6 +860,18 @@ function advice() {
     <div class="status-line ${sug === "none" ? "ok" : "warn"}" style="margin:0">${icon(sug === "none" ? "check" : "alert")}${esc(SUGGEST_TEXT[sug])} You decide.</div>
     <div class="list-head">What the guidelines say<span>Tap a row for details</span></div>
     <div class="row-list">${items.length ? items.map(adviceRow).join("") : `<div class="row-sub" style="padding:8px 2px">Nothing to suggest on the confirmed information.</div>`}</div>
+    ${(a.management || []).length ? `<div class="list-head">What you can do now<span>From the national guideline</span></div>
+      <div class="row-list">${a.management.map((m, i) => `<details class="row-item adv mgmt" ${i === 0 ? "open" : ""}>
+        <summary class="row-main"><span class="row-ico">${icon("heart")}</span>
+          <div class="row-text"><div class="row-title">${esc(m.title)}</div><div class="row-sub">${m.steps.length} steps · tap to open or close</div></div>
+          <button class="row-say" data-say-mgmt="${i}" aria-label="Read aloud">${icon("speaker")}</button></summary>
+        <ol class="steps-list">${m.steps.map((t) => `<li>${esc(t)}</li>`).join("")}</ol>
+        <div class="row-more" style="margin-top:4px"><div class="tiny">${esc(m.scope_note)}</div><div class="tiny" style="margin-top:4px">${esc(m.cite)}</div></div>
+      </details>`).join("")}</div>` : ""}
+    ${a.routine ? `<div class="list-head">Care due at this contact<span>Contact ${a.routine.contact}, around ${a.routine.week} weeks</span></div>
+      <div class="routine">${a.routine.items.map((t) => `<div>${icon("check")}<span>${esc(t)}</span></div>`).join("")}
+        ${a.routine.tests.length ? `<div class="routine-sub">First-contact tests</div>${a.routine.tests.map((t) => `<div>${icon("flask")}<span>${esc(t)}</span></div>`).join("")}` : ""}
+        <div class="tiny" style="margin-top:8px">${esc(a.routine.cite)}</div></div>` : ""}
     ${a.ask_next?.length && !a.danger ? `<div class="note-line warn">${icon("alert")}Not checked (missing): ${esc(a.ask_next.map((q) => q.label).join(", "))}</div>` : ""}
     ${a.next_contact?.text ? `<div class="note-line">${icon("calendar")}Next contact: ${esc(a.next_contact.text)}</div>` : ""}
     <div class="list-head">Your decision</div>
@@ -882,6 +894,11 @@ bind.advice = () => {
     e.preventDefault(); e.stopPropagation();
     const x = items[Number(b.dataset.sayAdv)];
     speakText(`${x.reasons.join(", ")}. Guideline suggests: ${x.rec}`, "en");
+  });
+  document.querySelectorAll("[data-say-mgmt]").forEach((b) => b.onclick = (e) => {
+    e.preventDefault(); e.stopPropagation();
+    const m = S.assess.management[Number(b.dataset.sayMgmt)];
+    speakText(`${m.title}. ${m.steps.join(" ")}`, "en");
   });
   document.querySelectorAll("[data-choice-dec]").forEach((b) => b.onclick = () => { S.decision.choice = b.dataset.choiceDec; S.decErr = ""; keepScroll(render); });
   $("#decReason") && ($("#decReason").oninput = (e) => { S.decision.reason = e.target.value; });

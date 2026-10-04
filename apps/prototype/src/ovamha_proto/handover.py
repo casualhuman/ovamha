@@ -105,6 +105,12 @@ def handover_text(e: Encounter) -> str:
     if not e.fired and not e.advice:
         lines.append("  - No referral suggested on confirmed data.")
     lines += [f"  ! {n}" for r in e.results for n in r.notes]
+    if e.management:
+        lines += ["", "GUIDELINE MANAGEMENT SHOWN TO THE WORKER"]
+        lines += [f"  - {m['title']} [{m['cite']}]" for m in e.management]
+    if e.routine:
+        lines += ["", f"CARE DUE AT CONTACT {e.routine['contact']} (around {e.routine['week']} weeks)"]
+        lines += [f"  - {t}" for t in e.routine["items"] + e.routine.get("tests", [])]
     lines += ["", "DECISION (by the health worker)"]
     if e.decision:
         lines.append(f"  - {DECISION_TEXT[e.decision['choice']]} by {e.decision['by']} at {e.decision['at']}"

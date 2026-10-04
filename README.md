@@ -88,6 +88,17 @@ The **Sierra Leone Integrated Obstetric and Newborn Care Guideline** (Ministry o
 | Sickle-cell disease, at a CHP | "If at a lower facility: referral to a CEmONC facility for advanced care." | Sierra Leone guideline, Table 3.4 |
 | 22 weeks pregnant | "Contact 3 at 26 weeks, around …" | Sierra Leone guideline, Table 3.2 |
 
+**Not just "refer": what the worker can do now.** With each suggestion, Ovamha shows the guideline's own management steps, transcribed word for word and cited, labelled *"do only what you are trained and supplied to do at your level of care"*:
+
+| Situation | Management shown (from the guideline) | Section |
+| --- | --- | --- |
+| Bleeding after 24 weeks | Shout for help; DR ABC; no vaginal examination; left lateral tilt if in shock; check fetal heart and movements; blood for Hb and group/screen, then IV fluids | Antepartum haemorrhage: initial resuscitation |
+| Severe pre-eclampsia / eclampsia | Magnesium sulphate loading dose (4 g 20% IV + 5 g 50% IM each buttock), repeat dose, maintenance dose if transfer exceeds 4 hours, toxicity checks; hydralazine or labetalol for BP ≥160/110; dexamethasone at 24 to below 34 weeks | Pre-eclampsia and eclampsia: management |
+| High risk of pre-eclampsia (e.g. previous PE) | Aspirin 75 mg daily; calcium 1.5–2.0 g daily; BP and urine protein every contact; birth at 37 weeks at a facility able to do caesarean birth | Tables 3.1 and 3.2; PE management |
+| Every contact | Care due at this contact: IPTp-SP dose, Td vaccine, aspirin, MMS, anti-D at 28 weeks if Rh-negative, first-contact tests | Table 3.2 |
+
+The guideline's annex on interventions by level of care is in images that could not be extracted, so the level-of-care note is shown on every management step instead of filtering by level.
+
 Where the guideline does not define a threshold, Ovamha states its assumption on screen and in the file (adolescent = under 20 years; high parity = 5 or more births; fetal heart rate normal range 110–160/min, from the guideline's intrapartum chapter). These need Ministry confirmation.
 
 **Adapting to another country (e.g. Nigeria):** add a guideline file in the same format, with that country's tables and citations. The app, the rules engine and the referral workflow stay the same. Nigeria's national guideline is not encoded yet.
