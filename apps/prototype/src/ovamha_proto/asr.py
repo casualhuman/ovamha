@@ -17,20 +17,26 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from functools import lru_cache
+from pathlib import Path
 
 import numpy as np
 
 SAMPLE_RATE = 16_000
+# Yoruba: LyngualLabs/whisper-small-yoruba (Apache 2.0) converted to CTranslate2 int8 by
+# scripts/convert_yoruba_asr.sh; used automatically when present (not committed: weights).
+_YO_LOCAL = Path(__file__).resolve().parents[4] / "ml/models/whisper-small-yoruba-ct2"
+_YO_DEFAULT = str(_YO_LOCAL) if (_YO_LOCAL / "model.bin").exists() else "small"
 MODELS = {
     "en": os.environ.get("OVAMHA_ASR_EN", "small"),
-    "yo": os.environ.get("OVAMHA_ASR_YO", "small"),
+    "yo": os.environ.get("OVAMHA_ASR_YO", _YO_DEFAULT),
     "kri": os.environ.get("OVAMHA_ASR_KRI", "small"),
 }
 # Whisper language code used for decoding.
 DECODE_LANG = {"en": "en", "yo": "yo", "kri": "en"}
 FALLBACK_NOTE = {
     "kri": "Krio: Whisper has no Krio model; decoded as English (fallback). MMS/DONDO pending.",
-    "yo": "Yoruba: base Whisper small (weak on Yoruba). LyngualLabs model pending conversion.",
+    "yo": ("Yoruba: Yoruba fine-tuned Whisper small (see ml/eval/results/yoruba-asr-fleurs.txt)."
+           if MODELS["yo"] != "small" else "Yoruba: base Whisper small (weak on Yoruba); Yoruba model not installed."),
 }
 
 
@@ -44,7 +50,8 @@ class AsrResult:
 
 def model_name(lang: str) -> str:
     m = MODELS.get(lang, "small")
-    return f"faster-whisper {'openai/whisper-small' if m == 'small' else m} (CTranslate2 int8)"
+    label = "openai/whisper-small" if m == "small" else ("LyngualLabs/whisper-small-yoruba" if "yoruba" in m else m)
+    return f"faster-whisper {label} (CTranslate2 int8)"
 
 
 @lru_cache(maxsize=3)
