@@ -112,6 +112,16 @@ def state(v: Visit) -> dict:
     }
 
 
+# ---------------- config ----------------
+
+@app.get("/api/config")
+def config():
+    """Hosted copies (OVAMHA_HOSTED=1) show a banner explaining the field deployment is offline."""
+    import os
+
+    return {"hosted": os.environ.get("OVAMHA_HOSTED") == "1"}
+
+
 # ---------------- auth ----------------
 
 class LoginIn(BaseModel):

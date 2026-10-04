@@ -156,7 +156,8 @@ function render() {
   app.classList.toggle("enter", !!S.enter);  // fade in only when arriving on a new screen, not on every tap
   S.enter = false;
   const view = { welcome, login, home, woman, describe, confirm, history, measure, advice, referral, result, profile }[S.screen] || home;
-  app.innerHTML = view();
+  app.innerHTML = view() + (S.hosted && ["welcome", "login", "home", "profile"].includes(S.screen)
+    ? `<div class="hosted-note">${icon("wifioff")}Hosted demo for judges. In the field, Ovamha runs fully offline on a local hub.</div>` : "");
   bind[S.screen]?.();
 }
 function nav(active) {
@@ -1096,6 +1097,7 @@ bind.profile = () => { $("#signout").onclick = () => signOut(false); };
 
 // ---------------------------------------------------------------- boot
 (async function boot() {
+  try { S.hosted = (await (await fetch("/api/config")).json()).hosted; } catch { S.hosted = false; }
   const saved = store.get("ovamha");
   if (saved?.token) {
     S.token = saved.token; S.worker = saved.worker; S.lang = saved.lang || "en";

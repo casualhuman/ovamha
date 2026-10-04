@@ -4,15 +4,19 @@ Ovamha (Offline Voice Assistant for Maternal Healthcare in Africa) helps communi
 
 Focus countries: Sierra Leone and Nigeria. Prototype for the World Bank Small AI for Development Hackathon (October 2026).
 
-## Run it
+## Try it
+
+**Online (hosted copy for judges):** https://r8086-ovamha.hf.space. The same code, with its speech and voice models inside the container; no external AI service is called. The free host sleeps when idle: the first visit can take about a minute. Records sync to a demo FHIR hub: https://r8086-ovamha-fhir.hf.space/fhir/ServiceRequest
+
+**Offline, on your own machine (how it runs in the field):**
 
 ```
-make setup     # once: Python environment and packages
+make setup     # once, with internet: Python packages and the speech/voice models
 make test      # 140 automated tests
-make run       # open http://localhost:8000
+make run       # then switch the internet off and open http://localhost:8000
 ```
 
-Phone on the same Wi-Fi: `make run-https` (phone microphones need HTTPS).
+Phone on the same Wi-Fi as the laptop "hub": `make run-https` (phone microphones need HTTPS). In the field, a laptop or Raspberry Pi at the health post is the hub and nurses' phones connect to it over local Wi-Fi; nothing needs the internet.
 
 ## For judges: demo logins
 
