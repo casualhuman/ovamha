@@ -27,7 +27,7 @@ FIELD_TERMS: dict[str, dict[str, list[str]]] = {
         "en": ["headache", "head ache", "head pain", "head is paining", "head is pounding", "head pounding", "pounding head",
                "head hurts", "head is hurting", "head is aching"],
         "kri": ["ed de at", "ed at", "headache"],
-        "yo": ["ori fifo", "ori n fo", "efori", "headache"],
+        "yo": ["ori fifo", "ori n fo", "ori mi n fo", "ori re n fo", "orififo", "efori", "headache"],
     },
     "visual_disturbance": {
         "en": ["blurred vision", "blurry", "blurred", "cannot see well", "can't see well", "seeing spots", "sees stars", "seeing stars",

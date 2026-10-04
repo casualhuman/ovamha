@@ -117,3 +117,21 @@ def test_everyday_phrasings_and_no_false_alarms(text, expected):
     ex = extract(text, "en")
     got = {f for f, v in ex.fields.items() if v.value is True} | {f.field for f in scan(ex)}
     assert got == expected
+
+
+def test_yoruba_one_letter_speech_error_is_flagged_not_recorded():
+    # Speech recognition heard "orẹ́" (friend) for "orí" (head): "ori n fo" = her head is aching.
+    ex = extract("ọrẹ́ ń fọ gidi gidi ara rẹ̀ síǹbọ́ náà", "yo")
+    assert ex.fields["headache"].value == NOT_CAPTURED  # never recorded as fact
+    flags = scan(ex)
+    assert [f.field for f in flags] == ["headache"] and "close to" in flags[0].reason
+
+
+def test_yoruba_near_match_does_not_fire_on_unrelated_or_negated_speech():
+    assert scan(extract("Ọ̀rẹ́ rẹ̀ wá kí i", "yo")) == []          # "her friend came to greet her"
+    assert scan(extract("Kò sí orí ń fọ́", "yo")) == []            # "no headache"
+    assert extract("Orí mi ń fọ́ gidi", "yo").fields["headache"].value is True
+
+
+def test_near_match_is_not_used_for_english():
+    assert [f.field for f in scan(extract("She has a headace", "en"))] == []
