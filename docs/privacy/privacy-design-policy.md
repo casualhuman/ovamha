@@ -1,9 +1,14 @@
 # Privacy design policy: Ovamha
 
-**Status: DRAFT**, 2026-10-04. Structured to the privacy design policy required by s.54 of the draft
-*Data Protection and Right to Access Information Regulatory Commission Bill, 2025* (not yet law),
-and to the MoHS *Health Information System Policy* 2021 (in force). Once the Bill is enacted, this
-policy must be approved by the Data Protection Commission and published (s.54(2)-(4)).
+**Status: DRAFT**, 2026-10-04. One policy for every country where Ovamha runs, built on
+international health guidance (WHO *Ethics and governance of AI for health* 2021; WHO *Data
+principles* 2020; WHO ANC DAK ANC.NFXNREQ) and the African baseline (ECOWAS Supplementary Act
+A/SA.1/01/10; AU Data Policy Framework 2022: privacy by design and by default). Country rules:
+**Nigeria**: Data Protection Act 2023 (privacy by design: s.24(2), s.39; notice: s.27) and National
+Health Act 2014 (s.26, s.29). **Sierra Leone**: MoHS Health Information System Policy 2021, and the
+draft Data Protection Bill 2025, whose s.54 sets this policy's structure; once enacted it must be
+approved by the Commission and published (s.54(2)-(4)). Abbreviations as in [README.md](README.md);
+unprefixed "Bill" and "HIS" mean the Sierra Leone texts.
 
 ## 1. Practices that anticipate and avoid harm (s.54(1)(a))
 
@@ -46,8 +51,8 @@ consented data, never on patient records or recordings.
 
 | Who | Obligation |
 |---|---|
-| Controller (facility / DHMT under MoHS, to be confirmed) | Register with the Commission (Bill s.49); approve this policy and the [DPIA](dpia.md); respond to her requests (access s.43, correction s.42, restriction s.28) within the legal time limits; report breaches ([breach-response.md](breach-response.md)) |
-| Health workers | Keep information confidential (HIS 3.7(b)); read the privacy notice; never share PINs or devices while signed in; report lost devices and suspected breaches immediately (HIS 3.7(c)) |
+| Controller (Sierra Leone: facility / DHMT under MoHS; Nigeria: the health facility or state ministry; to be confirmed) | Approve this policy and the [DPIA](dpia.md); respond to her requests (ECOWAS Art. 39-41; NDPA s.34-36; SL-Bill s.28, 42, 43); report breaches ([breach-response.md](breach-response.md)); Nigeria: NDPC consultation and registration where required (NDPA s.28, s.44); Sierra Leone: register once the Bill is enacted (s.49) |
+| Health workers | Keep information confidential (SL-HIS 3.7(b); NHA s.26(1)); read the privacy notice; never share PINs or devices while signed in; report lost devices and suspected breaches immediately (SL-HIS 3.7(c)) |
 | Ovamha developers | Build privacy in by default (Bill s.55); keep the controls in [README.md](README.md) tested; never use patient data or recordings for development or training |
 
 ## 5. Privacy from collection to deletion (s.54(1)(e))
@@ -57,7 +62,7 @@ consented data, never on patient records or recordings.
 | Voice recording | Until transcribed (seconds) | Deleted (`server.py` `_transcribe_upload`) |
 | Read-aloud audio of her details | Until played | Deleted (`server.py` `do_speak`) |
 | Transcript, AI proposals, unconfirmed items | Until the encounter closes | Discarded (ARCH DEV-03; `confirm.py` `finalise`) |
-| Registry on the phone | While she is in care at the facility | Per MoHS retention schedule (to be obtained) |
+| Registry on the phone | While she is in care at the facility | Per the national retention schedule (to be obtained for each country; ECOWAS Art. 25(3), 44; NDPA s.24(1)(d)) |
 | Sync outbox | Until uploaded to the hub | Deleted after upload (`sync.py` `flush`) |
 | Hub health records | Per national health-records retention policy (ARCH DB-07; HIS 3.6(a)) | Deleted or de-identified at the end of the period (Bill s.40(4)) |
 | SMS bodies | Configurable period (ARCH DB-07) | Purged; the FHIR Communication remains |
@@ -69,7 +74,10 @@ information". Local test data lives in `OVAMHA_DATA` and can be wiped by deletin
 
 ## Sources
 
-- *The Data Protection and Right to Access Information Regulatory Commission Act, 2025* (Bill, not yet law): s.26-28, 39-43, 46, 49, 54, 55.
+- WHO, *Ethics and governance of artificial intelligence for health*, 2021; WHO, *Data principles*, 2020.
+- ECOWAS, *Supplementary Act A/SA.1/01/10*, 2010: Art. 23-28, 36, 39-44. African Union, *Data Policy Framework*, 2022.
+- *Nigeria Data Protection Act*, 2023: s.24, 27, 28, 34-36, 39, 44. *National Health Act* (Nigeria), 2014: s.26, s.29.
+- *The Data Protection and Right to Access Information Regulatory Commission Act, 2025* (Sierra Leone Bill, not yet law): s.26-28, 39-43, 46, 49, 54, 55.
 - MoHS Sierra Leone, *Health Information System Policy*, 2021: s.3.5.9, 3.5.10, 3.6, 3.7.
 - WHO, *Digital adaptation kit for antenatal care*, 2021: ANC.NFXNREQ.001-043.
 - Ovamha architecture: AP-05, DEV-03, DB-07, SEC-02, SEC-06.

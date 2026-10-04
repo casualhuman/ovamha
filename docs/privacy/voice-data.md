@@ -33,14 +33,17 @@ The transcript is not logged. The audit trail records that an action happened, n
 
 ## Before recording any person
 
-Recording people to test or train models is health research under the MoHS Health Information System
-Policy 2021, s.3.5.10(d): it needs written ethical clearance from the **Sierra Leone Ethics and
-Scientific Review Committee (SLESRC)**. Voices are personal data; under the draft Data Protection
-Bill 2025 consent must be freely given, informed and specific (s.37). Use the consent text in
-`ml/eval/RECORDING_GUIDE.md`, and keep signed copies.
+Recording people to test or train models is health research. In Sierra Leone it needs written ethical
+clearance from the **Sierra Leone Ethics and Scientific Review Committee (SLESRC)** (MoHS HIS Policy
+2021, s.3.5.10(d)); in Nigeria, approval from a registered health research ethics committee. Voices
+are personal data: consent must be informed and specific (NDPA s.25-26; SL-Bill s.37; ECOWAS Art. 23).
+Use the consent text in `ml/eval/RECORDING_GUIDE.md`, and keep signed copies.
 
 ## Sources
 
+- WHO, *Ethics and governance of artificial intelligence for health*, 2021: principle 1 (privacy, confidentiality, informed consent).
+- ECOWAS, *Supplementary Act A/SA.1/01/10*, 2010: Art. 23, 25(1) (specified purposes, no incompatible further processing), 25(3) (kept no longer than needed).
+- *Nigeria Data Protection Act*, 2023: s.24(1)(b)-(d), s.25-26.
 - MoHS Sierra Leone, *Health Information System Policy* (2021), s.3.5.10(d).
-- *Data Protection and Right to Access Information Regulatory Commission Bill* (2025, not yet law), s.26(1)(c)-(d), s.27(1), s.37, s.39(1).
+- *Data Protection and Right to Access Information Regulatory Commission Bill* (Sierra Leone, 2025, not yet law), s.26(1)(c)-(d), s.27(1), s.37, s.39(1).
 - Ovamha architecture, DEV-03 ("Unconfirmed drafts and audio MUST be held outside the FHIR Engine and deleted when the encounter closes").
