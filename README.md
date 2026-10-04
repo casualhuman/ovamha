@@ -20,7 +20,7 @@ MaternalSave is a **voice** assistant: you describe the woman out loud, the way 
 | 4 | Tap **Returning** (a woman who has been before). Enter the card number for the option you pick below (**`MAM-A2A`** or **`ANC-24T`**) → **Find** → **Continue** | *Card found*, her name, and *1 previous check on this device*. Her history is already recorded, so that step is skipped |
 | 5 | Tap the large **microphone** (allow microphone access the first time) and **say** the description from your option below. Tap the microphone again when you finish. **Replay guidance** plays back what you said → **Next** | Speech is turned into text on the device, then *What we understood*: each danger sign MaternalSave heard, with the words it heard it from |
 | 6 | Tap **Correct** on each item (for a headache, choose **Severe** or **Mild**). If something was misheard, tap **Not true**. Then **Next: measurements** | Only confirmed items count; nothing unconfirmed reaches the advice |
-| 7 | Enter the numbers from your option on the keypad (or tap the microphone beside a field and say them, e.g. *"one sixty-five over one twelve"*) → **Confirm** under each; for urine protein, tap the result. Then **Check the guidelines** | *Guideline advice*, every line citing its source, and **What you can do now**: the guideline's own steps for this woman |
+| 7 | Enter the numbers from your option on the keypad (or tap the microphone beside a field and say them, e.g. *"one sixty-five over one twelve"*) → **Confirm** under each; for urine protein, tap the result. Repeat BP and urine protein appear only when BP is 140/90 or higher or a pre-eclampsia sign was confirmed; pulse, temperature and fetal heart rate are under **More measurements**. Then **Check the guidelines** | *Guideline advice*, every line citing its source, and **What you can do now**: the guideline's own steps for this woman |
 | 8 | Under **Your decision**, choose one → **Confirm my decision** | The result: referral, SMS, referral letter and the record |
 
 Numbers go on the keypad by default on purpose: a misheard blood pressure is dangerous, so voice is used for symptoms and history.
@@ -31,7 +31,7 @@ Numbers go on the keypad by default on purpose: a misheard blood pressure is dan
 
 - **Say:** *"Routine visit. She feels well, she only has some back pain. No bleeding, no headache, and the baby is moving well."*
 - **What we understood:** *Vaginal bleeding · No*, *Headache · No*. "No bleeding" is recorded as a real answer, not as missing.
-- **Measurements:** blood pressure **124 / 80**, urine protein **Negative**.
+- **Measurements:** gestational age is already filled in from her history (about 20 weeks): tap **Confirm**. Blood pressure **124 / 80**.
 - **You should see:** *High-risk pregnancy: the guidelines suggest planning delivery at a CEmONC facility. You decide*, because of her previous pre-eclampsia and caesarean section (Sierra Leone guideline, Table 3.4).
 - **What you can do now:** *High risk of pre-eclampsia: prevention and monitoring*: aspirin 75 mg daily, calcium, BP and urine protein at every contact, birth at 37 weeks at a facility able to do caesarean birth. Below it, **Care due at this contact** (Td vaccine, IPTp SP, aspirin, micronutrients, birth plan) and the **Next contact** date.
 - **Decide:** **Plan a referral** → *Planned referral. Recorded.* No emergency SMS is sent.
@@ -40,7 +40,7 @@ Numbers go on the keypad by default on purpose: a misheard blood pressure is dan
 
 - **Say:** *"Since this morning her head is banging and everything looks blurry. Her hands and face are puffy."*
 - **What we understood:** *Headache · Yes* (choose **Severe**), *Visual disturbance · Yes*, *Swelling · Yes*. The classifier understands "head is banging" as a headache and "puffy" as swelling; a keyword list misses the headache and only flags the swelling for checking.
-- **Measurements:** blood pressure **165 / 112**, urine protein **++**.
+- **Measurements:** blood pressure **165 / 112**. Urine protein appears straight away because pre-eclampsia signs were confirmed: tap **++**.
 - **You should see:** *The guidelines suggest urgent referral. You decide.* Rows: severe headache with visual disturbance (WHO danger signs), BP 165/112 with protein ++ (Sierra Leone guideline: severe pre-eclampsia), and her previous pre-eclampsia.
 - **What you can do now:** *Severe pre-eclampsia / eclampsia: act fast, magnesium sulphate*: the loading dose with exact amounts, the repeat and maintenance doses, when to withhold it (breathing below 16, no reflexes, low urine), blood-pressure treatment, and dexamethasone between 24 and 34 weeks. Tap 🔊 to hear it.
 - **Decide:** **Refer urgently** → **She agrees** → tap 🔊 to hear the iSBAR call script → **I called just now** → **Refer digitally and prepare the letter**. The referral SMS goes to the hospital; tap **ACK** to play the hospital's reply: *Hospital accepted the referral*. **Preview the letter** shows the printable referral letter with a feedback slip.

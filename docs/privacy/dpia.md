@@ -97,7 +97,7 @@ Implemented and tested in the prototype (details and code locations in [README.m
 voice deleted after transcription; no read-aloud audio of her details on disk; encryption at rest
 of registry, SMS log, outbox and audit; owner-only files; audit trail without personal details;
 15-minute idle and 8-hour shift sign-out; PIN not remembered; lockout after 5 wrong PINs; privacy
-notice before registration; "Show her record"; anonymised export; national ID never stored;
+notice before registration; "Show record"; anonymised export; national ID never stored;
 consent to referral; worker confirms all AI output; on-device AI; no clinical data in the app cache;
 hosted-demo warning.
 

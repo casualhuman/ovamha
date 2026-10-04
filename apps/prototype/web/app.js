@@ -465,10 +465,14 @@ function woman() {
       ${who}<div class="small muted">${w.new ? "Write this on her antenatal card" : "Her card number"}</div>
       <div class="card-code">${esc(w.card_code)}</div>
       <div class="row" style="justify-content:center;gap:8px"><button class="btn soft" id="sayCard">${icon("speaker")}Read aloud</button>
-        <button class="btn soft" id="herRecord">${icon("file")}Show her record</button></div>
+        <button class="btn soft" id="herRecord">${icon("file")}Show record</button></div>
       <div class="small muted" style="margin-top:12px;display:flex;flex-direction:column;gap:4px;align-items:center">
         <span style="display:inline-flex;gap:6px;align-items:center">${idLine}</span>${dob ? `<span>${esc(dob)}</span>` : ""}
         ${w.new ? "" : `<span>${w.visits} previous ${w.visits === 1 ? "check" : "checks"} on this device</span>`}</div>
+      ${w.last_check ? `<div class="small" style="margin-top:10px;text-align:left;background:var(--soft,#f1f5f9);border-radius:12px;padding:10px 12px">
+        <b>Last check</b> ${esc((w.last_check.at || "").slice(0, 10))}${w.last_check.ga_weeks ? ` · ${w.last_check.ga_weeks} weeks` : ""}<br>
+        ${esc(w.last_check.findings.length ? w.last_check.findings.join(", ") : "No danger sign confirmed")}${w.last_check.measurements["Blood pressure"] ? ` · BP ${esc(w.last_check.measurements["Blood pressure"])}` : ""}<br>
+        <span class="muted">${esc(w.last_check.decision || w.last_check.guideline || "")}</span></div>` : ""}
     </div>
     <div style="margin-top:16px"><button class="btn primary" id="toDescribe">Continue${icon("right")}</button></div>`;
   } else if (S.cardMode === "new") {
@@ -544,8 +548,12 @@ function showRecord(rec) {
     ${line("Last check", rec.last_visit)}${line("Born", rec.birth_date + (rec.birth_date_estimated ? " (estimated)" : ""))}
     ${line("National ID", rec.national_id)}${line("Privacy notice read", rec.privacy_notice_at)}
     <h4 style="margin:12px 0 4px">Registration</h4>${obj(rec.details) || '<div class="small muted">None</div>'}
+    <h4 style="margin:12px 0 4px">Previous checks</h4>${(rec.history || []).map((h) => `<div class="small" style="margin:0 0 8px">
+      <b>${esc((h.at || "").slice(0, 10))}</b>${h.ga_weeks ? ` · ${h.ga_weeks} weeks` : ""}${h.worker ? ` · ${esc(h.worker)}` : ""}<br>
+      Found: ${esc(h.findings && h.findings.length ? h.findings.join(", ") : "no danger sign confirmed")}${h.denied && h.denied.length ? ` · Not present: ${esc(h.denied.join(", "))}` : ""}<br>
+      ${Object.entries(h.measurements || {}).map(([k, v]) => `${esc(k)} ${esc(v)}`).join(" · ")}${h.decision ? `<br>Decision: ${esc(h.decision)}${h.reason ? ` (${esc(h.reason)})` : ""}` : ""}</div>`).join("") || '<div class="small muted">None recorded on this device</div>'}
     <h4 style="margin:12px 0 4px">History and profile</h4>${obj(rec.profile) || '<div class="small muted">Not collected yet</div>'}
-    <p class="tiny muted" style="margin-top:12px">Visit records are kept at the health facility hub. She can ask for any mistake to be corrected.</p>
+    <p class="tiny muted" style="margin-top:12px">Full visit records are kept at the health facility hub. She can ask for any mistake to be corrected.</p>
     <div class="row" style="margin-top:12px"><button class="btn soft" id="recPrint">${icon("file")}Print</button><button class="btn primary modal-ok">Close</button></div></div>`;
   const close = () => m.remove();
   m.querySelector(".modal-x").onclick = close;
@@ -739,56 +747,115 @@ bind.history = () => {
 };
 
 // ---------------------------------------------------------------- 6. measurements (keypad default, voice optional)
+// Essentials first (gestational age, BP). Follow-ups appear only when the guideline needs them:
+// repeat BP and urine protein when BP is 140/90 or higher (or a pre-eclampsia sign is confirmed).
+// Everything else sits under "More measurements". Impossible numbers are flagged while typing.
 const MEASURES = [
-  { id: "ga", prompt: "ask_ga", title: "Gestational age", icon: "calendar", fields: [["gestational_age_weeks", "weeks"]] },
-  { id: "bp", prompt: "ask_bp", title: "Blood pressure", icon: "heart", fields: [["systolic", "systolic"], ["diastolic", "diastolic"]], unit: "mmHg · say “90 over 60”" },
-  { id: "bp2", prompt: "ask_bp_repeat", title: "Repeat blood pressure", icon: "heart", fields: [["systolic_repeat", "systolic"], ["diastolic_repeat", "diastolic"]], unit: "mmHg · only if the first was high", optional: true },
-  { id: "pulse", prompt: "ask_pulse", title: "Pulse", icon: "heart", fields: [["pulse", "/min"]], optional: true },
-  { id: "temp", prompt: "ask_temp", title: "Temperature", icon: "temp", fields: [["temperature", "°C"]], optional: true },
-  { id: "fhr", prompt: "ask_fhr", title: "Fetal heart rate", icon: "baby", fields: [["fetal_heart_rate", "/min"]], optional: true },
+  { id: "ga", prompt: "ask_ga", title: "Gestational age", icon: "calendar", fields: [["gestational_age_weeks", "weeks"]], group: "core" },
+  { id: "bp", prompt: "ask_bp", title: "Blood pressure", icon: "heart", fields: [["systolic", "systolic"], ["diastolic", "diastolic"]], unit: "mmHg · say “90 over 60”", group: "core" },
+  { id: "bp2", prompt: "ask_bp_repeat", title: "Repeat blood pressure", icon: "heart", fields: [["systolic_repeat", "systolic"], ["diastolic_repeat", "diastolic"]], unit: "mmHg · the first reading was high", group: "followup" },
+  { id: "pulse", prompt: "ask_pulse", title: "Pulse", icon: "heart", fields: [["pulse", "/min"]], group: "more" },
+  { id: "temp", prompt: "ask_temp", title: "Temperature", icon: "temp", fields: [["temperature", "°C"]], group: "more" },
+  { id: "fhr", prompt: "ask_fhr", title: "Fetal heart rate", icon: "baby", fields: [["fetal_heart_rate", "/min"]], group: "more" },
 ];
+// Same ranges as the server (server.py PLAUSIBLE), so a typo is caught before Confirm.
+const PLAUS = { gestational_age_weeks: [4, 45], systolic: [50, 300], diastolic: [20, 200], systolic_repeat: [50, 300],
+  diastolic_repeat: [20, 200], pulse: [20, 250], temperature: [30, 45], fetal_heart_rate: [50, 250] };
+const PE_SIGNS = ["headache", "visual_disturbance", "swelling"];
 const item = (f) => (S.st?.items || []).find((i) => i.field === f);
+const rawVal = (f) => String(S.numbers[f] ?? item(f)?.value ?? "").trim();
+const numVal = (f) => (rawVal(f) === "" || isNaN(Number(rawVal(f))) ? null : Number(rawVal(f)));
+const bpHigh = () => (numVal("systolic") ?? 0) >= 140 || (numVal("diastolic") ?? 0) >= 90;
+const peSign = () => PE_SIGNS.some((f) => item(f)?.confirmed && item(f).value !== false);
+function problem(m) {
+  const vals = m.fields.map(([f]) => [f, rawVal(f)]);
+  for (const [f, v] of vals) {
+    if (v === "") continue;
+    const n = Number(v), [lo, hi] = PLAUS[f];
+    if (isNaN(n)) return "Enter a number.";
+    if (n < lo || n > hi) return `${v} looks wrong: expected ${lo} to ${hi}.`;
+  }
+  if (vals.length === 2 && vals[0][1] && vals[1][1] && Number(vals[0][1]) <= Number(vals[1][1]))
+    return "The top number (systolic) should be higher than the bottom (diastolic).";
+  return "";
+}
+function gaSuggestion() {
+  const w = S.st?.woman;
+  if (!w) return null;
+  if (w.profile_derived?.ga_weeks) return { weeks: Math.floor(w.profile_derived.ga_weeks), from: "her last menstrual period" };
+  const lc = w.last_check;
+  if (lc?.ga_weeks && lc.at) return { weeks: Math.floor(lc.ga_weeks + (Date.now() - Date.parse(lc.at)) / 6048e5), from: "her last check" };
+  return null;
+}
 function measureCard(m) {
   const allOk = m.fields.every(([f]) => item(f)?.confirmed);
-  const inputs = m.fields.map(([f, u], k) => `${k ? '<span class="sep">/</span>' : ""}<input class="num" inputmode="decimal" id="n-${f}" placeholder="${esc(u)}" value="${esc(item(f)?.value ?? S.numbers[f] ?? "")}" ${allOk ? "disabled" : ""}>`).join("");
+  const err = allOk ? "" : problem(m);
+  const inputs = m.fields.map(([f, u], k) => `${k ? '<span class="sep">/</span>' : ""}<input class="num${err ? " bad" : ""}" inputmode="decimal" id="n-${f}" data-m="${m.id}" placeholder="${esc(u)}" value="${esc(item(f)?.value ?? S.numbers[f] ?? "")}" ${allOk ? "disabled" : ""}>`).join("");
   const live = S.numRec === m.id;
-  return `<div class="card measure">
-    <div style="display:flex;align-items:center;gap:10px"><span class="icon-btn soft" style="width:40px;height:40px">${icon(m.icon)}</span>
-      <h3 style="flex:1;margin:0">${m.title}${m.optional ? ' <span class="tiny">optional</span>' : ""}</h3>
-      <button class="icon-btn soft" data-prompt="${m.prompt}" aria-label="Read the question aloud">${icon("speaker")}</button></div>
+  const ga = m.id === "ga" && !allOk ? gaSuggestion() : null;
+  const gaNow = numVal("gestational_age_weeks");
+  const hint = !ga ? m.unit
+    : gaNow === ga.weeks ? `About ${ga.weeks} weeks from ${ga.from}. Confirm or change it.`
+    : gaNow !== null && Math.abs(gaNow - ga.weeks) >= 3 ? `Check: ${ga.from} suggests about ${ga.weeks} weeks.` : m.unit;
+  return `<div class="card measure compact" id="m-${m.id}">
+    <div class="m-head"><span class="m-ico">${icon(m.icon)}</span>
+      <h3>${m.title}${m.group === "more" ? ' <span class="tiny">optional</span>' : ""}</h3>
+      <button class="icon-btn soft sm" data-prompt="${m.prompt}" aria-label="Read the question aloud">${icon("speaker")}</button></div>
     <div class="num-row">${inputs}${allOk ? "" : `<button class="mic-sm ${live ? "live" : ""}" data-mrec="${m.id}" aria-label="Say the number">${icon(live ? "stop" : "mic")}</button>`}</div>
-    ${m.unit ? `<div class="unit">${esc(m.unit)}</div>` : ""}
+    ${hint ? `<div class="unit${hint.startsWith("Check:") ? " warn" : ""}">${esc(hint)}</div>` : ""}
+    <div class="m-err" id="err-${m.id}">${esc(err)}</div>
     ${allOk ? `<div class="done-line">${icon("check")}Confirmed <button class="link small" data-msay="${m.id}">Read back</button><button class="link small" data-mundo="${m.id}">Change</button></div>`
-      : `<div class="row" style="margin-top:12px"><button class="btn soft" data-msay="${m.id}">${icon("speaker")}Read back</button><button class="btn primary" data-mok="${m.id}">${icon("check")}Confirm</button></div>`}
+      : `<div class="m-acts"><button class="icon-btn soft sm" data-msay="${m.id}" aria-label="Read back">${icon("speaker")}</button><button class="btn primary sm" data-mok="${m.id}" ${err ? "disabled" : ""}>${icon("check")}Confirm</button></div>`}
   </div>`;
 }
 const choiceKey = (v) => (v === true ? "yes" : v === false ? "no" : String(v));
-function choiceCard(field, title, opts, ic, prompt) {
+function choiceCard(field, title, opts, ic, prompt, optional = true) {
   const it = item(field);
-  return `<div class="card measure"><div style="display:flex;align-items:center;gap:10px"><span class="icon-btn soft" style="width:40px;height:40px">${icon(ic)}</span><h3 style="flex:1;margin:0">${title} <span class="tiny">optional</span></h3>
-    <button class="icon-btn soft" data-prompt="${prompt}" aria-label="Read the question aloud">${icon("speaker")}</button></div>
+  return `<div class="card measure compact"><div class="m-head"><span class="m-ico">${icon(ic)}</span><h3>${title}${optional ? ' <span class="tiny">optional</span>' : ""}</h3>
+    <button class="icon-btn soft sm" data-prompt="${prompt}" aria-label="Read the question aloud">${icon("speaker")}</button></div>
     <div class="seg">${opts.map(([v, l]) => `<button data-choice="${field}" data-v="${esc(v)}" class="${it?.confirmed && choiceKey(it.value) === v ? "on" : ""}">${l}</button>`).join("")}</div>
     ${it?.confirmed ? `<div class="done-line">${icon("check")}Confirmed: ${esc(it.confirmed_value)} <button class="link small" data-csay="${field}">Read back</button></div>` : ""}</div>`;
 }
+const urineCard = (req) => choiceCard("urine_protein", "Urine protein", [["negative", "Negative"], ["trace", "Trace"], ["+", "+"], ["++", "++"], ["+++", "+++"], ["unknown", "Not done"]], "flask", "ask_protein", !req);
+const severePeCard = (req) => choiceCard("severe_pe_symptoms", "Severe pre-eclampsia symptoms", [["yes", "Yes"], ["no", "No"], ["unknown", "Don't know"]], "alert", "ask_severe_pe", !req);
 function measure() {
   const danger = S.st?.preview?.danger;
+  const ga = gaSuggestion();
+  if (ga && !item("gestational_age_weeks") && S.numbers.gestational_age_weeks === undefined) S.numbers.gestational_age_weeks = String(ga.weeks);
+  const high = bpHigh(), pe = peSign(), followUp = high || pe;
+  const more = MEASURES.filter((m) => m.group === "more");
+  const moreUsed = more.some((m) => m.fields.some(([f]) => rawVal(f) !== "")) || (!followUp && (item("urine_protein") || item("severe_pe_symptoms")));
   return `<div class="screen">${topbar("Measurements", "confirm")}${steps(4)}
     ${danger && S.st?.needs_profile ? `<div class="note-line">${icon("file")}Her full history can wait because of the danger sign. Complete it at her next contact.</div>` : ""}
     ${danger ? `<div class="note-line warn">${icon("alert")}Danger sign confirmed. Measurements are optional; you decide at the end.</div>` : `<p class="muted small" style="margin-top:0">Type the numbers, or tap the microphone and say them. Each one is read back for you to confirm.</p>`}
-    ${MEASURES.map(measureCard).join("")}
-    ${choiceCard("urine_protein", "Urine protein", [["negative", "Negative"], ["trace", "Trace"], ["+", "+"], ["++", "++"], ["+++", "+++"], ["unknown", "Not done"]], "flask", "ask_protein")}
-    ${choiceCard("severe_pe_symptoms", "Severe pre-eclampsia symptoms", [["yes", "Yes"], ["no", "No"], ["unknown", "Don't know"]], "alert", "ask_severe_pe")}
+    ${MEASURES.filter((m) => m.group === "core").map(measureCard).join("")}
+    ${high ? `<div class="note-line warn">${icon("alert")}BP is 140/90 or higher: repeat it, and check urine protein.</div>${measureCard(MEASURES.find((m) => m.id === "bp2"))}`
+      : pe ? `<div class="note-line warn">${icon("alert")}Headache, blurred vision or swelling confirmed: check urine protein.</div>` : ""}
+    ${followUp ? urineCard(true) + severePeCard(true) : ""}
+    <details class="more"${moreUsed || S.moreOpen ? " open" : ""}><summary>${icon("plus")}More measurements <span class="tiny">optional</span></summary>
+      ${more.map(measureCard).join("")}${followUp ? "" : urineCard(false) + severePeCard(false)}</details>
   </div>
   <div class="sticky">${statusBanner()}<button class="btn primary" id="finish">${icon("shield")}Check the guidelines</button></div>`;
 }
 bind.measure = () => {
-  const refresh = (st) => { S.st = st; render(); };
+  const refresh = (st) => { S.st = st; keepScroll(render); };
   const readInputs = (m) => m.fields.map(([f]) => [f, $(`#n-${f}`).value.trim()]);
-  document.querySelectorAll("input.num").forEach((el) => el.oninput = () => { S.numbers[el.id.slice(2)] = el.value; });
+  document.querySelectorAll("input.num").forEach((el) => {
+    el.oninput = () => {  // live check without re-rendering, so typing keeps focus
+      S.numbers[el.id.slice(2)] = el.value;
+      const m = MEASURES.find((x) => x.id === el.dataset.m), err = problem(m);
+      $(`#err-${m.id}`).textContent = err;
+      document.querySelectorAll(`#m-${m.id} input.num`).forEach((i) => i.classList.toggle("bad", !!err));
+      const ok = $(`#m-${m.id} [data-mok]`); if (ok) ok.disabled = !!err;
+    };
+    el.onchange = () => { if (el.dataset.m === "bp") keepScroll(render); };  // BP may reveal the follow-ups
+  });
+  const det = $("details.more"); if (det) det.ontoggle = () => { S.moreOpen = det.open; };
   document.querySelectorAll("[data-mok]").forEach((b) => b.onclick = async () => {
     const m = MEASURES.find((x) => x.id === b.dataset.mok);
     const vals = readInputs(m);
     if (vals.some(([, v]) => v === "")) { toast("Enter every number first"); return; }
+    if (problem(m)) { toast(problem(m), 4000); return; }
     try {
       let st;
       for (const [f, v] of vals) { await api("/api/measure", { body: { field: f, value: v } }); st = await api("/api/confirm", { body: { field: f } }); }

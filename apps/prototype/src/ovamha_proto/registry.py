@@ -78,6 +78,7 @@ class Woman:
     profile: dict = field(default_factory=dict)  # ANC.B6 first-contact profile answers
     profile_at: str | None = None
     privacy_notice_at: str | None = None  # when the privacy notice was read to her (draft DP Bill 2025 s.27(3))
+    history: list = field(default_factory=list)  # one summary per finished check, oldest first (see visit_summary)
 
 
 def _woman(rec: dict) -> Woman:
@@ -177,7 +178,14 @@ def seed_demo(today: date | None = None) -> list[str]:
     data, added = _load(), []
     for d in json.loads(DEMO_WOMEN.read_text())["women"]:
         code = d["card_code"]
-        if code in data or not is_valid(code):
+        if not is_valid(code):
+            continue
+        history = [{**{k: v for k, v in h.items() if k != "weeks_ago"},
+                    "at": (today - timedelta(weeks=h.get("weeks_ago", 0))).isoformat()} for h in d.get("history", [])]
+        if code in data:
+            if history and not data[code].get("history"):  # backfill demo women seeded by an earlier version
+                data[code]["history"] = history
+                added.append(code)
             continue
         profile = dict(d["profile"])
         if d.get("lmp_weeks_ago") is not None:
@@ -187,7 +195,7 @@ def seed_demo(today: date | None = None) -> list[str]:
                   episode_id=str(uuid.uuid5(uuid.NAMESPACE_URL, f"ovamha-demo-episode/{code}")),
                   birth_date=str(today.year - d["age_years"]), birth_date_estimated=True,
                   details=d.get("details", {}), profile=profile,
-                  profile_at=datetime.now(timezone.utc).replace(microsecond=0).isoformat())
+                  profile_at=datetime.now(timezone.utc).replace(microsecond=0).isoformat(), history=history)
         data[code] = asdict(w)
         added.append(code)
     if added:
@@ -195,12 +203,15 @@ def seed_demo(today: date | None = None) -> list[str]:
     return added
 
 
-def record_visit(code: str) -> None:
+def record_visit(code: str, summary: dict | None = None) -> None:
+    """Count a finished check and keep its summary, so a returning woman's earlier findings are available."""
     data = _load()
     c = normalise(code)
     if c in data:
         data[c]["visits"] += 1
         data[c]["last_visit"] = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+        if summary:
+            data[c].setdefault("history", []).append(summary)
         _save(data)
 
 
@@ -214,4 +225,5 @@ def her_record(w: Woman) -> dict:
         "national_id": "Card shown, with her consent; number not stored" if w.national_id else "Not linked",
         "details": w.details, "profile": w.profile, "profile_at": w.profile_at,
         "privacy_notice_at": w.privacy_notice_at,
+        "history": list(reversed(w.history)),  # newest first
     }

@@ -93,7 +93,8 @@ def _woman_view(w: registry.Woman | None) -> dict | None:
     return {"card_code": registry.display(w.card_code), "visits": w.visits, "last_visit": w.last_visit, "new": w.visits == 0,
             "id_check": w.national_id, "birth_date": w.birth_date, "birth_date_estimated": w.birth_date_estimated,
             "name": " ".join(x for x in (w.details.get("first_name"), w.details.get("family_name")) if x),
-            "profile_done": bool(w.profile), "profile_derived": questionnaire.derived(w.profile) if w.profile else {}}
+            "profile_done": bool(w.profile), "profile_derived": questionnaire.derived(w.profile) if w.profile else {},
+            "last_check": w.history[-1] if w.history else None}
 
 
 def _rule_view(results) -> dict:
@@ -255,7 +256,11 @@ def woman_record(v: Visit = Depends(visit)):
     if not v.woman:
         raise HTTPException(409, "Open her card first.")
     audit.log("record-shown-to-woman", v.worker.worker_id, woman=v.woman.woman_id)
-    return registry.her_record(v.woman)
+    rec = registry.her_record(v.woman)
+    for key, qset in (("details", "anc-registration"), ("profile", "anc-profile")):  # readable labels, not codes
+        rec[key] = {(questionnaire.find_question(qset, q) or {}).get("label", q): questionnaire.display(qset, q, val)
+                    for q, val in rec[key].items()}
+    return rec
 
 
 @app.get("/api/state")
@@ -527,10 +532,40 @@ def _now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
+SUGGESTION_TEXT = {"urgent_referral": "Urgent referral suggested", "refer_cemonc": "Referral to a CEmONC facility suggested",
+                   "refer_assessment": "Referral for assessment suggested",
+                   "plan_cemonc_delivery": "Plan delivery at a CEmONC facility", "none": "No referral suggested"}
+DECISION_LABEL = {"urgent": "Urgent referral", "planned": "Planned referral (not an emergency)", "none": "No referral at this contact"}
+
+
+def visit_summary(e: Encounter) -> dict:
+    """What a later check needs to know about this one: confirmed findings, measurements, advice, decision."""
+    c = e.confirmed
+    yes = [label(f) + (f" ({c[f]})" if c[f] in ("severe", "mild") else "") for f in c
+           if f not in KEYPAD_FIELDS and f != "bleeding_amount" and c[f] not in (False, None, "unknown", "negative")
+           and f not in ("urine_protein", "severe_pe_symptoms")]
+    if c.get("bleeding_amount") not in (None, "not captured"):
+        yes.append(f"Bleeding amount: {c['bleeding_amount']}")
+    meas = {}
+    if c.get("systolic") and c.get("diastolic"):
+        meas["Blood pressure"] = f"{c['systolic']}/{c['diastolic']}"
+    for f in ("systolic_repeat", "pulse", "temperature", "fetal_heart_rate", "urine_protein"):
+        if c.get(f) not in (None, "unknown"):
+            meas[label(f)] = str(c[f])
+    ga = c.get("gestational_age_weeks") or e.profile_derived.get("ga_weeks")
+    d = e.decision or {}
+    return {"at": e.at, "ga_weeks": round(float(ga)) if ga else None, "worker": e.worker_name or e.worker_id,
+            "facility": e.facility, "findings": yes,
+            "denied": [label(f) for f in c if c[f] is False and f not in KEYPAD_FIELDS],
+            "measurements": meas, "guideline": SUGGESTION_TEXT.get(e.suggestion, e.suggestion),
+            "decision": DECISION_LABEL.get(d.get("choice"), d.get("choice") or ""), "reason": d.get("reason") or "",
+            "referral_code": e.code if e.referral else None}
+
+
 def _complete(v: Visit) -> dict:
     """Record the encounter: notify the receiving facility for an urgent referral, build the FHIR record, queue sync."""
     e = v.encounter
-    registry.record_visit(e.card_code)
+    registry.record_visit(e.card_code, visit_summary(e))
     audit.log("encounter-finished", v.worker.worker_id, woman=e.woman_id, encounter=e.code)
     out_sms = None
     if e.urgent and not e.sms:

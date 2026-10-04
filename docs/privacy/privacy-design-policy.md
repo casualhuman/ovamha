@@ -17,7 +17,7 @@ unprefixed "Bill" and "HIS" mean the Sierra Leone texts.
   optional.
 - **Tell her first** (Bill s.27(3)): the worker reads the privacy notice before registering a woman.
   MaternalSave refuses to register without it and records when it was read.
-- **Her data is hers** (HIS 3.5.9(a)): she can see her record ("Show her record", printable) (HIS
+- **Her data is hers** (HIS 3.5.9(a)): she can see her record ("Show record", printable) (HIS
   3.5.10(a); Bill s.43) and ask for corrections (Bill s.42).
 - **Share only for her care, or with her written consent** (HIS 3.5.9(c), 3.7(b)): referral data goes
   to the receiving facility after her consent to referral is recorded.
