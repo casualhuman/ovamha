@@ -65,9 +65,7 @@ def item_text(field: str, label: str, value, lang: str) -> tuple[str, str]:
         vkey = str(value)
     if isinstance(value, (int, float)) and not isinstance(value, bool):
         spoken_val = number_words(value)
-        f = _phrase(lang, "fields", field)
-        if f and lang != "en":
-            return f"{f}: {spoken_val}", lang  # numbers are in English words for now
+        # Numbers are spoken in English words for now: a Yoruba or Krio voice cannot read them.
         return f"{_phrase('en', 'fields', field) or label}: {spoken_val}", "en"
     f, v = _phrase(lang, "fields", field), _phrase(lang, "values", vkey)
     if f and v:
