@@ -1,0 +1,41 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "anc-profile-past-substance-use",
+  "url": "https://fhir.ovamha.org/CodeSystem/anc-profile-past-substance-use",
+  "version": "0.1.0",
+  "name": "AncProfilePastSubstanceUse",
+  "title": "Ovamha answers: Substances used in a past pregnancy",
+  "status": "draft",
+  "experimental": true,
+  "publisher": "Ovamha",
+  "description": "Answer options for 'Substances used in a past pregnancy' (ANC.B6.DE51-DE56). Placeholder until WHO SMART ANC codes are mapped after DAK Annex extraction.",
+  "caseSensitive": true,
+  "content": "complete",
+  "count": 5,
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Ovamha answers: Substances used in a past pregnancy</p><table><tr><td>alcohol</td><td>Alcohol</td></tr><tr><td>tobacco</td><td>Tobacco</td></tr><tr><td>other_drugs</td><td>Other drugs</td></tr><tr><td>none</td><td>None</td></tr><tr><td>unknown</td><td>Don't know</td></tr></table></div>"
+  },
+  "concept": [
+    {
+      "code": "alcohol",
+      "display": "Alcohol"
+    },
+    {
+      "code": "tobacco",
+      "display": "Tobacco"
+    },
+    {
+      "code": "other_drugs",
+      "display": "Other drugs"
+    },
+    {
+      "code": "none",
+      "display": "None"
+    },
+    {
+      "code": "unknown",
+      "display": "Don't know"
+    }
+  ]
+}

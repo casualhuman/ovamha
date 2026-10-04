@@ -1,0 +1,33 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "anc-profile-alcohol-substance",
+  "url": "https://fhir.ovamha.org/CodeSystem/anc-profile-alcohol-substance",
+  "version": "0.1.0",
+  "name": "AncProfileAlcoholSubstance",
+  "title": "Ovamha answers: Alcohol or drugs now?",
+  "status": "draft",
+  "experimental": true,
+  "publisher": "Ovamha",
+  "description": "Answer options for 'Alcohol or drugs now?' (ANC.B6.DE145-DE152). Placeholder until WHO SMART ANC codes are mapped after DAK Annex extraction.",
+  "caseSensitive": true,
+  "content": "complete",
+  "count": 3,
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Ovamha answers: Alcohol or drugs now?</p><table><tr><td>yes</td><td>Yes</td></tr><tr><td>no</td><td>No</td></tr><tr><td>unknown</td><td>Don't know</td></tr></table></div>"
+  },
+  "concept": [
+    {
+      "code": "yes",
+      "display": "Yes"
+    },
+    {
+      "code": "no",
+      "display": "No"
+    },
+    {
+      "code": "unknown",
+      "display": "Don't know"
+    }
+  ]
+}

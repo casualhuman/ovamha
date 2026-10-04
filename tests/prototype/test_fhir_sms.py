@@ -55,7 +55,8 @@ def test_bundle_only_loinc_codes_are_the_confirmed_ones(enc):
     import re
 
     loinc = set(re.findall(r'"system": "http://loinc.org", "code": "([^"]+)"', text))
-    assert loinc <= {"85354-9", "8480-6", "8462-4"}
+    # BP panel/components, LMP (spec 7.4), and Patient Consent 59284-0 (accepted by the HL7 validator in the R4 consent-category value set)
+    assert loinc <= {"85354-9", "8480-6", "8462-4", "8665-2", "59284-0"}
     assert "snomed" not in text.lower()
 
 

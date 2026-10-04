@@ -1,0 +1,41 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "anc-profile-education",
+  "url": "https://fhir.ovamha.org/CodeSystem/anc-profile-education",
+  "version": "0.1.0",
+  "name": "AncProfileEducation",
+  "title": "Ovamha answers: Highest school level",
+  "status": "draft",
+  "experimental": true,
+  "publisher": "Ovamha",
+  "description": "Answer options for 'Highest school level' (ANC.B6.DE1-DE6). Placeholder until WHO SMART ANC codes are mapped after DAK Annex extraction.",
+  "caseSensitive": true,
+  "content": "complete",
+  "count": 5,
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Ovamha answers: Highest school level</p><table><tr><td>none</td><td>None</td></tr><tr><td>primary</td><td>Primary</td></tr><tr><td>secondary</td><td>Secondary</td></tr><tr><td>higher</td><td>College or university</td></tr><tr><td>unknown</td><td>Don't know</td></tr></table></div>"
+  },
+  "concept": [
+    {
+      "code": "none",
+      "display": "None"
+    },
+    {
+      "code": "primary",
+      "display": "Primary"
+    },
+    {
+      "code": "secondary",
+      "display": "Secondary"
+    },
+    {
+      "code": "higher",
+      "display": "College or university"
+    },
+    {
+      "code": "unknown",
+      "display": "Don't know"
+    }
+  ]
+}

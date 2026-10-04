@@ -1,0 +1,29 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "anc-profile-pregnancy-confirmed",
+  "url": "https://fhir.ovamha.org/CodeSystem/anc-profile-pregnancy-confirmed",
+  "version": "0.1.0",
+  "name": "AncProfilePregnancyConfirmed",
+  "title": "Ovamha answers: Pregnancy confirmed?",
+  "status": "draft",
+  "experimental": true,
+  "publisher": "Ovamha",
+  "description": "Answer options for 'Pregnancy confirmed?' (ANC.B4.DE1). Placeholder until WHO SMART ANC codes are mapped after DAK Annex extraction.",
+  "caseSensitive": true,
+  "content": "complete",
+  "count": 2,
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Ovamha answers: Pregnancy confirmed?</p><table><tr><td>test_positive</td><td>Yes, test positive</td></tr><tr><td>not_tested</td><td>Not tested</td></tr></table></div>"
+  },
+  "concept": [
+    {
+      "code": "test_positive",
+      "display": "Yes, test positive"
+    },
+    {
+      "code": "not_tested",
+      "display": "Not tested"
+    }
+  ]
+}

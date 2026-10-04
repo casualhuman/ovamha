@@ -1,0 +1,33 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "anc-profile-last-birth-preterm",
+  "url": "https://fhir.ovamha.org/CodeSystem/anc-profile-last-birth-preterm",
+  "version": "0.1.0",
+  "name": "AncProfileLastBirthPreterm",
+  "title": "Ovamha answers: Was her last baby born early?",
+  "status": "draft",
+  "experimental": true,
+  "publisher": "Ovamha",
+  "description": "Answer options for 'Was her last baby born early?' (ANC.B6.DE27-DE33). Placeholder until WHO SMART ANC codes are mapped after DAK Annex extraction.",
+  "caseSensitive": true,
+  "content": "complete",
+  "count": 3,
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Ovamha answers: Was her last baby born early?</p><table><tr><td>yes</td><td>Yes, preterm</td></tr><tr><td>no</td><td>No</td></tr><tr><td>unknown</td><td>Don't know</td></tr></table></div>"
+  },
+  "concept": [
+    {
+      "code": "yes",
+      "display": "Yes, preterm"
+    },
+    {
+      "code": "no",
+      "display": "No"
+    },
+    {
+      "code": "unknown",
+      "display": "Don't know"
+    }
+  ]
+}

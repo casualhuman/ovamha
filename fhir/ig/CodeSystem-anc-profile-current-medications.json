@@ -1,0 +1,53 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "anc-profile-current-medications",
+  "url": "https://fhir.ovamha.org/CodeSystem/anc-profile-current-medications",
+  "version": "0.1.0",
+  "name": "AncProfileCurrentMedications",
+  "title": "Ovamha answers: Medicines she takes now",
+  "status": "draft",
+  "experimental": true,
+  "publisher": "Ovamha",
+  "description": "Answer options for 'Medicines she takes now' (ANC.B6.DE109-DE138). Placeholder until WHO SMART ANC codes are mapped after DAK Annex extraction.",
+  "caseSensitive": true,
+  "content": "complete",
+  "count": 8,
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Ovamha answers: Medicines she takes now</p><table><tr><td>iron_folic</td><td>Iron or folic acid</td></tr><tr><td>calcium</td><td>Calcium</td></tr><tr><td>antimalarial</td><td>Malaria prevention (IPTp)</td></tr><tr><td>antiretroviral</td><td>HIV medicine</td></tr><tr><td>antihypertensive</td><td>Blood pressure medicine</td></tr><tr><td>other</td><td>Other</td></tr><tr><td>none</td><td>None</td></tr><tr><td>unknown</td><td>Don't know</td></tr></table></div>"
+  },
+  "concept": [
+    {
+      "code": "iron_folic",
+      "display": "Iron or folic acid"
+    },
+    {
+      "code": "calcium",
+      "display": "Calcium"
+    },
+    {
+      "code": "antimalarial",
+      "display": "Malaria prevention (IPTp)"
+    },
+    {
+      "code": "antiretroviral",
+      "display": "HIV medicine"
+    },
+    {
+      "code": "antihypertensive",
+      "display": "Blood pressure medicine"
+    },
+    {
+      "code": "other",
+      "display": "Other"
+    },
+    {
+      "code": "none",
+      "display": "None"
+    },
+    {
+      "code": "unknown",
+      "display": "Don't know"
+    }
+  ]
+}

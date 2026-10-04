@@ -1,0 +1,33 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "referral-decision",
+  "url": "https://fhir.ovamha.org/CodeSystem/referral-decision",
+  "version": "0.1.0",
+  "name": "ReferralDecision",
+  "title": "Ovamha referral decision",
+  "status": "draft",
+  "experimental": true,
+  "publisher": "Ovamha",
+  "description": "The health worker's decision after guideline advice.",
+  "caseSensitive": true,
+  "content": "complete",
+  "count": 3,
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Ovamha referral decision</p><table><tr><td>urgent</td><td>Urgent referral</td></tr><tr><td>planned</td><td>Planned referral</td></tr><tr><td>none</td><td>No referral at this contact</td></tr></table></div>"
+  },
+  "concept": [
+    {
+      "code": "urgent",
+      "display": "Urgent referral"
+    },
+    {
+      "code": "planned",
+      "display": "Planned referral"
+    },
+    {
+      "code": "none",
+      "display": "No referral at this contact"
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "anc-profile-ga-source",
+  "url": "https://fhir.ovamha.org/CodeSystem/anc-profile-ga-source",
+  "version": "0.1.0",
+  "name": "AncProfileGaSource",
+  "title": "Ovamha answers: How do you know how far along she is?",
+  "status": "draft",
+  "experimental": true,
+  "publisher": "Ovamha",
+  "description": "Answer options for 'How do you know how far along she is?' (ANC.B6.DE18-DE22). Placeholder until WHO SMART ANC codes are mapped after DAK Annex extraction.",
+  "caseSensitive": true,
+  "content": "complete",
+  "count": 4,
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Ovamha answers: How do you know how far along she is?</p><table><tr><td>lmp</td><td>Last menstrual period</td></tr><tr><td>ultrasound</td><td>Ultrasound</td></tr><tr><td>sfh_palpation</td><td>Fundal height or palpation</td></tr><tr><td>unknown</td><td>Not known yet</td></tr></table></div>"
+  },
+  "concept": [
+    {
+      "code": "lmp",
+      "display": "Last menstrual period"
+    },
+    {
+      "code": "ultrasound",
+      "display": "Ultrasound"
+    },
+    {
+      "code": "sfh_palpation",
+      "display": "Fundal height or palpation"
+    },
+    {
+      "code": "unknown",
+      "display": "Not known yet"
+    }
+  ]
+}

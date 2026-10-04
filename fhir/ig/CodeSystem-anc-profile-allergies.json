@@ -1,0 +1,41 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "anc-profile-allergies",
+  "url": "https://fhir.ovamha.org/CodeSystem/anc-profile-allergies",
+  "version": "0.1.0",
+  "name": "AncProfileAllergies",
+  "title": "Ovamha answers: Allergies",
+  "status": "draft",
+  "experimental": true,
+  "publisher": "Ovamha",
+  "description": "Answer options for 'Allergies' (ANC.B6.DE57-DE71). Placeholder until WHO SMART ANC codes are mapped after DAK Annex extraction.",
+  "caseSensitive": true,
+  "content": "complete",
+  "count": 5,
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Ovamha answers: Allergies</p><table><tr><td>medicine</td><td>A medicine</td></tr><tr><td>food</td><td>A food</td></tr><tr><td>other</td><td>Other</td></tr><tr><td>none</td><td>None</td></tr><tr><td>unknown</td><td>Don't know</td></tr></table></div>"
+  },
+  "concept": [
+    {
+      "code": "medicine",
+      "display": "A medicine"
+    },
+    {
+      "code": "food",
+      "display": "A food"
+    },
+    {
+      "code": "other",
+      "display": "Other"
+    },
+    {
+      "code": "none",
+      "display": "None"
+    },
+    {
+      "code": "unknown",
+      "display": "Don't know"
+    }
+  ]
+}

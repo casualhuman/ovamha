@@ -1,0 +1,69 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "anc-profile-past-complications",
+  "url": "https://fhir.ovamha.org/CodeSystem/anc-profile-past-complications",
+  "version": "0.1.0",
+  "name": "AncProfilePastComplications",
+  "title": "Ovamha answers: Problems in past pregnancies",
+  "status": "draft",
+  "experimental": true,
+  "publisher": "Ovamha",
+  "description": "Answer options for 'Problems in past pregnancies' (ANC.B6.DE34-DE50). Placeholder until WHO SMART ANC codes are mapped after DAK Annex extraction.",
+  "caseSensitive": true,
+  "content": "complete",
+  "count": 12,
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Ovamha answers: Problems in past pregnancies</p><table><tr><td>pre_eclampsia</td><td>Pre-eclampsia (high blood pressure)</td></tr><tr><td>eclampsia</td><td>Eclampsia (fits)</td></tr><tr><td>heavy_bleeding</td><td>Heavy bleeding before or after birth</td></tr><tr><td>caesarean</td><td>Caesarean section</td></tr><tr><td>prolonged_labour</td><td>Very long or obstructed labour</td></tr><tr><td>gestational_diabetes</td><td>Diabetes in pregnancy</td></tr><tr><td>baby_died_early</td><td>Baby died in the first week</td></tr><tr><td>low_birth_weight</td><td>Very small baby</td></tr><tr><td>large_baby</td><td>Very large baby</td></tr><tr><td>perineal_tear</td><td>Severe tear</td></tr><tr><td>none</td><td>None</td></tr><tr><td>unknown</td><td>Don't know</td></tr></table></div>"
+  },
+  "concept": [
+    {
+      "code": "pre_eclampsia",
+      "display": "Pre-eclampsia (high blood pressure)"
+    },
+    {
+      "code": "eclampsia",
+      "display": "Eclampsia (fits)"
+    },
+    {
+      "code": "heavy_bleeding",
+      "display": "Heavy bleeding before or after birth"
+    },
+    {
+      "code": "caesarean",
+      "display": "Caesarean section"
+    },
+    {
+      "code": "prolonged_labour",
+      "display": "Very long or obstructed labour"
+    },
+    {
+      "code": "gestational_diabetes",
+      "display": "Diabetes in pregnancy"
+    },
+    {
+      "code": "baby_died_early",
+      "display": "Baby died in the first week"
+    },
+    {
+      "code": "low_birth_weight",
+      "display": "Very small baby"
+    },
+    {
+      "code": "large_baby",
+      "display": "Very large baby"
+    },
+    {
+      "code": "perineal_tear",
+      "display": "Severe tear"
+    },
+    {
+      "code": "none",
+      "display": "None"
+    },
+    {
+      "code": "unknown",
+      "display": "Don't know"
+    }
+  ]
+}

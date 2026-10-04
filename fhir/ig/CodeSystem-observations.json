@@ -1,0 +1,53 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "observations",
+  "url": "https://fhir.ovamha.org/CodeSystem/observations",
+  "version": "0.1.0",
+  "name": "Observations",
+  "title": "Ovamha observations",
+  "status": "draft",
+  "experimental": true,
+  "publisher": "Ovamha",
+  "description": "Other observations captured by Ovamha. Placeholder until WHO SMART ANC codes are mapped after DAK Annex extraction.",
+  "caseSensitive": true,
+  "content": "complete",
+  "count": 8,
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Ovamha observations</p><table><tr><td>bleeding-amount</td><td>Bleeding amount</td></tr><tr><td>fetal-heart-rate</td><td>Fetal heart rate (/min)</td></tr><tr><td>gestational-age-weeks</td><td>Gestational age (weeks)</td></tr><tr><td>pulse</td><td>Pulse (/min)</td></tr><tr><td>severe-pe-symptoms</td><td>Symptoms of severe pre-eclampsia</td></tr><tr><td>temperature</td><td>Temperature (°C)</td></tr><tr><td>urine-protein</td><td>Urine protein</td></tr><tr><td>referral-decision</td><td>Referral decision by health worker</td></tr></table></div>"
+  },
+  "concept": [
+    {
+      "code": "bleeding-amount",
+      "display": "Bleeding amount"
+    },
+    {
+      "code": "fetal-heart-rate",
+      "display": "Fetal heart rate (/min)"
+    },
+    {
+      "code": "gestational-age-weeks",
+      "display": "Gestational age (weeks)"
+    },
+    {
+      "code": "pulse",
+      "display": "Pulse (/min)"
+    },
+    {
+      "code": "severe-pe-symptoms",
+      "display": "Symptoms of severe pre-eclampsia"
+    },
+    {
+      "code": "temperature",
+      "display": "Temperature (°C)"
+    },
+    {
+      "code": "urine-protein",
+      "display": "Urine protein"
+    },
+    {
+      "code": "referral-decision",
+      "display": "Referral decision by health worker"
+    }
+  ]
+}

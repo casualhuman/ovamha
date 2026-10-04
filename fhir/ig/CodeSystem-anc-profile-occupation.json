@@ -1,0 +1,49 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "anc-profile-occupation",
+  "url": "https://fhir.ovamha.org/CodeSystem/anc-profile-occupation",
+  "version": "0.1.0",
+  "name": "AncProfileOccupation",
+  "title": "Ovamha answers: Work",
+  "status": "draft",
+  "experimental": true,
+  "publisher": "Ovamha",
+  "description": "Answer options for 'Work' (ANC.B6.DE7-DE13). Placeholder until WHO SMART ANC codes are mapped after DAK Annex extraction.",
+  "caseSensitive": true,
+  "content": "complete",
+  "count": 7,
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Ovamha answers: Work</p><table><tr><td>farming</td><td>Farming</td></tr><tr><td>trading</td><td>Trading or market</td></tr><tr><td>formal</td><td>Salaried job</td></tr><tr><td>student</td><td>Student</td></tr><tr><td>home</td><td>Home duties</td></tr><tr><td>other</td><td>Other</td></tr><tr><td>unemployed</td><td>No work</td></tr></table></div>"
+  },
+  "concept": [
+    {
+      "code": "farming",
+      "display": "Farming"
+    },
+    {
+      "code": "trading",
+      "display": "Trading or market"
+    },
+    {
+      "code": "formal",
+      "display": "Salaried job"
+    },
+    {
+      "code": "student",
+      "display": "Student"
+    },
+    {
+      "code": "home",
+      "display": "Home duties"
+    },
+    {
+      "code": "other",
+      "display": "Other"
+    },
+    {
+      "code": "unemployed",
+      "display": "No work"
+    }
+  ]
+}

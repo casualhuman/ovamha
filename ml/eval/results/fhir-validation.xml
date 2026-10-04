@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<OperationOutcome xmlns="http://hl7.org/fhir">
+  <text>
+    <status value="generated"/>
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p class="res-header-id">
+        <b>OperationOutcome </b>
+      </p>
+      <p>All OK</p>
+      <table class="grid">
+        <tr>
+          <td>
+            <b>Severity</b>
+          </td>
+          <td>
+            <b>Location</b>
+          </td>
+          <td>
+            <b>Code</b>
+          </td>
+          <td>
+            <b>Details</b>
+          </td>
+          <td>
+            <b>Diagnostics</b>
+          </td>
+          <td>
+            <b>Source</b>
+          </td>
+        </tr>
+        <tr>
+          <td>Information</td>
+          <td>Bundle.entry[9].resource/*Observation/null*/</td>
+          <td>Informational Note</td>
+          <td>Validate Observation against the Blood pressure systolic and diastolic profile (http://hl7.org/fhir/StructureDefinition/bp) which is required by the FHIR specification because the LOINC code 85354-9 was found</td>
+          <td/>
+          <td>InstanceValidator</td>
+        </tr>
+        <tr>
+          <td>Information</td>
+          <td>Bundle.entry[14].resource/*GuidanceResponse/null*/.module.ofType(canonical)</td>
+          <td>Invalid Content</td>
+          <td>A definition could not be found for Canonical URL 'http://fhir.org/guides/who/anc-cds/PlanDefinition/ANCDT01'</td>
+          <td/>
+          <td>InstanceValidator</td>
+        </tr>
+        <tr>
+          <td>Information</td>
+          <td>Bundle.entry[9].resource</td>
+          <td>Informational Note</td>
+          <td>Validate Observation against the Blood pressure systolic and diastolic profile (http://hl7.org/fhir/StructureDefinition/bp) which is required by the FHIR specification because the LOINC code 85354-9 was found</td>
+          <td/>
+          <td>InstanceValidator</td>
+        </tr>
+      </table>
+    </div>
+  </text>
+  <extension url="http://hl7.org/fhir/StructureDefinition/operationoutcome-file">
+    <valueString value="fhir/examples/referral-bundle.json"/>
+  </extension>
+  <issue>
+    <extension url="http://hl7.org/fhir/StructureDefinition/operationoutcome-issue-line">
+      <valueInteger value="276"/>
+    </extension>
+    <extension url="http://hl7.org/fhir/StructureDefinition/operationoutcome-issue-col">
+      <valueInteger value="8"/>
+    </extension>
+    <extension url="http://hl7.org/fhir/StructureDefinition/operationoutcome-issue-source">
+      <valueString value="InstanceValidator"/>
+    </extension>
+    <extension url="http://hl7.org/fhir/StructureDefinition/operationoutcome-message-id">
+      <valueCode value="VALIDATION_VAL_PROFILE_SIGNPOST_OBS"/>
+    </extension>
+    <extension url="http://hl7.org/fhir/StructureDefinition/operationoutcome-issue-context">
+      <valueString value="http://hl7.org/fhir/StructureDefinition/Organization|4.0.1"/>
+    </extension>
+    <severity value="information"/>
+    <code value="informational"/>
+    <details>
+      <text value="Validate Observation against the Blood pressure systolic and diastolic profile (http://hl7.org/fhir/StructureDefinition/bp) which is required by the FHIR specification because the LOINC code 85354-9 was found"/>
+    </details>
+    <expression value="Bundle.entry[9].resource/*Observation/null*/"/>
+  </issue>
+  <issue>
+    <extension url="http://hl7.org/fhir/StructureDefinition/operationoutcome-issue-line">
+      <valueInteger value="590"/>
+    </extension>
+    <extension url="http://hl7.org/fhir/StructureDefinition/operationoutcome-issue-col">
+      <valueInteger value="87"/>
+    </extension>
+    <extension url="http://hl7.org/fhir/StructureDefinition/operationoutcome-issue-source">
+      <valueString value="InstanceValidator"/>
+    </extension>
+    <extension url="http://hl7.org/fhir/StructureDefinition/operationoutcome-message-id">
+      <valueCode value="TYPE_SPECIFIC_CHECKS_DT_CANONICAL_RESOLVE"/>
+    </extension>
+    <extension url="http://hl7.org/fhir/StructureDefinition/operationoutcome-issue-context">
+      <valueString value="http://hl7.org/fhir/StructureDefinition/GuidanceResponse|4.0.1"/>
+    </extension>
+    <severity value="information"/>
+    <code value="invalid"/>
+    <details>
+      <text value="A definition could not be found for Canonical URL 'http://fhir.org/guides/who/anc-cds/PlanDefinition/ANCDT01'"/>
+    </details>
+    <expression value="Bundle.entry[14].resource/*GuidanceResponse/null*/.module.ofType(canonical)"/>
+  </issue>
+  <issue>
+    <extension url="http://hl7.org/fhir/StructureDefinition/operationoutcome-issue-line">
+      <valueInteger value="276"/>
+    </extension>
+    <extension url="http://hl7.org/fhir/StructureDefinition/operationoutcome-issue-col">
+      <valueInteger value="8"/>
+    </extension>
+    <extension url="http://hl7.org/fhir/StructureDefinition/operationoutcome-issue-source">
+      <valueString value="InstanceValidator"/>
+    </extension>
+    <extension url="http://hl7.org/fhir/StructureDefinition/operationoutcome-message-id">
+      <valueCode value="VALIDATION_VAL_PROFILE_SIGNPOST_OBS"/>
+    </extension>
+    <extension url="http://hl7.org/fhir/StructureDefinition/operationoutcome-issue-context">
+      <valueString value="http://hl7.org/fhir/StructureDefinition/Device|4.0.1"/>
+    </extension>
+    <severity value="information"/>
+    <code value="informational"/>
+    <details>
+      <text value="Validate Observation against the Blood pressure systolic and diastolic profile (http://hl7.org/fhir/StructureDefinition/bp) which is required by the FHIR specification because the LOINC code 85354-9 was found"/>
+    </details>
+    <expression value="Bundle.entry[9].resource"/>
+  </issue>
+</OperationOutcome>

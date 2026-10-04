@@ -76,7 +76,7 @@ Where the guideline does not define a threshold, Ovamha states its assumption on
 
 | Standard | How Ovamha uses it |
 | --- | --- |
-| [HL7 FHIR R4](https://hl7.org/fhir/R4/) | Every encounter becomes a transaction Bundle: Patient, EpisodeOfCare, Encounter, Observation, GuidanceResponse, ServiceRequest, Task, Communication, Consent, Provenance, Organization, PractitionerRole, Device. Example: [fhir/examples/referral-bundle.json](fhir/examples/referral-bundle.json) |
+| [HL7 FHIR R4](https://hl7.org/fhir/R4/) | Every encounter becomes a transaction Bundle: Patient, EpisodeOfCare, Encounter, Observation, GuidanceResponse, ServiceRequest, Task, Communication, Consent, Provenance, Organization, PractitionerRole, Device. Example: [fhir/examples/referral-bundle.json](fhir/examples/referral-bundle.json). **Official HL7 FHIR Validator: 0 errors, 0 warnings** ([result](ml/eval/results/fhir-validation.md)); the blood pressure reading passes the FHIR vital-signs BP profile |
 | [LOINC](https://loinc.org/) | Blood pressure panel 85354-9, systolic 8480-6, diastolic 8462-4, last menstrual period 8665-2 |
 | [UCUM](https://ucum.org/) | Units of measure (mm[Hg], Cel, /min, wk) |
 | HL7 terminology | Provenance participant types (verifier, assembler, author), consent scope, data-absent-reason (`asked-unknown` for "Don't know"), confidentiality (`R`, restricted, on partner HIV status) |
@@ -106,14 +106,15 @@ Speak → What we understood (worker confirms each item) → Her history (first 
 - Numbers by keypad or voice; read-aloud in English, Krio and Yoruba voices (MMS-TTS)
 - Cited guideline advice (WHO DAK and the Sierra Leone guideline); the worker's decision is recorded
 - Referral pathway, simulated referral SMS with ACK/FULL replies, printable referral letter with feedback slip
-- FHIR R4 records with structural validation, and a device outbox that syncs to the hub FHIR server when reachable
+- FHIR R4 records that pass the official HL7 validator with 0 errors and 0 warnings, and a device outbox that syncs to the hub FHIR server when reachable
 
 ## Honest limits
 
 - Krio and Yoruba speech recognition and read-back wording still need native-speaker data
 - WHO DAK rules are demo rules from the DAK PDF; danger-sign and profile codes are Ovamha placeholders until the DAK annex spreadsheets are extracted and replaced with WHO SMART ANC codes
 - The Sierra Leone guideline used is a January 2026 draft; the Ministry's national standardized referral form layout was not available
-- SMS is simulated without a GSM modem; the hub FHIR server (HAPI) needs Docker; the official HL7 validator has not been run yet
+- SMS is simulated without a GSM modem; the hub FHIR server (HAPI) needs Docker
+- FHIR records validate against base R4, not yet against WHO SMART ANC profiles
 - No measured accuracy yet: evaluation protocol in [ml/eval/](ml/eval/)
 
 ## Key documents

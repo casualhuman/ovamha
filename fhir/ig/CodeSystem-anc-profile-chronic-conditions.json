@@ -1,0 +1,73 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "anc-profile-chronic-conditions",
+  "url": "https://fhir.ovamha.org/CodeSystem/anc-profile-chronic-conditions",
+  "version": "0.1.0",
+  "name": "AncProfileChronicConditions",
+  "title": "Ovamha answers: Long-term health conditions",
+  "status": "draft",
+  "experimental": true,
+  "publisher": "Ovamha",
+  "description": "Answer options for 'Long-term health conditions' (ANC.B6.DE83-DE99). Placeholder until WHO SMART ANC codes are mapped after DAK Annex extraction.",
+  "caseSensitive": true,
+  "content": "complete",
+  "count": 13,
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Ovamha answers: Long-term health conditions</p><table><tr><td>hypertension</td><td>High blood pressure</td></tr><tr><td>diabetes</td><td>Diabetes</td></tr><tr><td>hiv</td><td>HIV</td></tr><tr><td>tuberculosis</td><td>Tuberculosis</td></tr><tr><td>sickle_cell</td><td>Sickle cell disease</td></tr><tr><td>epilepsy</td><td>Epilepsy</td></tr><tr><td>heart_disease</td><td>Heart disease</td></tr><tr><td>kidney_disease</td><td>Kidney disease</td></tr><tr><td>asthma</td><td>Asthma</td></tr><tr><td>mental_health</td><td>Mental health condition</td></tr><tr><td>other</td><td>Other</td></tr><tr><td>none</td><td>None</td></tr><tr><td>unknown</td><td>Don't know</td></tr></table></div>"
+  },
+  "concept": [
+    {
+      "code": "hypertension",
+      "display": "High blood pressure"
+    },
+    {
+      "code": "diabetes",
+      "display": "Diabetes"
+    },
+    {
+      "code": "hiv",
+      "display": "HIV"
+    },
+    {
+      "code": "tuberculosis",
+      "display": "Tuberculosis"
+    },
+    {
+      "code": "sickle_cell",
+      "display": "Sickle cell disease"
+    },
+    {
+      "code": "epilepsy",
+      "display": "Epilepsy"
+    },
+    {
+      "code": "heart_disease",
+      "display": "Heart disease"
+    },
+    {
+      "code": "kidney_disease",
+      "display": "Kidney disease"
+    },
+    {
+      "code": "asthma",
+      "display": "Asthma"
+    },
+    {
+      "code": "mental_health",
+      "display": "Mental health condition"
+    },
+    {
+      "code": "other",
+      "display": "Other"
+    },
+    {
+      "code": "none",
+      "display": "None"
+    },
+    {
+      "code": "unknown",
+      "display": "Don't know"
+    }
+  ]
+}

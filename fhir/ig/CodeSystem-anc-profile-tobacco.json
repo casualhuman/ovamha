@@ -1,0 +1,37 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "anc-profile-tobacco",
+  "url": "https://fhir.ovamha.org/CodeSystem/anc-profile-tobacco",
+  "version": "0.1.0",
+  "name": "AncProfileTobacco",
+  "title": "Ovamha answers: Tobacco",
+  "status": "draft",
+  "experimental": true,
+  "publisher": "Ovamha",
+  "description": "Answer options for 'Tobacco' (ANC.B6.DE153-DE155). Placeholder until WHO SMART ANC codes are mapped after DAK Annex extraction.",
+  "caseSensitive": true,
+  "content": "complete",
+  "count": 4,
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Ovamha answers: Tobacco</p><table><tr><td>uses</td><td>She uses tobacco</td></tr><tr><td>exposed</td><td>Others smoke near her</td></tr><tr><td>none</td><td>No</td></tr><tr><td>unknown</td><td>Don't know</td></tr></table></div>"
+  },
+  "concept": [
+    {
+      "code": "uses",
+      "display": "She uses tobacco"
+    },
+    {
+      "code": "exposed",
+      "display": "Others smoke near her"
+    },
+    {
+      "code": "none",
+      "display": "No"
+    },
+    {
+      "code": "unknown",
+      "display": "Don't know"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "anc-profile-caffeine-high",
+  "url": "https://fhir.ovamha.org/CodeSystem/anc-profile-caffeine-high",
+  "version": "0.1.0",
+  "name": "AncProfileCaffeineHigh",
+  "title": "Ovamha answers: More than 2 cups of coffee or strong tea a day?",
+  "status": "draft",
+  "experimental": true,
+  "publisher": "Ovamha",
+  "description": "Answer options for 'More than 2 cups of coffee or strong tea a day?' (ANC.B6.DE139-DE144). Placeholder until WHO SMART ANC codes are mapped after DAK Annex extraction.",
+  "caseSensitive": true,
+  "content": "complete",
+  "count": 3,
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Ovamha answers: More than 2 cups of coffee or strong tea a day?</p><table><tr><td>yes</td><td>Yes</td></tr><tr><td>no</td><td>No</td></tr><tr><td>unknown</td><td>Don't know</td></tr></table></div>"
+  },
+  "concept": [
+    {
+      "code": "yes",
+      "display": "Yes"
+    },
+    {
+      "code": "no",
+      "display": "No"
+    },
+    {
+      "code": "unknown",
+      "display": "Don't know"
+    }
+  ]
+}

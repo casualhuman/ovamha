@@ -1,0 +1,37 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "anc-profile-partner-hiv",
+  "url": "https://fhir.ovamha.org/CodeSystem/anc-profile-partner-hiv",
+  "version": "0.1.0",
+  "name": "AncProfilePartnerHiv",
+  "title": "Ovamha answers: Partner's HIV status (as she reports it)",
+  "status": "draft",
+  "experimental": true,
+  "publisher": "Ovamha",
+  "description": "Answer options for 'Partner's HIV status (as she reports it)' (ANC.B6.DE156-DE161). Placeholder until WHO SMART ANC codes are mapped after DAK Annex extraction.",
+  "caseSensitive": true,
+  "content": "complete",
+  "count": 4,
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Ovamha answers: Partner's HIV status (as she reports it)</p><table><tr><td>positive</td><td>Positive</td></tr><tr><td>negative</td><td>Negative</td></tr><tr><td>unknown</td><td>Not known</td></tr><tr><td>no_partner</td><td>No partner</td></tr></table></div>"
+  },
+  "concept": [
+    {
+      "code": "positive",
+      "display": "Positive"
+    },
+    {
+      "code": "negative",
+      "display": "Negative"
+    },
+    {
+      "code": "unknown",
+      "display": "Not known"
+    },
+    {
+      "code": "no_partner",
+      "display": "No partner"
+    }
+  ]
+}

@@ -1,0 +1,117 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "anc-profile",
+  "url": "https://fhir.ovamha.org/CodeSystem/anc-profile",
+  "version": "0.1.0",
+  "name": "AncProfile",
+  "title": "Ovamha ANC profile items",
+  "status": "draft",
+  "experimental": true,
+  "publisher": "Ovamha",
+  "description": "First-contact history and profile items, each citing its WHO DAK data element (ANC.B4, ANC.B6). Placeholder until WHO SMART ANC codes are mapped after DAK Annex extraction.",
+  "caseSensitive": true,
+  "content": "complete",
+  "count": 24,
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Ovamha ANC profile items</p><table><tr><td>pregnancy_confirmed</td><td>Pregnancy confirmed? (ANC.B4.DE1)</td></tr><tr><td>ga_source</td><td>How do you know how far along she is? (ANC.B6.DE18-DE22)</td></tr><tr><td>lmp</td><td>First day of last menstrual period (ANC.B6.DE14-DE17)</td></tr><tr><td>ga_weeks</td><td>Gestational age (weeks) (ANC.B6.DE14-DE17)</td></tr><tr><td>gravida</td><td>Number of pregnancies, including this one (ANC.B6.DE23-DE26)</td></tr><tr><td>live_births</td><td>Babies born alive (ANC.B6.DE23-DE26)</td></tr><tr><td>stillbirths</td><td>Stillbirths (ANC.B6.DE23-DE26)</td></tr><tr><td>miscarriages</td><td>Miscarriages or abortions (ANC.B6.DE23-DE26)</td></tr><tr><td>last_birth_preterm</td><td>Was her last baby born early? (ANC.B6.DE27-DE33)</td></tr><tr><td>past_complications</td><td>Problems in past pregnancies (ANC.B6.DE34-DE50)</td></tr><tr><td>past_substance_use</td><td>Substances used in a past pregnancy (ANC.B6.DE51-DE56)</td></tr><tr><td>chronic_conditions</td><td>Long-term health conditions (ANC.B6.DE83-DE99)</td></tr><tr><td>allergies</td><td>Allergies (ANC.B6.DE57-DE71)</td></tr><tr><td>past_surgeries</td><td>Past operations (ANC.B6.DE72-DE82)</td></tr><tr><td>current_medications</td><td>Medicines she takes now (ANC.B6.DE109-DE138)</td></tr><tr><td>ttcv_doses</td><td>Tetanus vaccine doses received (ANC.B6.DE100-DE104)</td></tr><tr><td>flu_vaccine</td><td>Flu vaccine this year? (ANC.B6.DE105-DE108)</td></tr><tr><td>caffeine_high</td><td>More than 2 cups of coffee or strong tea a day? (ANC.B6.DE139-DE144)</td></tr><tr><td>alcohol_substance</td><td>Alcohol or drugs now? (ANC.B6.DE145-DE152)</td></tr><tr><td>tobacco</td><td>Tobacco (ANC.B6.DE153-DE155)</td></tr><tr><td>partner_hiv</td><td>Partner's HIV status (as she reports it) (ANC.B6.DE156-DE161)</td></tr><tr><td>education</td><td>Highest school level (ANC.B6.DE1-DE6)</td></tr><tr><td>occupation</td><td>Work (ANC.B6.DE7-DE13)</td></tr><tr><td>edd</td><td>Estimated date of delivery (LMP + 280 days)</td></tr></table></div>"
+  },
+  "concept": [
+    {
+      "code": "pregnancy_confirmed",
+      "display": "Pregnancy confirmed? (ANC.B4.DE1)"
+    },
+    {
+      "code": "ga_source",
+      "display": "How do you know how far along she is? (ANC.B6.DE18-DE22)"
+    },
+    {
+      "code": "lmp",
+      "display": "First day of last menstrual period (ANC.B6.DE14-DE17)"
+    },
+    {
+      "code": "ga_weeks",
+      "display": "Gestational age (weeks) (ANC.B6.DE14-DE17)"
+    },
+    {
+      "code": "gravida",
+      "display": "Number of pregnancies, including this one (ANC.B6.DE23-DE26)"
+    },
+    {
+      "code": "live_births",
+      "display": "Babies born alive (ANC.B6.DE23-DE26)"
+    },
+    {
+      "code": "stillbirths",
+      "display": "Stillbirths (ANC.B6.DE23-DE26)"
+    },
+    {
+      "code": "miscarriages",
+      "display": "Miscarriages or abortions (ANC.B6.DE23-DE26)"
+    },
+    {
+      "code": "last_birth_preterm",
+      "display": "Was her last baby born early? (ANC.B6.DE27-DE33)"
+    },
+    {
+      "code": "past_complications",
+      "display": "Problems in past pregnancies (ANC.B6.DE34-DE50)"
+    },
+    {
+      "code": "past_substance_use",
+      "display": "Substances used in a past pregnancy (ANC.B6.DE51-DE56)"
+    },
+    {
+      "code": "chronic_conditions",
+      "display": "Long-term health conditions (ANC.B6.DE83-DE99)"
+    },
+    {
+      "code": "allergies",
+      "display": "Allergies (ANC.B6.DE57-DE71)"
+    },
+    {
+      "code": "past_surgeries",
+      "display": "Past operations (ANC.B6.DE72-DE82)"
+    },
+    {
+      "code": "current_medications",
+      "display": "Medicines she takes now (ANC.B6.DE109-DE138)"
+    },
+    {
+      "code": "ttcv_doses",
+      "display": "Tetanus vaccine doses received (ANC.B6.DE100-DE104)"
+    },
+    {
+      "code": "flu_vaccine",
+      "display": "Flu vaccine this year? (ANC.B6.DE105-DE108)"
+    },
+    {
+      "code": "caffeine_high",
+      "display": "More than 2 cups of coffee or strong tea a day? (ANC.B6.DE139-DE144)"
+    },
+    {
+      "code": "alcohol_substance",
+      "display": "Alcohol or drugs now? (ANC.B6.DE145-DE152)"
+    },
+    {
+      "code": "tobacco",
+      "display": "Tobacco (ANC.B6.DE153-DE155)"
+    },
+    {
+      "code": "partner_hiv",
+      "display": "Partner's HIV status (as she reports it) (ANC.B6.DE156-DE161)"
+    },
+    {
+      "code": "education",
+      "display": "Highest school level (ANC.B6.DE1-DE6)"
+    },
+    {
+      "code": "occupation",
+      "display": "Work (ANC.B6.DE7-DE13)"
+    },
+    {
+      "code": "edd",
+      "display": "Estimated date of delivery (LMP + 280 days)"
+    }
+  ]
+}

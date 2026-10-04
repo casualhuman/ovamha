@@ -71,12 +71,61 @@ def _ident(system: str, value: str) -> dict:
     return {"system": system, "value": value}
 
 
+def _summary(r: dict) -> str:
+    """One readable line per resource for Resource.text (FHIR best practice dom-6)."""
+    rt = r["resourceType"]
+    def cc(x):
+        return (x or {}).get("text") or next((c.get("display") or c.get("code") for c in (x or {}).get("coding", [])), "")
+    if rt == "Observation":
+        v = r.get("valueBoolean", r.get("valueString", r.get("valueInteger", r.get("valueDateTime", ""))))
+        if "valueQuantity" in r:
+            v = f"{r['valueQuantity']['value']} {r['valueQuantity'].get('unit', '')}"
+        if "valueCodeableConcept" in r:
+            v = cc(r["valueCodeableConcept"])
+        if "component" in r and rt == "Observation" and r["code"]["coding"][0].get("code") == "85354-9":
+            v = "/".join(str(c["valueQuantity"]["value"]) for c in r["component"]) + " mmHg"
+        elif "component" in r:
+            v = ", ".join(cc(c["code"]) for c in r["component"])
+        if "dataAbsentReason" in r:
+            v = "not known"
+        return f"{cc(r['code'])}: {v}"
+    if rt == "Patient":
+        return "Pregnant woman, Ovamha card " + next((i["value"] for i in r.get("identifier", []) if i["system"].endswith("/card")), "")
+    if rt in ("Organization",):
+        return r.get("name", rt)
+    if rt == "ServiceRequest":
+        return f"{cc(r.get('code'))} ({r.get('priority')})"
+    if rt == "Task":
+        return f"Referral task, status {r.get('status')}"
+    if rt == "GuidanceResponse":
+        return "; ".join(x.get("text", "") for x in r.get("reasonCode", [])) or "Guideline result"
+    if rt == "Provenance":
+        return "Provenance: " + cc(r.get("activity"))
+    if rt == "Consent":
+        return f"{cc(r['category'][0])}: {r.get('status')}"
+    if rt == "Communication":
+        return "Referral SMS: " + r["payload"][0]["contentString"]
+    if rt == "Device":
+        return r["deviceName"][0]["name"]
+    if rt == "Encounter":
+        return f"Antenatal contact ({r.get('status')})"
+    if rt == "EpisodeOfCare":
+        return "Pregnancy (antenatal care episode)"
+    return rt
+
+
+def _narrative(r: dict) -> dict:
+    from html import escape
+    return {"status": "generated", "div": f'<div xmlns="http://www.w3.org/1999/xhtml"><p>{escape(_summary(r))}</p></div>'}
+
+
 class _Builder:
     def __init__(self) -> None:
         self.entries: list[dict] = []
 
     def add(self, resource: dict, ident: dict | None = None) -> str:
         """Add a resource; with an identifier it is a conditional create (idempotent)."""
+        resource.setdefault("text", _narrative(resource))
         urn = _urn()
         req = {"method": "POST", "url": resource["resourceType"]}
         if ident:
@@ -273,7 +322,7 @@ def build_bundle(e: Encounter) -> dict:
         b.add({
             "resourceType": "Consent", "status": "active" if e.referral_steps.get("consent") else "rejected",
             "scope": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/consentscope", "code": "treatment"}]},
-            "category": [{"text": "Consent to referral"}], "patient": subj, "dateTime": e.decision["at"],
+            "category": [{"coding": [{"system": LOINC, "code": "59284-0", "display": "Patient Consent"}], "text": "Consent to referral"}], "patient": subj, "dateTime": e.decision["at"],
             "performer": [subj], "organization": [{"reference": org}],
             "policy": [{"uri": f"{FHIR}/policy/referral-consent"}],
             "provision": {"type": "permit" if e.referral_steps.get("consent") else "deny"},
@@ -315,7 +364,7 @@ def build_bundle(e: Encounter) -> dict:
         b.add({
             "resourceType": "Consent", "status": "active",
             "scope": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/consentscope", "code": "patient-privacy"}]},
-            "category": [{"text": "Link Ovamha record to national ID"}],
+            "category": [{"coding": [{"system": LOINC, "code": "59284-0", "display": "Patient Consent"}], "text": "Link Ovamha record to national ID"}],
             "patient": subj, "dateTime": e.national_id["consent_at"],
             "performer": [subj], "organization": [{"reference": org}],
             "policy": [{"uri": f"{FHIR}/policy/national-id-linkage"}],
@@ -338,15 +387,14 @@ def build_bundle(e: Encounter) -> dict:
                                for d in assemblers[activity]]
         if activity == "keyed":
             agents.insert(0, {"type": {"coding": [{"system": PART_TYPE, "code": "author"}]}, "who": {"reference": role}})
-        b.entries.append({
-            "fullUrl": _urn(),
-            "resource": {
-                "resourceType": "Provenance", "target": [{"reference": t} for t in targets], "recorded": e.at,
-                "activity": {"coding": [{"system": CAPTURE_CS, "code": activity}]},
-                "agent": agents, "entity": [content_pack],
-            },
-            "request": {"method": "POST", "url": "Provenance"},
-        })
+        prov = {
+            "resourceType": "Provenance", "target": [{"reference": t} for t in targets], "recorded": e.at,
+            "activity": {"coding": [{"system": CAPTURE_CS, "code": activity},
+                                    {"system": "http://terminology.hl7.org/CodeSystem/v3-DataOperation", "code": "CREATE", "display": "create"}]},
+            "agent": agents, "entity": [content_pack],
+        }
+        prov["text"] = _narrative(prov)
+        b.entries.append({"fullUrl": _urn(), "resource": prov, "request": {"method": "POST", "url": "Provenance"}})
 
     return {"resourceType": "Bundle", "type": "transaction", "entry": b.entries}
 

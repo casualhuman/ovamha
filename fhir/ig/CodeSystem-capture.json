@@ -1,0 +1,37 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "capture",
+  "url": "https://fhir.ovamha.org/CodeSystem/capture",
+  "version": "0.1.0",
+  "name": "Capture",
+  "title": "Ovamha capture method",
+  "status": "draft",
+  "experimental": true,
+  "publisher": "Ovamha",
+  "description": "How a value was captured and confirmed (architecture specification section 12).",
+  "caseSensitive": true,
+  "content": "complete",
+  "count": 4,
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Ovamha capture method</p><table><tr><td>keyed</td><td>Entered on keypad by the health worker</td></tr><tr><td>spoken-ai-extracted-confirmed</td><td>Spoken, extracted by AI, confirmed by the health worker</td></tr><tr><td>ai-flag-confirmed</td><td>Raised by the AI safety net, confirmed by the health worker</td></tr><tr><td>rule-prompt-confirmed</td><td>Asked because a rule needed it, confirmed by the health worker</td></tr></table></div>"
+  },
+  "concept": [
+    {
+      "code": "keyed",
+      "display": "Entered on keypad by the health worker"
+    },
+    {
+      "code": "spoken-ai-extracted-confirmed",
+      "display": "Spoken, extracted by AI, confirmed by the health worker"
+    },
+    {
+      "code": "ai-flag-confirmed",
+      "display": "Raised by the AI safety net, confirmed by the health worker"
+    },
+    {
+      "code": "rule-prompt-confirmed",
+      "display": "Asked because a rule needed it, confirmed by the health worker"
+    }
+  ]
+}

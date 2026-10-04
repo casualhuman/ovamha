@@ -1,0 +1,101 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "danger-signs",
+  "url": "https://fhir.ovamha.org/CodeSystem/danger-signs",
+  "version": "0.1.0",
+  "name": "DangerSigns",
+  "title": "Ovamha danger signs",
+  "status": "draft",
+  "experimental": true,
+  "publisher": "Ovamha",
+  "description": "Danger signs captured by Ovamha, named after the WHO DAK quick check and national guideline danger signs. Placeholder until WHO SMART ANC codes are mapped after DAK Annex extraction.",
+  "caseSensitive": true,
+  "content": "complete",
+  "count": 20,
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Ovamha danger signs</p><table><tr><td>abdominal-pain</td><td>Abdominal pain</td></tr><tr><td>breathing-difficulty</td><td>Difficulty breathing</td></tr><tr><td>central-cyanosis</td><td>Central cyanosis</td></tr><tr><td>convulsions</td><td>Convulsions</td></tr><tr><td>dizziness</td><td>Dizziness</td></tr><tr><td>fainting</td><td>Fainting</td></tr><tr><td>fever</td><td>Fever</td></tr><tr><td>foul-discharge</td><td>Foul-smelling vaginal discharge</td></tr><tr><td>headache</td><td>Headache</td></tr><tr><td>imminent-delivery</td><td>Imminent delivery</td></tr><tr><td>labour</td><td>Labour</td></tr><tr><td>looks-very-ill</td><td>Looks very ill</td></tr><tr><td>reduced-fetal-movement</td><td>Reduced fetal movement</td></tr><tr><td>severe-pain</td><td>Severe pain</td></tr><tr><td>swelling</td><td>Swelling</td></tr><tr><td>unconscious</td><td>Unconscious / not responding</td></tr><tr><td>vaginal-bleeding</td><td>Vaginal bleeding</td></tr><tr><td>visual-disturbance</td><td>Visual disturbance</td></tr><tr><td>vomiting</td><td>Vomiting</td></tr><tr><td>waters-broken</td><td>Waters broken</td></tr></table></div>"
+  },
+  "concept": [
+    {
+      "code": "abdominal-pain",
+      "display": "Abdominal pain"
+    },
+    {
+      "code": "breathing-difficulty",
+      "display": "Difficulty breathing"
+    },
+    {
+      "code": "central-cyanosis",
+      "display": "Central cyanosis"
+    },
+    {
+      "code": "convulsions",
+      "display": "Convulsions"
+    },
+    {
+      "code": "dizziness",
+      "display": "Dizziness"
+    },
+    {
+      "code": "fainting",
+      "display": "Fainting"
+    },
+    {
+      "code": "fever",
+      "display": "Fever"
+    },
+    {
+      "code": "foul-discharge",
+      "display": "Foul-smelling vaginal discharge"
+    },
+    {
+      "code": "headache",
+      "display": "Headache"
+    },
+    {
+      "code": "imminent-delivery",
+      "display": "Imminent delivery"
+    },
+    {
+      "code": "labour",
+      "display": "Labour"
+    },
+    {
+      "code": "looks-very-ill",
+      "display": "Looks very ill"
+    },
+    {
+      "code": "reduced-fetal-movement",
+      "display": "Reduced fetal movement"
+    },
+    {
+      "code": "severe-pain",
+      "display": "Severe pain"
+    },
+    {
+      "code": "swelling",
+      "display": "Swelling"
+    },
+    {
+      "code": "unconscious",
+      "display": "Unconscious / not responding"
+    },
+    {
+      "code": "vaginal-bleeding",
+      "display": "Vaginal bleeding"
+    },
+    {
+      "code": "visual-disturbance",
+      "display": "Visual disturbance"
+    },
+    {
+      "code": "vomiting",
+      "display": "Vomiting"
+    },
+    {
+      "code": "waters-broken",
+      "display": "Waters broken"
+    }
+  ]
+}

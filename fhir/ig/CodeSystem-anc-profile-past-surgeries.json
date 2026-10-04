@@ -1,0 +1,41 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "anc-profile-past-surgeries",
+  "url": "https://fhir.ovamha.org/CodeSystem/anc-profile-past-surgeries",
+  "version": "0.1.0",
+  "name": "AncProfilePastSurgeries",
+  "title": "Ovamha answers: Past operations",
+  "status": "draft",
+  "experimental": true,
+  "publisher": "Ovamha",
+  "description": "Answer options for 'Past operations' (ANC.B6.DE72-DE82). Placeholder until WHO SMART ANC codes are mapped after DAK Annex extraction.",
+  "caseSensitive": true,
+  "content": "complete",
+  "count": 5,
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Ovamha answers: Past operations</p><table><tr><td>caesarean</td><td>Caesarean section</td></tr><tr><td>uterine_surgery</td><td>Womb operation</td></tr><tr><td>other</td><td>Other operation</td></tr><tr><td>none</td><td>None</td></tr><tr><td>unknown</td><td>Don't know</td></tr></table></div>"
+  },
+  "concept": [
+    {
+      "code": "caesarean",
+      "display": "Caesarean section"
+    },
+    {
+      "code": "uterine_surgery",
+      "display": "Womb operation"
+    },
+    {
+      "code": "other",
+      "display": "Other operation"
+    },
+    {
+      "code": "none",
+      "display": "None"
+    },
+    {
+      "code": "unknown",
+      "display": "Don't know"
+    }
+  ]
+}
