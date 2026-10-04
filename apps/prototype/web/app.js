@@ -199,9 +199,9 @@ document.addEventListener("click", (e) => { const b = e.target.closest("[data-ba
 
 // ---------------------------------------------------------------- 1. welcome (onboarding)
 const SLIDES = [
-  { t: "Offline voice guidance<br>for safer maternal care", p: "MaternaSave helps nurses, midwives and community health workers spot danger signs early and refer fast, with no internet." },
+  { t: "Offline voice guidance<br>for safer maternal care", p: "MaternaSave helps nurses, midwives and community health workers spot danger signs early and know what to do next, from the national guideline, with no internet." },
   { t: "Speak in Krio,<br>Yoruba or English", p: "Describe the woman's situation in your own words. MaternaSave writes it down and reads the key facts back to you." },
-  { t: "You confirm.<br>Then refer.", p: "Nothing counts until you confirm it. WHO danger-sign checks run on the confirmed facts and the referral SMS is ready in seconds." },
+  { t: "You confirm.<br>You decide.", p: "Nothing counts until you confirm it. MaternaSave shows what the guideline suggests for her today: care to give, treatment steps, and referral only when it is needed." },
 ];
 function welcome() {
   const s = SLIDES[S.slide];
