@@ -8,7 +8,9 @@
       "details": {
         "first_name": "Mariama",
         "family_name": "Demo",
-        "address": "Demo community"
+        "address": "Demo community",
+        "phone": "+23276000101",
+        "wants_reminders": "yes"
       },
       "profile": {
         "pregnancy_confirmed": "test_positive",
@@ -76,7 +78,9 @@
       "details": {
         "first_name": "Aminata",
         "family_name": "Demo",
-        "address": "Demo village"
+        "address": "Demo village",
+        "phone": "+23276000102",
+        "wants_reminders": "yes"
       },
       "profile": {
         "pregnancy_confirmed": "test_positive",

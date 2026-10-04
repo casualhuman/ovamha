@@ -17,7 +17,7 @@ from . import secure_store
 EVENTS = {
     "login", "login-failed", "login-locked", "logout", "idle-logout",
     "woman-created", "woman-opened", "record-shown-to-woman", "privacy-notice-given",
-    "encounter-finished", "sms-sent", "sms-received", "fhir-upload", "fhir-upload-failed", "export-anonymised",
+    "encounter-finished", "sms-sent", "sms-reminder-sent", "sms-received", "fhir-upload", "fhir-upload-failed", "export-anonymised",
 }
 FORBIDDEN_KEYS = {"name", "first_name", "family_name", "phone", "transcript", "text", "pin", "symptoms", "number"}
 

@@ -21,7 +21,7 @@ FIELD_TERMS: dict[str, dict[str, list[str]]] = {
     "fainting": {
         "en": ["fainted", "faint", "fainting", "passed out", "collapsed", "blacked out"],
         "kri": ["faint", "fainted", "fɔdɔm", "fodom"],
-        "yo": ["daku", "o daku", "fainted"],
+        "yo": ["didaku", "daku", "o daku", "fainted"],
     },
     "headache": {
         "en": ["headache", "head ache", "head pain", "head is paining", "head is pounding", "head pounding", "pounding head",
