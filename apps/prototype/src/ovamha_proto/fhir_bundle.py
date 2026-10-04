@@ -24,6 +24,7 @@ never stored, used as a key, or sent.
 from __future__ import annotations
 
 import uuid
+from urllib.parse import quote
 
 from . import questionnaire
 from .confirm import label
@@ -132,7 +133,8 @@ class _Builder:
             resource.setdefault("identifier", [])
             if ident not in resource["identifier"]:
                 resource["identifier"].insert(0, ident)
-            req["ifNoneExist"] = f"identifier={ident['system']}|{ident['value']}"
+            # Search parameters must be URL-encoded (a live HAPI server rejects spaces etc. in match URLs).
+            req["ifNoneExist"] = f"identifier={quote(ident['system'], safe=':/')}|{quote(ident['value'], safe='')}"
         self.entries.append({"fullUrl": urn, "resource": resource, "request": req})
         return urn
 

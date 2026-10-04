@@ -129,3 +129,10 @@ def test_no_consent_means_no_referral(enc):
     assert "ServiceRequest" not in types
     consent = next(e["resource"] for e in b["entry"] if e["resource"]["resourceType"] == "Consent" and e["resource"]["category"][0]["text"] == "Consent to referral")
     assert consent["status"] == "rejected"
+
+
+def test_conditional_create_match_urls_are_url_encoded(enc):
+    """Regression: HAPI rejected a match URL containing spaces (HAPI-1744)."""
+    for e in build_bundle(enc)["entry"]:
+        url = e["request"].get("ifNoneExist", "")
+        assert " " not in url and "(" not in url, url

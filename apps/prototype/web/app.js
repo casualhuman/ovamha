@@ -156,8 +156,8 @@ function render() {
   app.classList.toggle("enter", !!S.enter);  // fade in only when arriving on a new screen, not on every tap
   S.enter = false;
   const view = { welcome, login, home, woman, describe, confirm, history, measure, advice, referral, result, profile }[S.screen] || home;
-  app.innerHTML = view() + (S.hosted && ["welcome", "login", "home", "profile"].includes(S.screen)
-    ? `<div class="hosted-note">${icon("wifioff")}Hosted demo for judges. In the field, Ovamha runs fully offline on a local hub.</div>` : "");
+  app.innerHTML = (S.hosted && ["welcome", "login", "home", "profile"].includes(S.screen)
+    ? `<div class="hosted-note">${icon("wifioff")}Hosted demo for judges. In the field, Ovamha runs fully offline on a local hub.</div>` : "") + view();
   bind[S.screen]?.();
 }
 function nav(active) {
